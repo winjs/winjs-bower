@@ -1,0 +1,7 @@
+{
+  "name": "winjs",
+  "version": "3.0.0",
+  "main": ["js/WinJS.js", "css/ui-dark.css", "fonts/Symbols.ttf"],
+  "dependencies": {
+  }
+}
