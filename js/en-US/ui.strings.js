@@ -1,6 +1,6 @@
-/*!
+﻿/*!
   Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-  Build: 3.0.0.winjs.2014.9.15
+  Build: 3.0.0.winjs.2014.10.2
   Version: WinJS.3.0
 */
 

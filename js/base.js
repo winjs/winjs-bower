@@ -1,4 +1,4 @@
-
+﻿
 /*! Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information. */
 (function (global) {
 
@@ -6,9 +6,9 @@
         if (typeof define === 'function' && define.amd) {
             define([], factory);
         } else {
-            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.0.winjs.2014.9.15 base.js,StartTM');
+            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.0.winjs.2014.10.2 base.js,StartTM');
             factory(global.WinJS);
-            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.0.winjs.2014.9.15 base.js,StopTM');
+            global.msWriteProfilerMark && msWriteProfilerMark('WinJS.3.0 3.0.0.winjs.2014.10.2 base.js,StopTM');
         }
     }(function (WinJS) {
 
@@ -761,7 +761,7 @@ define('WinJS/Core/_Events',[
 
 define('require-json',{load: function(id){throw new Error("Dynamic load not allowed: " + id);}});
 
-define(﻿'require-json!en-US/ui.resjson',{
+define('require-json!en-US/ui.resjson',{
     "appBarAriaLabel": "App Bar",
     "appBarCommandAriaLabel": "App Bar Item",
     "averageRating": "Average Rating",
@@ -4176,7 +4176,7 @@ define('WinJS/Scheduler',[
 
     // Performance.now is not defined in web workers.
     //
-    var now = (_Global.performance && _Global.performance.now.bind(_Global.performance)) || Date.now.bind(Date);
+    var now = (_Global.performance && _Global.performance.now && _Global.performance.now.bind(_Global.performance)) || Date.now.bind(Date);
 
     // Main scheduler pump.
     //
@@ -4641,6 +4641,9 @@ define('WinJS/Core/_BaseUtils',[
         get notSupportedForProcessing() { return "Value is not supported within a declarative processing context, if you want it to be supported mark it using WinJS.Utilities.markSupportedForProcessing. The value was: '{0}'"; }
     };
 
+    var requestAnimationWorker;
+    var requestAnimationId = 0;
+    var requestAnimationHandlers = {};
     var isPhone = false;
     var validation = false;
     var platform = _Global.navigator.platform;
@@ -4974,6 +4977,25 @@ define('WinJS/Core/_BaseUtils',[
 
         _setImmediate: _BaseCoreUtils._setImmediate,
 
+        _requestAnimationFrame: _Global.requestAnimationFrame ? _Global.requestAnimationFrame.bind(_Global) : function (handler) {
+            var handle = ++requestAnimationId;
+            requestAnimationHandlers[handle] = handler;
+            requestAnimationWorker = requestAnimationWorker || _Global.setTimeout(function () {
+                var toProcess = requestAnimationHandlers;
+                var now = Date.now();
+                requestAnimationHandlers = {};
+                requestAnimationWorker = null;
+                Object.keys(toProcess).forEach(function (key) {
+                    toProcess[key](now);
+                });
+            }, 16);
+            return handle;
+        },
+
+        _cancelAnimationFrame: _Global.cancelAnimationFrame ? _Global.cancelAnimationFrame.bind(_Global) : function (handle) {
+            delete requestAnimationHandlers[handle];
+        },
+
         // Allows the browser to finish dispatching its current set of events before running
         // the callback.
         _yieldForEvents: _Global.setImmediate ? _Global.setImmediate.bind(_Global) : function (handler) {
@@ -5018,7 +5040,7 @@ define('WinJS/Core/_BaseUtils',[
         },
 
         _now: function _now() {
-            return (_Global.performance && _Global.performance.now()) || Date.now();
+            return (_Global.performance && _Global.performance.now && _Global.performance.now()) || Date.now();
         },
 
         _traceAsyncOperationStarting: _Trace._traceAsyncOperationStarting,
@@ -6041,8 +6063,9 @@ define('WinJS/Utilities/_ElementUtilities',[
                     handler.refCount--;
                     if (handler.refCount === 0) {
                         exports._removeEventListener(_Global, name, handler, capture);
+                        delete handlers[name];
                     }
-                    delete handlers[name];
+
                 }
 
                 removeClass(element, this._getClassName(name, capture));
@@ -6179,7 +6202,10 @@ define('WinJS/Utilities/_ElementUtilities',[
         setAdjustedScrollPosition(element, position.scrollLeft, position.scrollTop);
     }
 
-    var supportsZoomTo = !!_Global.HTMLElement.prototype.msZoomTo;
+    // navigator.msManipulationViewsEnabled tells us whether snap points work or not regardless of whether the style properties exist, however,
+    // on Phone WWAs, this check returns false even though snap points are supported. To work around this bug, we check for the presence of
+    // 'MSAppHost' in the user agent string which indicates that we are in a WWA environment; all WWA environments support snap points.
+    var supportsSnapPoints = _Global.navigator.msManipulationViewsEnabled || _Global.navigator.userAgent.indexOf("MSAppHost") >= 0;
     var supportsTouchDetection = !!(_Global.MSPointerEvent || _Global.TouchEvent);
 
     var uniqueElementIDCounter = 0;
@@ -6225,15 +6251,15 @@ define('WinJS/Utilities/_ElementUtilities',[
     _Base.Namespace._moduleDefine(exports, "WinJS.Utilities", {
         _dataKey: _dataKey,
 
-        _supportsTouchDetection: {
+        _supportsSnapPoints: {
             get: function () {
-                return supportsTouchDetection;
+                return supportsSnapPoints;
             }
         },
 
-        _supportsZoomTo: {
+        _supportsTouchDetection: {
             get: function () {
-                return supportsZoomTo;
+                return supportsTouchDetection;
             }
         },
 
@@ -6277,48 +6303,6 @@ define('WinJS/Utilities/_ElementUtilities',[
                 }
                 return this._supportsTouchActionCrossSlideValue;
             }
-        },
-
-        _detectSnapPointsSupport: function () {
-            // Snap point feature detection is special - On most platforms it is enough to check if 'msZoomTo'
-            // is available, however, Windows Phone IEs claim that they support it but don't really do so we
-            // test by creating a scroller with mandatory snap points and test against ManipulationStateChanged events.
-            if (!this._snapPointsDetectionPromise) {
-                if (!_Global.HTMLElement.prototype.msZoomTo) {
-                    this._snapPointsDetectionPromise = Promise.wrap(false);
-                } else {
-                    this._snapPointsDetectionPromise = new Promise(function (c) {
-                        var scroller = _Global.document.createElement("div");
-                        scroller.style.width = "100px";
-                        scroller.style.overflowX = "scroll";
-                        scroller.style.msScrollSnapType = "mandatory";
-                        scroller.style.position = "absolute";
-                        scroller.style.opacity = "0";
-                        scroller.style.visibility = "hidden";
-                        var handler = function (e) {
-                            scroller.removeEventListener("MSManipulationStateChanged", handler);
-                            _Global.clearTimeout(timeoutHandle);
-                            _Global.document.body.removeChild(scroller);
-                            c(true);
-                        };
-                        scroller.addEventListener("MSManipulationStateChanged", handler);
-
-                        var content = _Global.document.createElement("div");
-                        content.style.width = content.style.height = "200px";
-                        scroller.appendChild(content);
-
-                        _Global.document.body.appendChild(scroller);
-                        scroller.msZoomTo({ contentX: 90 });
-
-                        var timeoutHandle = _Global.setTimeout(function () {
-                            scroller.removeEventListener("MSManipulationStateChanged", handler);
-                            _Global.document.body.removeChild(scroller);
-                            c(false);
-                        }, 50);
-                    });
-                }
-            }
-            return this._snapPointsDetectionPromise;
         },
 
         _MSGestureEvent: _MSGestureEvent,
@@ -6468,11 +6452,11 @@ define('WinJS/Utilities/_ElementUtilities',[
                             element._zoomToDestY = null;
                         } else {
                             setAdjustedScrollPosition(element, initialPos.scrollLeft + t * xFactor, initialPos.scrollTop + t * yFactor);
-                            _Global.requestAnimationFrame(update);
+                            _BaseUtils._requestAnimationFrame(update);
                         }
                     };
 
-                    _Global.requestAnimationFrame(update);
+                    _BaseUtils._requestAnimationFrame(update);
                 }, Scheduler.Priority.high, null, "WinJS.Utilities._zoomTo");
             }
         },
