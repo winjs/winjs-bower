@@ -1,13 +1,13 @@
 ﻿/*!
-  Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-  Build: 3.0.0.winjs.2014.10.2
-  Version: WinJS.3.0
+  Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+  Build: 4.0.0-preview.winjs.2015.3.25
+  Version: WinJS.4.0
 */
 
 (function (global) {
     global.strings = global.strings || {};
 
-    var appxVersion = "WinJS.3.0";
+    var appxVersion = "WinJS.4.0";
     var developerPrefix = "Developer.";
     if (appxVersion.indexOf(developerPrefix) === 0) {
         appxVersion = appxVersion.substring(developerPrefix.length);
@@ -22,6 +22,15 @@
 {
     "appBarAriaLabel": "App Bar",
     "appBarCommandAriaLabel": "App Bar Item",
+    "autoSuggestBoxAriaLabel": "Autosuggestbox",
+    "autoSuggestBoxAriaLabelInputNoPlaceHolder": "Autosuggestbox, enter to submit query, esc to clear text",
+    "autoSuggestBoxAriaLabelInputPlaceHolder": "Autosuggestbox, {0}, enter to submit query, esc to clear text",
+    "autoSuggestBoxAriaLabelQuery": "Suggestion: {0}",
+    "_autoSuggestBoxAriaLabelQuery.comment": "Suggestion: query text (example: Suggestion: contoso)",
+    "autoSuggestBoxAriaLabelSeparator": "Separator: {0}",
+    "_autoSuggestBoxAriaLabelSeparator.comment": "Separator: separator text (example: Separator: People or Separator: Apps)",
+    "autoSuggestBoxAriaLabelResult": "Result: {0}, {1}",
+    "_autoSuggestBoxAriaLabelResult.comment": "Result: text, detailed text (example: Result: contoso, www.contoso.com)",
     "averageRating": "Average Rating",
     "backbuttonarialabel": "Back",
     "clearYourRating" : "Clear your rating",
@@ -42,12 +51,6 @@
     "searchBoxAriaLabelInputNoPlaceHolder": "Searchbox, enter to submit query, esc to clear text",
     "searchBoxAriaLabelInputPlaceHolder": "Searchbox, {0}, enter to submit query, esc to clear text",
     "searchBoxAriaLabelButton": "Click to submit query",
-    "searchBoxAriaLabelQuery": "Suggestion: {0}",
-    "_searchBoxAriaLabelQuery.comment": "Suggestion: query text (example: Suggestion: contoso)",
-    "searchBoxAriaLabelSeparator": "Separator: {0}",
-    "_searchBoxAriaLabelSeparator.comment": "Separator: separator text (example: Separator: People or Separator: Apps)",
-    "searchBoxAriaLabelResult": "Result: {0}, {1}",
-    "_searchBoxAriaLabelResult.comment": "Result: text, detailed text (example: Result: contoso, www.contoso.com)",
     "selectAMPM": "Select A.M P.M",
     "selectDay": "Select Day",
     "selectHour": "Select Hour",
@@ -57,6 +60,8 @@
     "settingsFlyoutAriaLabel": "Settings Flyout",
     "tentativeRating": "Tentative Rating",
     "timePicker": "Time Picker",
+    "toolbarAriaLabel": "ToolBar",
+    "toolbarOverflowButtonAriaLabel": "View more",
     "unrated": "Unrated",
     "userRating": "User Rating",
     // AppBar Icons follow, the format of the ui.js and ui.resjson differ for
@@ -450,10 +455,12 @@
     "_appBarIcons\\threebars.comment":                  "{Locked:qps-ploc,qps-plocm}",
     "appBarIcons\\fourbars":                            "\uE1E9", //  group:System
     "_appBarIcons\\fourbars.comment":                   "{Locked:qps-ploc,qps-plocm}",
-    "appBarIcons\\scan":               			"\uE294", //  group:General
-    "_appBarIcons\\scan.comment":                   	"{Locked:qps-ploc,qps-plocm}",
-    "appBarIcons\\preview":            			"\uE295", //  group:General
-    "_appBarIcons\\preview.comment":                   	"{Locked:qps-ploc,qps-plocm}"
+    "appBarIcons\\scan":                                "\uE294", //  group:General
+    "_appBarIcons\\scan.comment":                       "{Locked:qps-ploc,qps-plocm}",
+    "appBarIcons\\preview":                             "\uE295", //  group:General
+    "_appBarIcons\\preview.comment":                    "{Locked:qps-ploc,qps-plocm}",
+    "appBarIcons\\hamburger":                           "\uE700", //  group:General
+    "_appBarIcons\\hamburger.comment":                  "{Locked:qps-ploc,qps-plocm}"
 }
 
 );
