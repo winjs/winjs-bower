@@ -13,5 +13,5 @@ bower install winjs
 Reference the script from your HTML:
 
 ```html
-<script src="/bower_components/winjs/winjs.js"></script>
+<script src="/bower_components/winjs/js/WinJS.js"></script>
 ```
