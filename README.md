@@ -1,4 +1,4 @@
-# winjs-release
+# winjs-bower
 
 This repository is used to distribute the WinJS package on `bower`. The contents of this repository are automatically generated from the [main WinJS repo](https://github.com/winjs/winjs). Please file issues and pull requests against that repo.
 
@@ -10,8 +10,10 @@ Install using bower
 bower install winjs
 ```
 
-Reference the script from your HTML:
+Reference WinJS from your HTML:
 
 ```html
-<script src="/bower_components/winjs/js/WinJS.js"></script>
+<link href="/bower_components/winjs/css/ui-light.css" rel="stylesheet" />
+<script src="/bower_components/winjs/js/base.js"></script>
+<script src="/bower_components/winjs/js/ui.js"></script>
 ```
