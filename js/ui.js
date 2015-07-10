@@ -12,7 +12,7 @@
             // amd
             define(["./base"], factory);
         } else {
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.0 4.0.1.winjs.2015.6.10 ui.js,StartTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.1 4.1.0.winjs.2015.7.10 ui.js,StartTM');
             if (typeof module !== 'undefined') {
                 // CommonJS
                 factory(require("./base"));
@@ -20,7 +20,7 @@
                 // No module system
                 factory(globalObject.WinJS);
             }
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.0 4.0.1.winjs.2015.6.10 ui.js,StopTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.1 4.1.0.winjs.2015.7.10 ui.js,StopTM');
         }
     }(function (WinJS) {
 
@@ -7591,8 +7591,8 @@ define('WinJS/_Accents',["require", "exports", "./Core/_Global", "./Core/_WinRT"
     // Figure out color theme
     var tag = _Global.document.createElement(Constants.themeDetectionTag);
     _Global.document.head.appendChild(tag);
-    var theme = _Global.getComputedStyle(tag).opacity;
-    isDarkTheme = theme === "0";
+    var cs = _Global.getComputedStyle(tag);
+    isDarkTheme = cs && cs.opacity === "0";
     tag.parentElement.removeChild(tag);
     try {
         UISettings = new _WinRT.Windows.UI.ViewManagement.UISettings();
@@ -8317,7 +8317,7 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
                     }
 
                     function applyDownVisual(transform) {
-                        if (that._site.isInSelectionMode()) {
+                        if (that._site.disablePressAnimation()) {
                             return;
                         }
 
@@ -9444,7 +9444,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                         selectRange: function (firstIndex, lastIndex, additive) {
                             return that._selectRange(firstIndex, lastIndex, additive);
                         },
-                        isInSelectionMode: function () {
+                        disablePressAnimation: function () {
                             return site._isInSelectionMode();
                         }
                     }, {
@@ -19750,8 +19750,8 @@ define('WinJS/Controls/ListView',[
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ListView_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="groupHeader" class="win-groupheader" locid="WinJS.UI.ListView_part:groupHeader">The header of a group.</part>
         /// <part name="progressbar" class="win-progress" locid="WinJS.UI.ListView_part:progressbar">The progress indicator of the ListView.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         ListView: _Base.Namespace._lazy(function () {
             var AffectedRange = _Base.Class.define(function () {
                 this.clear();
@@ -21586,6 +21586,7 @@ define('WinJS/Controls/ListView',[
                                 if (index === +index) {
                                     that._updater.updateDrag = true;
                                     that._updater.selectionChanged = true;
+                                    that._updater.changed = true;
 
                                     var firstRange = that._updater.selectionFirst[index],
                                         lastRange = that._updater.selectionLast[index],
@@ -21594,7 +21595,6 @@ define('WinJS/Controls/ListView',[
                                     if (range && range.oldFirstIndex !== range.oldLastIndex) {
                                         delete that._updater.selectionFirst[range.oldFirstIndex];
                                         delete that._updater.selectionLast[range.oldLastIndex];
-                                        that._updater.changed = true;
                                     }
                                 }
                                 that._writeProfilerMark("moved(" + index + "),info");
@@ -26266,8 +26266,8 @@ define('WinJS/Controls/FlipView',[
         /// <part name="rightNavigationButton" class="win-navright" locid="WinJS.UI.FlipView_part:rightNavigationButton">The right navigation button.</part>
         /// <part name="topNavigationButton" class="win-navtop" locid="WinJS.UI.FlipView_part:topNavigationButton">The top navigation button.</part>
         /// <part name="bottomNavigationButton" class="win-navbottom" locid="WinJS.UI.FlipView_part:bottomNavigationButton">The bottom navigation button.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         FlipView: _Base.Namespace._lazy(function () {
 
             // Class names
@@ -27553,8 +27553,8 @@ define('WinJS/Controls/ItemContainer',[
         /// <part name="selectionbackground" class="win-selectionbackground" locid="WinJS.UI.ItemContainer_part:selectionbackground">The background of a selection checkmark.</part>
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ItemContainer_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="focusedoutline" class="win-focusedoutline" locid="WinJS.UI.ItemContainer_part:focusedoutline">Used to display an outline when the main container has keyboard focus.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         ItemContainer: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -27660,6 +27660,9 @@ define('WinJS/Controls/ItemContainer',[
                     changeFocus: function () { },
                     selectRange: function (firstIndex, lastIndex) {
                         return that._selection.set({ firstIndex: firstIndex, lastIndex: lastIndex });
+                    },
+                    disablePressAnimation: function () {
+                        return false;
                     }
                 }, {
                     pressedEntity: {
@@ -28288,8 +28291,8 @@ define('WinJS/Controls/Repeater',[
         /// <icon src="ui_winjs.ui.repeater.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.Repeater"></div>]]></htmlSnippet>
         /// <part name="repeater" class="win-repeater" locid="WinJS.UI.Repeater_part:repeater">The Repeater control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         Repeater: _Base.Namespace._lazy(function () {
 
             // Constants
@@ -28801,8 +28804,8 @@ define('WinJS/Controls/DatePicker',[
         /// <icon src="ui_winjs.ui.datepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.DatePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.DatePicker_e:change">Occurs when the current date changes.</event>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         DatePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_DAY_PATTERN = 'day',
@@ -29557,8 +29560,8 @@ define('WinJS/Controls/TimePicker',[
         /// <icon src="ui_winjs.ui.timepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.TimePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.TimePicker_e:change">Occurs when the time changes.</event>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         TimePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_MINUTE_PATTERN = "{minute.integer(2)}",
@@ -30221,8 +30224,8 @@ define('WinJS/Controls/BackButton',[
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.BackButton"></button>]]></htmlSnippet>
         /// <part name="BackButton" class="win-navigation-backbutton" locid="WinJS.UI.BackButton_part:BackButton">The BackButton control itself</part>
         /// <part name="BackArrowGlyph" class="win-back" locid="WinJS.UI.BackButton_part:BackArrowGlyph">The Back Arrow glyph</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         BackButton: _Base.Namespace._lazy(function () {
             // Statics
             var strings = {
@@ -30410,8 +30413,8 @@ define('WinJS/Controls/Tooltip',[
         /// <event name="beforeclose" bubbles="false" locid="WinJS.UI.Tooltip_e:beforeclose">Raised when the tooltip is about to become hidden.</event>
         /// <event name="closed" bubbles="false" locid="WinJS.UI.Tooltip_e:close">Raised when the tooltip is hidden.</event>
         /// <part name="tooltip" class="win-tooltip" locid="WinJS.UI.Tooltip_e:tooltip">The entire Tooltip control.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         Tooltip: _Base.Namespace._lazy(function () {
             var lastCloseTime = 0;
             var Key = _ElementUtilities.Key;
@@ -31375,8 +31378,8 @@ define('WinJS/Controls/Rating',[
         /// <part name="tentative-full" class="win-star win-tentative win-full" locid="WinJS.UI.Rating_part:tentative-full">The full star when the Rating control shows the tentative rating.</part>
         /// <part name="disabled-empty" class="win-star win-disabled win-empty" locid="WinJS.UI.Rating_part:disabled-empty">The empty star when the control is disabled.</part>
         /// <part name="disabled-full" class="win-star win-disabled win-full" locid="WinJS.UI.Rating_part:disabled-full">The full star when the control is disabled.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         Rating: _Base.Namespace._lazy(function () {
             var createEvent = _Events._createEventProperty;
 
@@ -32516,8 +32519,9 @@ define('WinJS/Controls/ToggleSwitch',[
     ],
     function toggleInit(_Global, _Base, _BaseUtils, _Events, _Resources, _Accents, _Control, _ElementUtilities) {
         "use strict";
-
-        _Accents.createAccentRule(".win-toggleswitch-on .win-toggleswitch-track", [{ name: "border-color", value: _Accents.ColorTypes.accent }]);
+        
+        _Accents.createAccentRule(".win-toggleswitch-on .win-toggleswitch-track", [{ name: "background-color", value: _Accents.ColorTypes.accent }]);
+        _Accents.createAccentRule("html.win-hoverable .win-toggleswitch-on:not(.win-toggleswitch-disabled):not(.win-toggleswitch-pressed) .win-toggleswitch-clickregion:hover .win-toggleswitch-track", [{ name: "background-color", value: _Accents.ColorTypes.listSelectPress }]);
 
         _Base.Namespace.define("WinJS.UI", {
             /// <field>
@@ -32535,8 +32539,8 @@ define('WinJS/Controls/ToggleSwitch',[
             /// <part name="title" class="win-toggleswitch-header" locid="WinJS.UI.ToggleSwitch_part:title">The main text for the ToggleSwitch control.</part>
             /// <part name="label-on" class="win-toggleswitch-value" locid="WinJS.UI.ToggleSwitch_part:label-on">The text for when the switch is on.</part>
             /// <part name="label-off" class="win-toggleswitch-value" locid="WinJS.UI.ToggleSwitch_part:label-off:">The text for when the switch is off.</part>
-            /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-            /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+            /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+            /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
             ToggleSwitch: _Base.Namespace._lazy(function () {
 
                 // Store some class names
@@ -32946,8 +32950,8 @@ define('WinJS/Controls/SemanticZoom',[
         /// <icon src="ui_winjs.ui.semanticzoom.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.SemanticZoom"><div class="zoomedInContainer" data-win-control="WinJS.UI.ListView"></div><div class="zoomedOutContainer" data-win-control="WinJS.UI.ListView"></div></div>]]></htmlSnippet>
         /// <part name="semanticZoom" class="win-semanticzoom" locid="WinJS.UI.SemanticZoom_part:semanticZoom">The entire SemanticZoom control.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         SemanticZoom: _Base.Namespace._lazy(function () {
             var browserStyleEquivalents = _BaseUtils._browserStyleEquivalents;
 
@@ -34457,38 +34461,31 @@ define('WinJS/Controls/SemanticZoom',[
 });
 
 // Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
-define('WinJS/Controls/Pivot/_Constants',[
-    ], function pivotConstantsInit() {
-    "use strict";
-
-    var members = {
-        // Names of classes used by the Pivot.
-        _ClassName: {
-            pivot: "win-pivot",
-            pivotLocked: "win-pivot-locked",
-            pivotTitle: "win-pivot-title",
-            pivotHeaderArea: "win-pivot-header-area",
-            pivotHeaderLeftCustom: "win-pivot-header-leftcustom",
-            pivotHeaderRightCustom: "win-pivot-header-rightcustom",
-            pivotHeaderItems: "win-pivot-header-items",
-            pivotHeaders: "win-pivot-headers",
-            pivotHeader: "win-pivot-header",
-            pivotHeaderSelected: "win-pivot-header-selected",
-            pivotViewport: "win-pivot-viewport",
-            pivotSurface: "win-pivot-surface",
-            pivotNoSnap: "win-pivot-nosnap",
-            pivotNavButton: "win-pivot-navbutton",
-            pivotNavButtonPrev: "win-pivot-navbutton-prev",
-            pivotNavButtonNext: "win-pivot-navbutton-next",
-            pivotShowNavButtons: "win-pivot-shownavbuttons",
-            pivotInputTypeMouse: "win-pivot-mouse",
-            pivotInputTypeTouch: "win-pivot-touch",
-            pivotDisableContentSwipeNavigation: "win-pivot-disablecontentswipenavigation"
-        }
+"use strict";
+define('WinJS/Controls/Pivot/_Constants',["require", "exports"], function (require, exports) {
+    // Names of classes used by the Pivot.
+    exports._ClassNames = {
+        pivot: "win-pivot",
+        pivotLocked: "win-pivot-locked",
+        pivotTitle: "win-pivot-title",
+        pivotHeaderArea: "win-pivot-header-area",
+        pivotHeaderLeftCustom: "win-pivot-header-leftcustom",
+        pivotHeaderRightCustom: "win-pivot-header-rightcustom",
+        pivotHeaderItems: "win-pivot-header-items",
+        pivotHeaders: "win-pivot-headers",
+        pivotHeader: "win-pivot-header",
+        pivotHeaderSelected: "win-pivot-header-selected",
+        pivotViewport: "win-pivot-viewport",
+        pivotSurface: "win-pivot-surface",
+        pivotNoSnap: "win-pivot-nosnap",
+        pivotNavButton: "win-pivot-navbutton",
+        pivotNavButtonPrev: "win-pivot-navbutton-prev",
+        pivotNavButtonNext: "win-pivot-navbutton-next",
+        pivotShowNavButtons: "win-pivot-shownavbuttons",
+        pivotInputTypeMouse: "win-pivot-mouse",
+        pivotInputTypeTouch: "win-pivot-touch",
+        pivotDisableContentSwipeNavigation: "win-pivot-disablecontentswipenavigation"
     };
-
-    return members;
-
 });
 
 // Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
@@ -34521,8 +34518,8 @@ define('WinJS/Controls/Pivot/_Item',[
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.PivotItem" data-win-options="{header: 'PivotItem Header'}">PivotItem Content</div>]]></htmlSnippet>
         /// <part name="pivotitem" class="win-pivot-item" locid="WinJS.UI.PivotItem_part:pivotitem">The entire PivotItem control.</part>
         /// <part name="content" class="win-pivot-item-content" locid="WinJS.UI.PivotItem_part:content">The content region of the PivotItem.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         PivotItem: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
@@ -34610,7 +34607,7 @@ define('WinJS/Controls/Pivot/_Item',[
                 _parentPivot: {
                     get: function () {
                         var el = this._element;
-                        while (el && !_ElementUtilities.hasClass(el, _Constants._ClassName.pivot)) {
+                        while (el && !_ElementUtilities.hasClass(el, _Constants._ClassNames.pivot)) {
                             el = el.parentNode;
                         }
                         return el && el.winControl;
@@ -34681,35 +34678,1303 @@ define('require-style!less/styles-pivot',[],function(){});
 
 define('require-style!less/colors-pivot',[],function(){});
 // Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
-define('WinJS/Controls/Pivot',[
-    '../Core/_Global',
-    '../Core/_Base',
-    '../Core/_BaseUtils',
-    '../Core/_ErrorFromName',
-    '../Core/_Events',
-    '../Core/_Log',
-    '../Core/_Resources',
-    '../Core/_WriteProfilerMark',
-    '../Animations',
-    '../Animations/_TransitionAnimation',
-    '../BindingList',
-    '../ControlProcessor',
-    '../Promise',
-    '../Scheduler',
-    '../_Signal',
-    '../Utilities/_Control',
-    '../Utilities/_Dispose',
-    '../Utilities/_ElementUtilities',
-    '../Utilities/_Hoverable',
-    '../Utilities/_TabContainer',
-    '../Utilities/_KeyboardBehavior',
-    './Pivot/_Constants',
-    './Pivot/_Item',
-    'require-style!less/styles-pivot',
-    'require-style!less/colors-pivot'
-], function pivotInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Promise, Scheduler, _Signal, _Control, _Dispose, _ElementUtilities, _Hoverable, _TabContainer, _KeyboardBehavior, _Constants, _Item) {
+/// <reference path="../../../../../typings/require.d.ts" />
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global", "../../Animations", "../../BindingList", "../../ControlProcessor", "../../Promise", "../../Scheduler", "../../Core/_Base", "../../Core/_BaseUtils", "../../Utilities/_Control", "../../Utilities/_Dispose", "../../Utilities/_ElementUtilities", "../../Core/_ErrorFromName", "../../Core/_Events", "../../Utilities/_Hoverable", "../../Utilities/_KeyboardBehavior", "../../Core/_Log", "../../Core/_Resources", "../../Utilities/_TabContainer", "../../Animations/_TransitionAnimation", "../../Core/_WriteProfilerMark", "./_Constants", "./_Item"], function (require, exports, _Global, Animations, BindingList, ControlProcessor, Promise, Scheduler, _Base, _BaseUtils, _Control, _Dispose, _ElementUtilities, _ErrorFromName, _Events, _Hoverable, _KeyboardBehavior, _Log, _Resources, _TabContainer, _TransitionAnimation, _WriteProfilerMark, _Constants, _PivotItem) {
+    // Force-load Dependencies
+    _Hoverable.isHoverable;
+    _PivotItem.PivotItem;
+    require(["require-style!less/styles-pivot"]);
+    require(["require-style!less/colors-pivot"]);
     "use strict";
+    var _EventNames = {
+        selectionChanged: "selectionchanged",
+        itemAnimationStart: "itemanimationstart",
+        itemAnimationEnd: "itemanimationend",
+    };
+    var strings = {
+        get duplicateConstruction() {
+            return "Invalid argument: Controls may only be instantiated one time for each DOM element";
+        },
+        get duplicateItem() {
+            return _Resources._getWinJSString("ui/duplicateItem").value;
+        },
+        get invalidContent() {
+            return "Invalid content: Pivot content must be made up of PivotItems.";
+        },
+        get pivotAriaLabel() {
+            return _Resources._getWinJSString("ui/pivotAriaLabel").value;
+        },
+        get pivotViewportAriaLabel() {
+            return _Resources._getWinJSString("ui/pivotViewportAriaLabel").value;
+        }
+    };
+    var supportsSnap = !!(_ElementUtilities._supportsSnapPoints && "inertiaDestinationX" in _Global["MSManipulationEvent"].prototype);
+    var PT_MOUSE = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_MOUSE || "mouse";
+    var PT_TOUCH = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_TOUCH || "touch";
+    var Keys = _ElementUtilities.Key;
+    var _headerSlideAnimationDuration = 250;
+    var _invalidMeasurement = -1;
+    function pivotDefaultHeaderTemplate(item) {
+        var element = _Global.document.createTextNode(typeof item.header === "object" ? JSON.stringify(item.header) : ('' + item.header));
+        return element;
+    }
+    var Pivot = (function () {
+        function Pivot(element, options) {
+            if (options === void 0) { options = {}; }
+            this._disposed = false;
+            this._firstLoad = true;
+            this._hidePivotItemAnimation = Promise.wrap();
+            this._loadPromise = Promise.wrap();
+            this._pendingRefresh = false;
+            this._selectedIndex = 0;
+            this._showPivotItemAnimation = Promise.wrap();
+            this._slideHeadersAnimation = Promise.wrap();
+            /// <signature helpKeyword="WinJS.UI.Pivot.Pivot">
+            /// <summary locid="WinJS.UI.Pivot.constructor">
+            /// Creates a new Pivot control.
+            /// </summary>
+            /// <param name="element" type="HTMLElement" domElement="true" isOptional="true" locid="WinJS.UI.Pivot.constructor_p:element">
+            /// The DOM element that hosts the Pivot control.
+            /// </param>
+            /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.Pivot.constructor_p:options">
+            /// An object that contains one or more property/value pairs to apply to the new control.
+            /// Each property of the options object corresponds to one of the control's properties or events.
+            /// Event names must begin with "on". For example, to provide a handler for the index changed event,
+            /// add a property named "onselectionchanged" to the options object and set its value to the event handler.
+            /// </param>
+            /// <returns type="WinJS.UI.Pivot" locid="WinJS.UI.Pivot.constructor_returnValue">
+            /// The new Pivot.
+            /// </returns>
+            /// </signature>
+            element = element || _Global.document.createElement("DIV");
+            if (element["winControl"]) {
+                throw new _ErrorFromName("WinJS.UI.Pivot.DuplicateConstruction", strings.duplicateConstruction);
+            }
+            this._handleItemChanged = this._handleItemChanged.bind(this);
+            this._handleItemInserted = this._handleItemInserted.bind(this);
+            this._handleItemMoved = this._handleItemMoved.bind(this);
+            this._handleItemRemoved = this._handleItemRemoved.bind(this);
+            this._handleItemReload = this._handleItemReload.bind(this);
+            this._resizeHandler = this._resizeHandler.bind(this);
+            this._updatePointerType = this._updatePointerType.bind(this);
+            this._id = element.id || _ElementUtilities._uniqueID(element);
+            this._writeProfilerMark("constructor,StartTM");
+            // Attaching JS control to DOM element
+            element["winControl"] = this;
+            this._element = element;
+            this._element.setAttribute("role", "tablist");
+            if (!this._element.getAttribute("aria-label")) {
+                this._element.setAttribute('aria-label', strings.pivotAriaLabel);
+            }
+            _ElementUtilities.addClass(this.element, _Constants._ClassNames.pivot);
+            _ElementUtilities.addClass(this.element, "win-disposable");
+            _ElementUtilities._addEventListener(this.element, "pointerenter", this._updatePointerType);
+            _ElementUtilities._addEventListener(this.element, "pointerout", this._updatePointerType);
+            // Title element
+            this._titleElement = _Global.document.createElement("DIV");
+            this._titleElement.style.display = "none";
+            _ElementUtilities.addClass(this._titleElement, _Constants._ClassNames.pivotTitle);
+            this._element.appendChild(this._titleElement);
+            // Header Area
+            this._headerAreaElement = _Global.document.createElement("DIV");
+            _ElementUtilities.addClass(this._headerAreaElement, _Constants._ClassNames.pivotHeaderArea);
+            this._element.appendChild(this._headerAreaElement);
+            // Header Items
+            this._headerItemsElement = _Global.document.createElement("DIV");
+            _ElementUtilities.addClass(this._headerItemsElement, _Constants._ClassNames.pivotHeaderItems);
+            this._headerAreaElement.appendChild(this._headerItemsElement);
+            this._headerItemsElWidth = null;
+            // Headers Container
+            this._headersContainerElement = _Global.document.createElement("DIV");
+            this._headersContainerElement.tabIndex = 0;
+            _ElementUtilities.addClass(this._headersContainerElement, _Constants._ClassNames.pivotHeaders);
+            this._headersContainerElement.addEventListener("keydown", this._headersKeyDown.bind(this));
+            _ElementUtilities._addEventListener(this._headersContainerElement, "pointerenter", this._showNavButtons.bind(this));
+            _ElementUtilities._addEventListener(this._headersContainerElement, "pointerout", this._hideNavButtons.bind(this));
+            this._headerItemsElement.appendChild(this._headersContainerElement);
+            this._element.addEventListener("click", this._elementClickedHandler.bind(this));
+            this._winKeyboard = new _KeyboardBehavior._WinKeyboard(this._headersContainerElement);
+            this._tabContainer = new _TabContainer.TabContainer(this._headersContainerElement);
+            // Custom Headers
+            this._customLeftHeader = _Global.document.createElement("DIV");
+            _ElementUtilities.addClass(this._customLeftHeader, _Constants._ClassNames.pivotHeaderLeftCustom);
+            this._headerAreaElement.insertBefore(this._customLeftHeader, this._headerAreaElement.children[0]);
+            this._customRightHeader = _Global.document.createElement("DIV");
+            _ElementUtilities.addClass(this._customRightHeader, _Constants._ClassNames.pivotHeaderRightCustom);
+            this._headerAreaElement.appendChild(this._customRightHeader);
+            // Viewport
+            this._viewportElement = _Global.document.createElement("DIV");
+            this._viewportElement.className = _Constants._ClassNames.pivotViewport;
+            this._element.appendChild(this._viewportElement);
+            this._viewportElement.setAttribute("role", "group");
+            this._viewportElement.setAttribute("aria-label", strings.pivotViewportAriaLabel);
+            this.element.addEventListener("mselementresize", this._resizeHandler);
+            _ElementUtilities._resizeNotifier.subscribe(this.element, this._resizeHandler);
+            this._viewportElWidth = null;
+            // Surface
+            this._surfaceElement = _Global.document.createElement("DIV");
+            this._surfaceElement.className = _Constants._ClassNames.pivotSurface;
+            this._viewportElement.appendChild(this._surfaceElement);
+            this._headersState = new HeaderStateBase(this);
+            // Navigation handlers
+            if (supportsSnap) {
+                this._viewportElement.addEventListener("MSManipulationStateChanged", this._MSManipulationStateChangedHandler.bind(this));
+            }
+            else {
+                _ElementUtilities.addClass(this.element, _Constants._ClassNames.pivotNoSnap);
+                _ElementUtilities._addEventListener(this._element, "pointerdown", this._elementPointerDownHandler.bind(this));
+                _ElementUtilities._addEventListener(this._element, "pointerup", this._elementPointerUpHandler.bind(this));
+            }
+            // This internally assigns this.items which causes item to be used (even from options) before selectedIndex
+            this._parse();
+            options = _BaseUtils._shallowCopy(options);
+            if (options.items) {
+                // Set this first so selectedIndex and selectedItem can work against the new items.
+                this.items = options.items;
+                delete options.items;
+            }
+            _Control.setOptions(this, options);
+            this._refresh();
+            this._writeProfilerMark("constructor,StopTM");
+        }
+        Object.defineProperty(Pivot.prototype, "element", {
+            /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.Pivot.element" helpKeyword="WinJS.UI.Pivot.element">
+            /// Gets the DOM element that hosts the Pivot.
+            /// </field>
+            get: function () {
+                return this._element;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Pivot.prototype, "customLeftHeader", {
+            /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.Pivot.customLeftHeader" helpKeyword="WinJS.UI.Pivot.customLeftHeader">
+            /// Gets or sets the left custom header.
+            /// </field>
+            get: function () {
+                return this._customLeftHeader.firstElementChild;
+            },
+            set: function (value) {
+                _ElementUtilities.empty(this._customLeftHeader);
+                value && this._customLeftHeader.appendChild(value);
+                this.forceLayout();
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Pivot.prototype, "customRightHeader", {
+            /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.Pivot.customRightHeader" helpKeyword="WinJS.UI.Pivot.customRightHeader">
+            /// Gets or sets the right custom header.
+            /// </field>
+            get: function () {
+                return this._customRightHeader.firstElementChild;
+            },
+            set: function (value) {
+                _ElementUtilities.empty(this._customRightHeader);
+                value && this._customRightHeader.appendChild(value);
+                this.forceLayout();
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Pivot.prototype, "locked", {
+            /// <field type="Boolean" locid="WinJS.UI.Pivot.locked" helpKeyword="WinJS.UI.Pivot.locked">
+            /// Gets or sets a value that specifies whether the Pivot is locked to the current item.
+            /// </field>
+            get: function () {
+                return _ElementUtilities.hasClass(this.element, _Constants._ClassNames.pivotLocked);
+            },
+            set: function (value) {
+                _ElementUtilities[value ? "addClass" : "removeClass"](this.element, _Constants._ClassNames.pivotLocked);
+                if (value) {
+                    this._hideNavButtons();
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Pivot.prototype, "items", {
+            /// <field type="WinJS.Binding.List" locid="WinJS.UI.Pivot.items" helpKeyword="WinJS.UI.Pivot.items">
+            /// Gets or sets the WinJS.Binding.List of PivotItem objects that belong to this Pivot.
+            /// </field>
+            get: function () {
+                if (this._pendingItems) {
+                    return this._pendingItems;
+                }
+                return this._items;
+            },
+            set: function (value) {
+                this._pendingItems = value;
+                this._refresh();
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Pivot.prototype, "title", {
+            /// <field type="String" locid="WinJS.UI.Pivot.title" helpKeyword="WinJS.UI.Pivot.title">
+            /// Gets or sets the title of the Pivot.
+            /// </field>
+            get: function () {
+                return this._titleElement.textContent;
+            },
+            set: function (value) {
+                if (value) {
+                    this._titleElement.style.display = "block";
+                    this._titleElement.textContent = value;
+                }
+                else {
+                    this._titleElement.style.display = "none";
+                    this._titleElement.textContent = "";
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Pivot.prototype, "selectedIndex", {
+            /// <field type="Number" integer="true" locid="WinJS.UI.Pivot.selectedIndex" helpKeyword="WinJS.UI.Pivot.selectedIndex">
+            /// Gets or sets the index of the item in view. This property is useful for restoring a previous view when your app launches or resumes.
+            /// </field>
+            get: function () {
+                if (this.items.length === 0) {
+                    return -1;
+                }
+                return this._selectedIndex;
+            },
+            set: function (value) {
+                if (value >= 0 && value < this.items.length) {
+                    if (this._pendingRefresh) {
+                        this._selectedIndex = value;
+                    }
+                    else {
+                        this._loadItem(value);
+                    }
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Pivot.prototype, "selectedItem", {
+            /// <field type="WinJS.UI.PivotItem" locid="WinJS.UI.Pivot.selectedItem" helpKeyword="WinJS.UI.Pivot.selectedItem">
+            /// Gets or sets the item in view. This property is useful for restoring a previous view when your app launches or resumes.
+            /// </field>
+            get: function () {
+                return this.items.getAt(this.selectedIndex);
+            },
+            set: function (value) {
+                var index = this.items.indexOf(value);
+                if (index !== -1) {
+                    this.selectedIndex = index;
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        // Public Methods
+        Pivot.prototype.dispose = function () {
+            /// <signature helpKeyword="WinJS.UI.Pivot.dispose">
+            /// <summary locid="WinJS.UI.Pivot.dispose">
+            /// Disposes this control.
+            /// </summary>
+            /// </signature>
+            if (this._disposed) {
+                return;
+            }
+            this._disposed = true;
+            this._updateEvents(this._items, null);
+            _ElementUtilities._resizeNotifier.unsubscribe(this.element, this._resizeHandler);
+            this._headersState.exit();
+            _Dispose._disposeElement(this._headersContainerElement);
+            for (var i = 0, len = this.items.length; i < len; i++) {
+                this.items.getAt(i).dispose();
+            }
+        };
+        Pivot.prototype.forceLayout = function () {
+            /// <signature helpKeyword="WinJS.UI.Pivot.forceLayout">
+            /// <summary locid="WinJS.UI.Pivot.forceLayout">
+            /// Forces the control to relayout its content. This function is expected to be called
+            /// when the pivot element is manually resized.
+            /// </summary>
+            /// </signature>
+            if (this._disposed) {
+                return;
+            }
+            this._resizeHandler();
+        };
+        // Lifecycle Methods
+        Pivot.prototype._applyProperties = function () {
+            if (this._disposed) {
+                return;
+            }
+            if (this._pendingItems) {
+                this._updateEvents(this._items, this._pendingItems);
+                this._items = this._pendingItems;
+                this._pendingItems = null;
+                while (this.element.firstElementChild !== this._titleElement) {
+                    var toRemove = this.element.firstElementChild;
+                    toRemove.parentNode.removeChild(toRemove);
+                }
+                _ElementUtilities.empty(this._surfaceElement);
+            }
+            attachItems(this);
+            this._rtl = _Global.getComputedStyle(this._element, null).direction === "rtl";
+            this._headersState.refreshHeadersState(true);
+            this._pendingRefresh = false;
+            this._firstLoad = true;
+            this.selectedIndex = this._selectedIndex;
+            this._firstLoad = false;
+            this._recenterViewport();
+            function attachItems(pivot) {
+                for (var i = 0, len = pivot.items.length; i < len; i++) {
+                    var item = pivot._items.getAt(i);
+                    if (item.element.parentNode === pivot._surfaceElement) {
+                        throw new _ErrorFromName("WinJS.UI.Pivot.DuplicateItem", strings.duplicateItem);
+                    }
+                    item.element.style.display = "none";
+                    pivot._surfaceElement.appendChild(item.element);
+                }
+            }
+        };
+        Pivot.prototype._parse = function () {
+            var pivotItems = [];
+            var pivotItemEl = this.element.firstElementChild;
+            while (pivotItemEl !== this._titleElement) {
+                ControlProcessor.processAll(pivotItemEl);
+                var pivotItemContent = pivotItemEl["winControl"];
+                if (pivotItemContent) {
+                    pivotItems.push(pivotItemContent);
+                }
+                else {
+                    throw new _ErrorFromName("WinJS.UI.Pivot.InvalidContent", strings.invalidContent);
+                }
+                var nextItemEl = pivotItemEl.nextElementSibling;
+                pivotItemEl = nextItemEl;
+            }
+            this.items = new BindingList.List(pivotItems);
+        };
+        Pivot.prototype._refresh = function () {
+            if (this._pendingRefresh) {
+                return;
+            }
+            // This is to coalesce property setting operations such as items and scrollPosition.
+            this._pendingRefresh = true;
+            Scheduler.schedule(this._applyProperties.bind(this), Scheduler.Priority.high);
+        };
+        Pivot.prototype._resizeHandler = function () {
+            if (this._disposed || this._pendingRefresh) {
+                return;
+            }
+            var oldViewportWidth = this._getViewportWidth();
+            var oldHeaderItemsWidth = this._getHeaderItemsWidth();
+            this._invalidateMeasures();
+            if (oldViewportWidth !== this._getViewportWidth() || oldHeaderItemsWidth !== this._getHeaderItemsWidth()) {
+                // Measures have changed
+                _Log.log && _Log.log('_resizeHandler, viewport from:' + oldViewportWidth + " to: " + this._getViewportWidth());
+                _Log.log && _Log.log('_resizeHandler, headers from:' + oldHeaderItemsWidth + " to: " + this._getHeaderItemsWidth());
+                this._hidePivotItemAnimation && this._hidePivotItemAnimation.cancel();
+                this._showPivotItemAnimation && this._showPivotItemAnimation.cancel();
+                this._slideHeadersAnimation && this._slideHeadersAnimation.cancel();
+                this._recenterViewport();
+                this._headersState.handleResize();
+            }
+            else {
+                _Log.log && _Log.log('_resizeHandler worthless resize');
+            }
+        };
+        // Navigation Methods
+        Pivot.prototype._activateHeader = function (headerElement) {
+            if (this.locked) {
+                return;
+            }
+            var index = this._items.indexOf(headerElement["_item"]);
+            if (index !== this.selectedIndex) {
+                this._headersState.activateHeader(headerElement);
+            }
+            else {
+                // Move focus into content for Narrator.
+                _ElementUtilities._setActiveFirstFocusableElement(this.selectedItem.element);
+            }
+        };
+        Pivot.prototype._goNext = function () {
+            if (this.selectedIndex < this._items.length - 1) {
+                this.selectedIndex++;
+            }
+            else {
+                this.selectedIndex = 0;
+            }
+        };
+        Pivot.prototype._goPrevious = function () {
+            this._animateToPrevious = true;
+            if (this.selectedIndex > 0) {
+                this.selectedIndex--;
+            }
+            else {
+                this.selectedIndex = this._items.length - 1;
+            }
+            this._animateToPrevious = false;
+        };
+        Pivot.prototype._loadItem = function (index) {
+            var _this = this;
+            this._rtl = _Global.getComputedStyle(this._element, null).direction === "rtl";
+            this._hidePivotItemAnimation.cancel();
+            this._showPivotItemAnimation.cancel();
+            this._slideHeadersAnimation.cancel();
+            var goPrev = this._animateToPrevious;
+            var newItem = this._items.getAt(index);
+            var selectionChangedDetail = {
+                index: index,
+                direction: goPrev ? "backwards" : "forward",
+                item: newItem
+            };
+            this._fireEvent(_EventNames.selectionChanged, true, false, selectionChangedDetail);
+            var skipAnimation = this._firstLoad;
+            var thisLoadPromise = this._loadPromise = this._loadPromise.then(function () {
+                var oldItem = _this._items.getAt(_this.selectedIndex);
+                oldItem && _this._hidePivotItem(oldItem.element, goPrev, skipAnimation);
+                var oldIndex = _this._selectedIndex;
+                _this._selectedIndex = index;
+                _this._headersState.handleNavigation(goPrev, index, oldIndex);
+                // Note: Adding Promise.timeout to force asynchrony so that thisLoadPromise
+                // is set before handler executes and compares thisLoadPromise.
+                return Promise.join([newItem._process(), _this._hidePivotItemAnimation, Promise.timeout()]).then(function () {
+                    if (_this._disposed || _this._loadPromise !== thisLoadPromise) {
+                        return;
+                    }
+                    _this._recenterViewport();
+                    return _this._showPivotItem(newItem.element, goPrev, skipAnimation).then(function () {
+                        if (_this._disposed || _this._loadPromise !== thisLoadPromise) {
+                            return;
+                        }
+                        _this._loadPromise = Promise.wrap();
+                        _this._writeProfilerMark("itemAnimationStop,info");
+                        _this._fireEvent(_EventNames.itemAnimationEnd, true, false, null);
+                    });
+                });
+            });
+        };
+        Pivot.prototype._recenterViewport = function () {
+            _ElementUtilities.setScrollPosition(this._viewportElement, { scrollLeft: this._getViewportWidth() });
+            if (this.selectedItem) {
+                this.selectedItem.element.style[this._getDirectionAccessor()] = this._getViewportWidth() + "px";
+            }
+        };
+        // Utility Methods
+        Pivot.prototype._fireEvent = function (type, canBubble, cancelable, detail) {
+            // Returns true if ev.preventDefault() was not called
+            var event = _Global.document.createEvent("CustomEvent");
+            event.initCustomEvent(type, !!canBubble, !!cancelable, detail);
+            return this.element.dispatchEvent(event);
+        };
+        Pivot.prototype._getDirectionAccessor = function () {
+            return this._rtl ? "right" : "left";
+        };
+        Pivot.prototype._getHeaderItemsWidth = function () {
+            if (!this._headerItemsElWidth) {
+                this._headerItemsElWidth = parseFloat(_Global.getComputedStyle(this._headerItemsElement).width);
+            }
+            return this._headerItemsElWidth || _invalidMeasurement;
+        };
+        Pivot.prototype._getViewportWidth = function () {
+            if (!this._viewportElWidth) {
+                this._viewportElWidth = parseFloat(_Global.getComputedStyle(this._viewportElement).width);
+                if (supportsSnap) {
+                    this._viewportElement.style[_BaseUtils._browserStyleEquivalents["scroll-snap-points-x"].scriptName] = "snapInterval(0%, " + Math.ceil(this._viewportElWidth) + "px)";
+                }
+            }
+            return this._viewportElWidth || _invalidMeasurement;
+        };
+        Pivot.prototype._invalidateMeasures = function () {
+            this._viewportElWidth = this._headerItemsElWidth = null;
+        };
+        Pivot.prototype._updateEvents = function (oldItems, newItems) {
+            if (oldItems) {
+                oldItems.removeEventListener("itemchanged", this._handleItemChanged);
+                oldItems.removeEventListener("iteminserted", this._handleItemInserted);
+                oldItems.removeEventListener("itemmoved", this._handleItemMoved);
+                oldItems.removeEventListener("itemremoved", this._handleItemRemoved);
+                oldItems.removeEventListener("reload", this._handleItemReload);
+            }
+            if (newItems) {
+                newItems.addEventListener("itemchanged", this._handleItemChanged);
+                newItems.addEventListener("iteminserted", this._handleItemInserted);
+                newItems.addEventListener("itemmoved", this._handleItemMoved);
+                newItems.addEventListener("itemremoved", this._handleItemRemoved);
+                newItems.addEventListener("reload", this._handleItemReload);
+            }
+        };
+        Pivot.prototype._writeProfilerMark = function (text) {
+            var message = "WinJS.UI.Pivot:" + this._id + ":" + text;
+            _WriteProfilerMark(message);
+            _Log.log && _Log.log(message, null, "pivotprofiler");
+        };
+        // Datasource Mutation Handlers
+        Pivot.prototype._handleItemChanged = function (ev) {
+            // Change is triggered by binding list setAt() API.
+            if (this._pendingItems) {
+                return;
+            }
+            var index = ev.detail.index;
+            var newItem = ev.detail.newValue;
+            var oldItem = ev.detail.oldValue;
+            if (newItem.element !== oldItem.element) {
+                if (newItem.element.parentNode === this._surfaceElement) {
+                    throw new _ErrorFromName("WinJS.UI.Pivot.DuplicateItem", strings.duplicateItem);
+                }
+                newItem.element.style.display = "none";
+                this._surfaceElement.insertBefore(newItem.element, oldItem.element);
+                this._surfaceElement.removeChild(oldItem.element);
+                if (index === this.selectedIndex) {
+                    this.selectedIndex = index;
+                }
+            }
+            this._headersState.render();
+            this._headersState.refreshHeadersState(true);
+        };
+        Pivot.prototype._handleItemInserted = function (ev) {
+            // Insert is triggered by binding list insert APIs such as splice(), push(), and unshift().
+            if (this._pendingItems) {
+                return;
+            }
+            var index = ev.detail.index;
+            var item = ev.detail.value;
+            if (item.element.parentNode === this._surfaceElement) {
+                throw new _ErrorFromName("WinJS.UI.Pivot.DuplicateItem", strings.duplicateItem);
+            }
+            item.element.style.display = "none";
+            if (index < this.items.length - 1) {
+                this._surfaceElement.insertBefore(item.element, this.items.getAt(index + 1).element);
+            }
+            else {
+                this._surfaceElement.appendChild(item.element);
+            }
+            if (index <= this.selectedIndex) {
+                this._selectedIndex++;
+            }
+            if (this._items.length === 1) {
+                this.selectedIndex = 0;
+            }
+            this._headersState.render();
+            this._headersState.refreshHeadersState(true);
+        };
+        Pivot.prototype._handleItemMoved = function (ev) {
+            // Move is triggered by binding list move() API.
+            if (this._pendingItems) {
+                return;
+            }
+            var oldIndex = ev.detail.oldIndex;
+            var newIndex = ev.detail.newIndex;
+            var item = ev.detail.value;
+            if (newIndex < this.items.length - 1) {
+                this._surfaceElement.insertBefore(item.element, this.items.getAt(newIndex + 1).element);
+            }
+            else {
+                this._surfaceElement.appendChild(item.element);
+            }
+            if (oldIndex < this.selectedIndex && newIndex >= this.selectedIndex) {
+                this._selectedIndex--;
+            }
+            else if (newIndex > this.selectedIndex && oldIndex <= this.selectedIndex) {
+                this._selectedIndex++;
+            }
+            else if (oldIndex === this.selectedIndex) {
+                this.selectedIndex = this.selectedIndex;
+            }
+            this._headersState.render();
+            this._headersState.refreshHeadersState(true);
+        };
+        Pivot.prototype._handleItemReload = function () {
+            // Reload is triggered by large operations on the binding list such as reverse(). This causes
+            // _pendingItems to be true which ignores future insert/remove/modified/moved events until the new
+            // items list is applied.
+            this.items = this.items;
+        };
+        Pivot.prototype._handleItemRemoved = function (ev) {
+            // Removed is triggered by binding list removal APIs such as splice(), pop(), and shift().
+            if (this._pendingItems) {
+                return;
+            }
+            var item = ev.detail.value;
+            var index = ev.detail.index;
+            this._surfaceElement.removeChild(item.element);
+            if (index < this.selectedIndex) {
+                this._selectedIndex--;
+            }
+            else if (index === this._selectedIndex) {
+                this.selectedIndex = Math.min(this.items.length - 1, this._selectedIndex);
+            }
+            this._headersState.render();
+            this._headersState.refreshHeadersState(true);
+        };
+        // Event Handlers
+        Pivot.prototype._elementClickedHandler = function (e) {
+            if (this.locked || this._navigationHandled) {
+                this._navigationHandled = false;
+                return;
+            }
+            var header;
+            var src = e.target;
+            if (_ElementUtilities.hasClass(src, _Constants._ClassNames.pivotHeader)) {
+                // UIA invoke clicks on the real header elements.
+                header = src;
+            }
+            else {
+                var hitSrcElement = false;
+                var hitTargets = _ElementUtilities._elementsFromPoint(e.clientX, e.clientY);
+                if (hitTargets && hitTargets[0] === this._viewportElement) {
+                    for (var i = 0, len = hitTargets.length; i < len; i++) {
+                        if (hitTargets[i] === src) {
+                            hitSrcElement = true;
+                        }
+                        if (_ElementUtilities.hasClass(hitTargets[i], _Constants._ClassNames.pivotHeader)) {
+                            header = hitTargets[i];
+                        }
+                    }
+                }
+                if (!hitSrcElement) {
+                    // The click's coordinates and source element do not correspond so we
+                    // can't trust the coordinates. Ignore the click. This case happens in
+                    // clicks triggered by UIA invoke because UIA invoke uses the top left
+                    // of the window as the coordinates of every click.
+                    header = null;
+                }
+            }
+            if (header) {
+                this._activateHeader(header);
+            }
+        };
+        Pivot.prototype._elementPointerDownHandler = function (e) {
+            if (supportsSnap) {
+                return;
+            }
+            var element = e.target;
+            this._elementPointerDownPoint = { x: e.clientX, y: e.clientY, type: e.pointerType || "mouse", time: Date.now(), inHeaders: this._headersContainerElement.contains(element) };
+        };
+        Pivot.prototype._elementPointerUpHandler = function (e) {
+            if (!this._elementPointerDownPoint || this.locked) {
+                this._elementPointerDownPoint = null;
+                return;
+            }
+            var element = e.target;
+            var filterDistance = 32;
+            var dyDxThresholdRatio = 0.4;
+            var dy = Math.abs(e.clientY - this._elementPointerDownPoint.y);
+            var dx = e.clientX - this._elementPointerDownPoint.x;
+            var thresholdY = Math.abs(dx * dyDxThresholdRatio);
+            var doSwipeDetection = dy < thresholdY && Math.abs(dx) > filterDistance && (!_ElementUtilities._supportsTouchDetection || (this._elementPointerDownPoint.type === e.pointerType && e.pointerType === PT_TOUCH)) && (!this.element.classList.contains(_Constants._ClassNames.pivotDisableContentSwipeNavigation) || (this._elementPointerDownPoint.inHeaders && this._headersContainerElement.contains(element)));
+            this._navigationHandled = false;
+            if (doSwipeDetection) {
+                // Swipe navigation detection
+                // Simulate inertia by multiplying dx by a polynomial function of dt
+                var dt = Date.now() - this._elementPointerDownPoint.time;
+                dx *= Math.max(1, Math.pow(350 / dt, 2));
+                dx = this._rtl ? -dx : dx;
+                var vwDiv4 = this._getViewportWidth() / 4;
+                if (dx < -vwDiv4) {
+                    this._goNext();
+                    this._navigationHandled = true;
+                }
+                else if (dx > vwDiv4) {
+                    this._goPrevious();
+                    this._navigationHandled = true;
+                }
+            }
+            if (!this._navigationHandled) {
+                while (element !== null && !_ElementUtilities.hasClass(element, _Constants._ClassNames.pivotHeader)) {
+                    element = element.parentElement;
+                }
+                if (element !== null) {
+                    this._activateHeader(element);
+                    this._navigationHandled = true;
+                }
+            }
+            this._elementPointerDownPoint = null;
+        };
+        Pivot.prototype._headersKeyDown = function (e) {
+            if (this.locked) {
+                return;
+            }
+            if (e.keyCode === Keys.leftArrow || e.keyCode === Keys.pageUp) {
+                this._rtl ? this._goNext() : this._goPrevious();
+                e.preventDefault();
+            }
+            else if (e.keyCode === Keys.rightArrow || e.keyCode === Keys.pageDown) {
+                this._rtl ? this._goPrevious() : this._goNext();
+                e.preventDefault();
+            }
+        };
+        Pivot.prototype._hideNavButtons = function (e) {
+            if (e && this._headersContainerElement.contains(e.relatedTarget)) {
+                // Don't hide the nav button if the pointerout event is being fired from going
+                // from one element to another within the header track.
+                return;
+            }
+            _ElementUtilities.removeClass(this._headersContainerElement, _Constants._ClassNames.pivotShowNavButtons);
+        };
+        Pivot.prototype._hidePivotItem = function (element, goPrevious, skipAnimation) {
+            if (skipAnimation || !_TransitionAnimation.isAnimationEnabled()) {
+                element.style.display = "none";
+                this._hidePivotItemAnimation = Promise.wrap();
+                return this._hidePivotItemAnimation;
+            }
+            this._hidePivotItemAnimation = _TransitionAnimation.executeTransition(element, {
+                property: "opacity",
+                delay: 0,
+                duration: 67,
+                timing: "linear",
+                from: "",
+                to: "0",
+            }).then(function () {
+                element.style.display = "none";
+            });
+            return this._hidePivotItemAnimation;
+        };
+        Pivot.prototype._MSManipulationStateChangedHandler = function (e) {
+            if (e.target !== this._viewportElement) {
+                // Ignore sub scroller manipulations.
+                return;
+            }
+            if (e.currentState === _ElementUtilities._MSManipulationEvent.MS_MANIPULATION_STATE_INERTIA) {
+                var delta = e["inertiaDestinationX"] - this._getViewportWidth();
+                if (delta > 0) {
+                    this._goNext();
+                }
+                else if (delta < 0) {
+                    this._goPrevious();
+                }
+            }
+        };
+        Pivot.prototype._updatePointerType = function (e) {
+            if (this._pointerType === (e.pointerType || PT_MOUSE)) {
+                return;
+            }
+            this._pointerType = e.pointerType || PT_MOUSE;
+            if (this._pointerType === PT_TOUCH) {
+                _ElementUtilities.removeClass(this.element, _Constants._ClassNames.pivotInputTypeMouse);
+                _ElementUtilities.addClass(this.element, _Constants._ClassNames.pivotInputTypeTouch);
+                this._hideNavButtons();
+            }
+            else {
+                _ElementUtilities.removeClass(this.element, _Constants._ClassNames.pivotInputTypeTouch);
+                _ElementUtilities.addClass(this.element, _Constants._ClassNames.pivotInputTypeMouse);
+            }
+        };
+        Pivot.prototype._showNavButtons = function (e) {
+            if (this.locked || (e && e.pointerType === PT_TOUCH)) {
+                return;
+            }
+            _ElementUtilities.addClass(this._headersContainerElement, _Constants._ClassNames.pivotShowNavButtons);
+        };
+        Pivot.prototype._showPivotItem = function (element, goPrevious, skipAnimation) {
+            this._writeProfilerMark("itemAnimationStart,info");
+            this._fireEvent(_EventNames.itemAnimationStart, true, false, null);
+            element.style.display = "";
+            if (skipAnimation || !_TransitionAnimation.isAnimationEnabled()) {
+                element.style.opacity = "";
+                this._showPivotItemAnimation = Promise.wrap();
+                return this._showPivotItemAnimation;
+            }
+            var negativeTransform = this._rtl ? !goPrevious : goPrevious;
+            // Find the elements to slide in
+            function filterOnScreen(element) {
+                var elementBoundingClientRect = element.getBoundingClientRect();
+                // Can't check left/right since it might be scrolled off.
+                return elementBoundingClientRect.top < viewportBoundingClientRect.bottom && elementBoundingClientRect.bottom > viewportBoundingClientRect.top;
+            }
+            var viewportBoundingClientRect = this._viewportElement.getBoundingClientRect();
+            var slideGroup1Els = element.querySelectorAll(".win-pivot-slide1");
+            var slideGroup2Els = element.querySelectorAll(".win-pivot-slide2");
+            var slideGroup3Els = element.querySelectorAll(".win-pivot-slide3");
+            //Filter the slide groups to the elements actually on screen to avoid animating extra elements
+            slideGroup1Els = Array.prototype.filter.call(slideGroup1Els, filterOnScreen);
+            slideGroup2Els = Array.prototype.filter.call(slideGroup2Els, filterOnScreen);
+            slideGroup3Els = Array.prototype.filter.call(slideGroup3Els, filterOnScreen);
+            this._showPivotItemAnimation = Promise.join([
+                _TransitionAnimation.executeTransition(element, {
+                    property: "opacity",
+                    delay: 0,
+                    duration: 333,
+                    timing: "cubic-bezier(0.1,0.9,0.2,1)",
+                    from: "0",
+                    to: "",
+                }),
+                _TransitionAnimation.executeTransition(element, {
+                    property: _BaseUtils._browserStyleEquivalents["transform"].cssName,
+                    delay: 0,
+                    duration: 767,
+                    timing: "cubic-bezier(0.1,0.9,0.2,1)",
+                    from: "translateX(" + (negativeTransform ? "-20px" : "20px") + ")",
+                    to: "",
+                }),
+                Animations[negativeTransform ? "slideRightIn" : "slideLeftIn"](null, slideGroup1Els, slideGroup2Els, slideGroup3Els)
+            ]);
+            return this._showPivotItemAnimation;
+        };
+        Pivot.supportedForProcessing = true;
+        Pivot._ClassNames = _Constants._ClassNames;
+        Pivot._EventNames = _EventNames;
+        return Pivot;
+    })();
+    exports.Pivot = Pivot;
+    var HeaderStateBase = (function () {
+        function HeaderStateBase(pivot) {
+            this.pivot = pivot;
+        }
+        // Called when transitioning away from this state
+        HeaderStateBase.prototype.exit = function () {
+        };
+        // Render headers
+        HeaderStateBase.prototype.render = function (goPrevious) {
+        };
+        // Called when a header is activated, i.e. tapped, clicked, arrow keyed to
+        HeaderStateBase.prototype.activateHeader = function (header) {
+        };
+        // Called when the selectedIndex changed
+        HeaderStateBase.prototype.handleNavigation = function (goPrevious, index, oldIndex) {
+        };
+        // Called when the control size changed
+        HeaderStateBase.prototype.handleResize = function () {
+        };
+        // Called when the header string of the specified pivotItem changed
+        HeaderStateBase.prototype.handleHeaderChanged = function (pivotItem) {
+        };
+        HeaderStateBase.prototype.getCumulativeHeaderWidth = function (index) {
+            // Computes the total width of headers from 0 up to the specified index
+            if (index === 0) {
+                return 0;
+            }
+            var originalLength = this.pivot._headersContainerElement.children.length;
+            for (var i = 0; i < index; i++) {
+                var header = this.renderHeader(i, false);
+                this.pivot._headersContainerElement.appendChild(header);
+            }
+            var width = 0;
+            var leftElement = (this.pivot._rtl ? this.pivot._headersContainerElement.lastElementChild : this.pivot._headersContainerElement.children[originalLength]);
+            var rightElement = (this.pivot._rtl ? this.pivot._headersContainerElement.children[originalLength] : this.pivot._headersContainerElement.lastElementChild);
+            width = (rightElement.offsetLeft + rightElement.offsetWidth) - leftElement.offsetLeft;
+            width += 2 * HeaderStateBase.headerHorizontalMargin;
+            for (var i = 0; i < index; i++) {
+                this.pivot._headersContainerElement.removeChild(this.pivot._headersContainerElement.lastElementChild);
+            }
+            return width;
+        };
+        HeaderStateBase.prototype.refreshHeadersState = function (invalidateCache) {
+            // Measures the cumulative header length and switches headers states if necessary
+            if (invalidateCache) {
+                this.cachedHeaderWidth = 0;
+            }
+            var width = this.cachedHeaderWidth || this.getCumulativeHeaderWidth(this.pivot.items.length);
+            this.cachedHeaderWidth = width;
+            if (width > this.pivot._getHeaderItemsWidth() && !(this.pivot["_headersState"] instanceof HeaderStateOverflow)) {
+                this.exit();
+                this.pivot["_headersState"] = new HeaderStateOverflow(this.pivot);
+            }
+            else if (width <= this.pivot._getHeaderItemsWidth() && !(this.pivot["_headersState"] instanceof HeaderStateStatic)) {
+                this.exit();
+                this.pivot["_headersState"] = new HeaderStateStatic(this.pivot);
+            }
+        };
+        HeaderStateBase.prototype.renderHeader = function (index, aria) {
+            // Renders a single header
+            var that = this;
+            var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
+            var item = this.pivot.items.getAt(index);
+            var headerContainerEl = _Global.document.createElement("BUTTON");
+            headerContainerEl.setAttribute("type", "button");
+            headerContainerEl.style.marginLeft = headerContainerEl.style.marginRight = HeaderStateBase.headerHorizontalMargin + "px";
+            _ElementUtilities.addClass(headerContainerEl, _Constants._ClassNames.pivotHeader);
+            headerContainerEl["_item"] = item;
+            headerContainerEl["_pivotItemIndex"] = index;
+            template(item, headerContainerEl);
+            function ariaSelectedMutated() {
+                if (that.pivot._disposed) {
+                    return;
+                }
+                if (that.pivot._headersContainerElement.contains(headerContainerEl) && index !== that.pivot.selectedIndex && headerContainerEl.getAttribute('aria-selected') === "true") {
+                    // Ignore aria selected changes on selected item.
+                    // By selecting another tab we change to it.
+                    that.pivot.selectedIndex = index;
+                }
+            }
+            if (aria) {
+                headerContainerEl.setAttribute('aria-selected', "" + (index === this.pivot.selectedIndex));
+                headerContainerEl.setAttribute('role', 'tab');
+                new _ElementUtilities._MutationObserver(ariaSelectedMutated).observe(headerContainerEl, { attributes: true, attributeFilter: ["aria-selected"] });
+            }
+            return headerContainerEl;
+        };
+        HeaderStateBase.prototype.updateHeader = function (item) {
+            // Updates the label of a header
+            var index = this.pivot.items.indexOf(item);
+            var headerElement = this.pivot._headersContainerElement.children[index];
+            headerElement.innerHTML = "";
+            var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
+            template(item, headerElement);
+        };
+        HeaderStateBase.prototype.setActiveHeader = function (newSelectedHeader) {
+            // Updates the selected header and clears the previously selected header if applicable
+            var focusWasInHeaders = false;
+            var currentSelectedHeader = this.pivot._headersContainerElement.querySelector("." + _Constants._ClassNames.pivotHeaderSelected);
+            if (currentSelectedHeader) {
+                currentSelectedHeader.classList.remove(_Constants._ClassNames.pivotHeaderSelected);
+                currentSelectedHeader.setAttribute("aria-selected", "false");
+                focusWasInHeaders = this.pivot._headersContainerElement.contains(_Global.document.activeElement);
+            }
+            newSelectedHeader.classList.add(_Constants._ClassNames.pivotHeaderSelected);
+            newSelectedHeader.setAttribute("aria-selected", "true");
+            focusWasInHeaders && this.pivot._headersContainerElement.focus();
+        };
+        HeaderStateBase.headersContainerLeadingMargin = 12;
+        HeaderStateBase.headerHorizontalMargin = 12;
+        return HeaderStateBase;
+    })();
+    // This state renders headers statically in the order they appear in the binding list.
+    // There is no animation when the selectedIndex changes, only the highlighted header changes.
+    var HeaderStateStatic = (function (_super) {
+        __extends(HeaderStateStatic, _super);
+        function HeaderStateStatic(pivot) {
+            _super.call(this, pivot);
+            this._firstRender = true;
+            this._transitionAnimation = Promise.wrap();
+            if (pivot._headersContainerElement.children.length && _TransitionAnimation.isAnimationEnabled()) {
+                // We transitioned from another headers state, do transition animation
+                // Calculate the offset from the selected header to where the selected header should be in static layout
+                var selectedHeader = pivot._headersContainerElement.querySelector("." + _Constants._ClassNames.pivotHeaderSelected);
+                var start = 0;
+                var end = 0;
+                if (pivot._rtl) {
+                    start = selectedHeader.offsetLeft + selectedHeader.offsetWidth + HeaderStateBase.headerHorizontalMargin;
+                    end = pivot._getHeaderItemsWidth() - this.getCumulativeHeaderWidth(pivot.selectedIndex) - HeaderStateBase.headersContainerLeadingMargin;
+                    end += parseFloat(pivot._headersContainerElement.style.marginLeft);
+                }
+                else {
+                    start = selectedHeader.offsetLeft;
+                    start += parseFloat(pivot._headersContainerElement.style.marginLeft); // overflow state has a hidden first element that we need to account for
+                    end = this.getCumulativeHeaderWidth(pivot.selectedIndex) + HeaderStateBase.headersContainerLeadingMargin + HeaderStateBase.headerHorizontalMargin;
+                }
+                var offset = start - end;
+                this.render();
+                // Offset every header by the calculated offset so there is no visual difference after the render call
+                var transformProperty = _BaseUtils._browserStyleEquivalents["transform"].cssName;
+                var transformValue = "translateX(" + offset + "px)";
+                for (var i = 0, l = pivot._headersContainerElement.children.length; i < l; i++) {
+                    pivot._headersContainerElement.children[i].style[transformProperty] = transformValue;
+                }
+                // Transition headers back to their original location
+                this._transitionAnimation = _TransitionAnimation.executeTransition(pivot._headersContainerElement.querySelectorAll("." + _Constants._ClassNames.pivotHeader), {
+                    property: transformProperty,
+                    delay: 0,
+                    duration: _headerSlideAnimationDuration,
+                    timing: "ease-out",
+                    to: ""
+                });
+            }
+            else {
+                this.render();
+            }
+        }
+        HeaderStateStatic.prototype.exit = function () {
+            this._transitionAnimation.cancel();
+        };
+        HeaderStateStatic.prototype.render = function () {
+            var pivot = this.pivot;
+            if (pivot._pendingRefresh || !pivot._items) {
+                return;
+            }
+            _Dispose._disposeElement(pivot._headersContainerElement);
+            _ElementUtilities.empty(pivot._headersContainerElement);
+            if (pivot._rtl) {
+                pivot._headersContainerElement.style.marginLeft = "0px";
+                pivot._headersContainerElement.style.marginRight = HeaderStateBase.headersContainerLeadingMargin + "px";
+            }
+            else {
+                pivot._headersContainerElement.style.marginLeft = HeaderStateBase.headersContainerLeadingMargin + "px";
+                pivot._headersContainerElement.style.marginRight = "0px";
+            }
+            pivot._viewportElement.style.overflow = pivot.items.length === 1 ? "hidden" : "";
+            if (pivot.items.length) {
+                for (var i = 0; i < pivot.items.length; i++) {
+                    var header = this.renderHeader(i, true);
+                    pivot._headersContainerElement.appendChild(header);
+                    if (i === pivot.selectedIndex) {
+                        header.classList.add(_Constants._ClassNames.pivotHeaderSelected);
+                    }
+                }
+                pivot._tabContainer.childFocus = pivot._headersContainerElement.children[pivot.selectedIndex];
+            }
+            this._firstRender = false;
+        };
+        HeaderStateStatic.prototype.activateHeader = function (headerElement) {
+            this.setActiveHeader(headerElement);
+            this.pivot._animateToPrevious = headerElement["_pivotItemIndex"] < this.pivot.selectedIndex;
+            this.pivot.selectedIndex = headerElement["_pivotItemIndex"];
+        };
+        HeaderStateStatic.prototype.handleNavigation = function (goPrevious, index, oldIndex) {
+            if (this._firstRender) {
+                this.render();
+            }
+            this.setActiveHeader(this.pivot._headersContainerElement.children[index]);
+            this.pivot._tabContainer.childFocus = this.pivot._headersContainerElement.children[index];
+        };
+        HeaderStateStatic.prototype.handleResize = function () {
+            this.refreshHeadersState(false);
+        };
+        HeaderStateStatic.prototype.handleHeaderChanged = function (pivotItem) {
+            this.updateHeader(pivotItem);
+            this.refreshHeadersState(true);
+        };
+        return HeaderStateStatic;
+    })(HeaderStateBase);
+    // This state renders the selected header always left-aligned (in ltr) and
+    // animates the headers when the selectedIndex changes.
+    var HeaderStateOverflow = (function (_super) {
+        __extends(HeaderStateOverflow, _super);
+        function HeaderStateOverflow(pivot) {
+            _super.call(this, pivot);
+            this._blocked = false;
+            this._firstRender = true;
+            this._transitionAnimation = Promise.wrap();
+            pivot._slideHeadersAnimation = Promise.wrap();
+            if (pivot._headersContainerElement.children.length && _TransitionAnimation.isAnimationEnabled()) {
+                // We transitioned from another headers state, do transition animation
+                var that = this;
+                var done = function () {
+                    that._blocked = false;
+                    that.render();
+                };
+                this._blocked = true;
+                // Calculate the offset from the selected header to the leading edge of the container
+                var selectedHeader = pivot._headersContainerElement.querySelector("." + _Constants._ClassNames.pivotHeaderSelected);
+                var start = 0;
+                var end = 0;
+                if (pivot._rtl) {
+                    start = pivot._getHeaderItemsWidth() - HeaderStateBase.headersContainerLeadingMargin;
+                    end = selectedHeader.offsetLeft;
+                    end += HeaderStateBase.headerHorizontalMargin;
+                    end += selectedHeader.offsetWidth;
+                    end += parseFloat(pivot._headersContainerElement.style.marginLeft);
+                }
+                else {
+                    start = HeaderStateBase.headersContainerLeadingMargin;
+                    end = selectedHeader.offsetLeft;
+                    end -= HeaderStateBase.headerHorizontalMargin;
+                    end += parseFloat(pivot._headersContainerElement.style.marginLeft);
+                }
+                var offset = start - end;
+                for (var i = 0; i < pivot.selectedIndex; i++) {
+                    pivot._headersContainerElement.appendChild(pivot._headersContainerElement.children[i].cloneNode(true));
+                }
+                // Transition headers to the leading edge of the container, then render the container as usual
+                var transformProperty = _BaseUtils._browserStyleEquivalents["transform"].cssName;
+                this._transitionAnimation = _TransitionAnimation.executeTransition(pivot._headersContainerElement.querySelectorAll("." + _Constants._ClassNames.pivotHeader), {
+                    property: transformProperty,
+                    delay: 0,
+                    duration: _headerSlideAnimationDuration,
+                    timing: "ease-out",
+                    to: "translateX(" + offset + "px)"
+                }).then(done, done);
+            }
+            else {
+                this.render();
+            }
+        }
+        HeaderStateOverflow.prototype.exit = function () {
+            this._transitionAnimation.cancel();
+            this.pivot._slideHeadersAnimation.cancel();
+        };
+        HeaderStateOverflow.prototype.render = function (goPrevious) {
+            var pivot = this.pivot;
+            if (this._blocked || pivot._pendingRefresh || !pivot._items) {
+                return;
+            }
+            var restoreFocus = pivot._headersContainerElement.contains(_Global.document.activeElement);
+            _Dispose._disposeElement(pivot._headersContainerElement);
+            _ElementUtilities.empty(pivot._headersContainerElement);
+            if (pivot._items.length === 1) {
+                var header = this.renderHeader(0, true);
+                header.classList.add(_Constants._ClassNames.pivotHeaderSelected);
+                pivot._headersContainerElement.appendChild(header);
+                pivot._viewportElement.style.overflow = "hidden";
+                pivot._headersContainerElement.style.marginLeft = "0px";
+                pivot._headersContainerElement.style.marginRight = "0px";
+            }
+            else if (pivot._items.length > 1) {
+                // We always render 1 additional header before the current item.
+                // When going backwards, we render 2 additional headers, the first one as usual, and the second one for
+                // fading out the previous last header.
+                var numberOfHeadersToRender = pivot._items.length + (goPrevious ? 2 : 1);
+                var maxHeaderWidth = pivot._getHeaderItemsWidth() * 0.8;
+                var indexToRender = pivot.selectedIndex - 1;
+                if (pivot._viewportElement.style.overflow) {
+                    pivot._viewportElement.style.overflow = "";
+                }
+                for (var i = 0; i < numberOfHeadersToRender; i++) {
+                    if (indexToRender === -1) {
+                        indexToRender = pivot._items.length - 1;
+                    }
+                    else if (indexToRender === pivot._items.length) {
+                        indexToRender = 0;
+                    }
+                    var header = this.renderHeader(indexToRender, true);
+                    pivot._headersContainerElement.appendChild(header);
+                    if (header.offsetWidth > maxHeaderWidth) {
+                        header.style.textOverflow = "ellipsis";
+                        header.style.width = maxHeaderWidth + "px";
+                    }
+                    if (indexToRender === pivot.selectedIndex) {
+                        header.classList.add(_Constants._ClassNames.pivotHeaderSelected);
+                    }
+                    indexToRender++;
+                }
+                if (!pivot._firstLoad && !this._firstRender) {
+                    var start, end;
+                    if (goPrevious) {
+                        start = "";
+                        end = "0";
+                    }
+                    else {
+                        start = "0";
+                        end = "";
+                    }
+                    var lastHeader = pivot._headersContainerElement.children[numberOfHeadersToRender - 1];
+                    lastHeader.style.opacity = start;
+                    var lastHeaderFadeInDuration = 0.167;
+                    lastHeader.style[_BaseUtils._browserStyleEquivalents["transition"].scriptName] = "opacity " + _TransitionAnimation._animationTimeAdjustment(lastHeaderFadeInDuration) + "s";
+                    _Global.getComputedStyle(lastHeader).opacity;
+                    lastHeader.style.opacity = end;
+                }
+                pivot._headersContainerElement.children[0].setAttribute("aria-hidden", "true");
+                pivot._headersContainerElement.style.marginLeft = "0px";
+                pivot._headersContainerElement.style.marginRight = "0px";
+                var leadingMargin = pivot._rtl ? "marginRight" : "marginLeft";
+                var firstHeader = pivot._headersContainerElement.children[0];
+                var leadingSpace = _ElementUtilities.getTotalWidth(firstHeader) - HeaderStateBase.headersContainerLeadingMargin;
+                if (firstHeader !== pivot._headersContainerElement.children[0]) {
+                    // Calling getTotalWidth caused a layout which can trigger a synchronous resize which in turn
+                    // calls renderHeaders. We can ignore this one since its the old headers which are not in the DOM.
+                    return;
+                }
+                pivot._headersContainerElement.style[leadingMargin] = (-1 * leadingSpace) + "px";
+                // Create header track nav button elements
+                pivot._prevButton = _Global.document.createElement("button");
+                pivot._prevButton.setAttribute("type", "button");
+                _ElementUtilities.addClass(pivot._prevButton, _Constants._ClassNames.pivotNavButton);
+                _ElementUtilities.addClass(pivot._prevButton, _Constants._ClassNames.pivotNavButtonPrev);
+                pivot._prevButton.addEventListener("click", function () {
+                    if (pivot.locked) {
+                        return;
+                    }
+                    pivot._rtl ? pivot._goNext() : pivot._goPrevious();
+                });
+                pivot._headersContainerElement.appendChild(pivot._prevButton);
+                pivot._prevButton.style.left = pivot._rtl ? "0px" : leadingSpace + "px";
+                pivot._nextButton = _Global.document.createElement("button");
+                pivot._nextButton.setAttribute("type", "button");
+                _ElementUtilities.addClass(pivot._nextButton, _Constants._ClassNames.pivotNavButton);
+                _ElementUtilities.addClass(pivot._nextButton, _Constants._ClassNames.pivotNavButtonNext);
+                pivot._nextButton.addEventListener("click", function () {
+                    if (pivot.locked) {
+                        return;
+                    }
+                    pivot._rtl ? pivot._goPrevious() : pivot._goNext();
+                });
+                pivot._headersContainerElement.appendChild(pivot._nextButton);
+                pivot._nextButton.style.right = pivot._rtl ? leadingSpace + "px" : "0px";
+            }
+            var firstHeaderIndex = pivot._headersContainerElement.children.length > 1 ? 1 : 0;
+            pivot._tabContainer.childFocus = pivot._headersContainerElement.children[firstHeaderIndex];
+            if (restoreFocus) {
+                pivot._headersContainerElement.focus();
+            }
+            this._firstRender = false;
+        };
+        HeaderStateOverflow.prototype.activateHeader = function (headerElement) {
+            if (!headerElement.previousSibling) {
+                // prevent clicking the previous header
+                return;
+            }
+            this.pivot.selectedIndex = headerElement["_pivotItemIndex"];
+        };
+        HeaderStateOverflow.prototype.handleNavigation = function (goPrevious, index, oldIndex) {
+            var that = this;
+            var pivot = this.pivot;
+            if (this._blocked || index < 0 || pivot._firstLoad) {
+                this.render(goPrevious);
+                return;
+            }
+            var targetHeader;
+            if (goPrevious) {
+                targetHeader = pivot._headersContainerElement.children[0];
+            }
+            else {
+                if (index < oldIndex) {
+                    index += pivot._items.length;
+                }
+                targetHeader = pivot._headersContainerElement.children[1 + index - oldIndex];
+            }
+            if (!targetHeader) {
+                this.render(goPrevious);
+                return;
+            }
+            // Update the selected one:
+            _ElementUtilities.removeClass(pivot._headersContainerElement.children[1], _Constants._ClassNames.pivotHeaderSelected);
+            _ElementUtilities.addClass(targetHeader, _Constants._ClassNames.pivotHeaderSelected);
+            var rtl = pivot._rtl;
+            function offset(element) {
+                if (rtl) {
+                    return element.offsetParent.offsetWidth - element.offsetLeft - element.offsetWidth;
+                }
+                else {
+                    return element.offsetLeft;
+                }
+            }
+            var endPosition = offset(pivot._headersContainerElement.children[1]) - offset(targetHeader);
+            if (rtl) {
+                endPosition *= -1;
+            }
+            function headerCleanup() {
+                if (pivot._disposed) {
+                    return;
+                }
+                that.render(goPrevious);
+                pivot._slideHeadersAnimation = Promise.wrap();
+            }
+            var headerAnimation;
+            if (_TransitionAnimation.isAnimationEnabled()) {
+                headerAnimation = _TransitionAnimation.executeTransition(pivot._headersContainerElement.querySelectorAll("." + _Constants._ClassNames.pivotHeader), {
+                    property: _BaseUtils._browserStyleEquivalents["transform"].cssName,
+                    delay: 0,
+                    duration: _headerSlideAnimationDuration,
+                    timing: "ease-out",
+                    to: "translateX(" + endPosition + "px)"
+                });
+            }
+            else {
+                headerAnimation = Promise.wrap();
+            }
+            pivot._slideHeadersAnimation = headerAnimation.then(headerCleanup, headerCleanup);
+        };
+        HeaderStateOverflow.prototype.handleResize = function () {
+            this.refreshHeadersState(false);
+        };
+        HeaderStateOverflow.prototype.handleHeaderChanged = function (pivotItem) {
+            this.render();
+            this.refreshHeadersState(true);
+        };
+        return HeaderStateOverflow;
+    })(HeaderStateBase);
+    _Base.Class.mix(Pivot, _Events.createEventProperties(_EventNames.itemAnimationEnd, _EventNames.itemAnimationStart, _EventNames.selectionChanged));
+    _Base.Class.mix(Pivot, _Control.DOMEventMixin);
+});
 
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+/// <reference path="../../../../typings/require.d.ts" />
+define('WinJS/Controls/Pivot',["require", "exports", '../Core/_Base'], function (require, exports, _Base) {
+    var module = null;
     _Base.Namespace.define("WinJS.UI", {
         /// <field>
         /// <summary locid="WinJS.UI.Pivot">
@@ -34727,1694 +35992,21 @@ define('WinJS/Controls/Pivot',[
         /// <part name="pivot" class="win-pivot" locid="WinJS.UI.Pivot_part:pivot">The entire Pivot control.</part>
         /// <part name="title" class="win-pivot-title" locid="WinJS.UI.Pivot_part:title">The title for the Pivot control.</part>
         /// <part name="header" class="win-pivot-header" locid="WinJS.UI.Pivot_part:header">A header of a Pivot Item.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
-        Pivot: _Base.Namespace._lazy(function () {
-            var PT_MOUSE = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_MOUSE || "mouse";
-            var PT_TOUCH = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_TOUCH || "touch";
-            var Keys = _ElementUtilities.Key;
-
-            function pivotDefaultHeaderTemplate(item) {
-                var element = _Global.document.createTextNode(typeof item.header === "object" ? JSON.stringify(item.header) : ('' + item.header));
-                return element;
-            }
-
-            var createEvent = _Events._createEventProperty;
-            var eventNames = {
-                selectionChanged: "selectionchanged",
-                itemAnimationStart: "itemanimationstart",
-                itemAnimationEnd: "itemanimationend",
-            };
-            var MSManipulationEventStates = _ElementUtilities._MSManipulationEvent;
-
-            var supportsSnap = !!(_ElementUtilities._supportsSnapPoints && _Global.HTMLElement.prototype.msZoomTo);
-
-            function _nop() { }
-            var headersStates = {
-                nop: {
-                    // Called when transitioning away from this state
-                    exit: _nop,
-
-                    // Render headers
-                    render: _nop,
-
-                    // Called when a header is activated, i.e. tapped, clicked, arrow keyed to
-                    activateHeader: _nop,
-
-                    // Called when the selectedIndex changed
-                    handleNavigation: _nop,
-
-                    // Called when the control size changed
-                    handleResize: _nop,
-
-                    // Called when the header string of the specified pivotItem changed
-                    handleHeaderChanged: _nop
-                },
-
-                common: {
-                    // This object contains a set of static helper functions for other states to use
-
-                    headersContainerLeadingMargin: 12,
-
-                    headerHorizontalMargin: 12,
-
-                    getCumulativeHeaderWidth: function headersState_getCumulativeHeaderWidth(pivot, index) {
-                        // Computes the total width of headers from 0 up to the specified index
-                        if (index === 0) {
-                            return 0;
-                        }
-
-                        var originalLength = pivot._headersContainerElement.children.length;
-                        for (var i = 0; i < index; i++) {
-                            var header = headersStates.common.renderHeader(pivot, i, false);
-                            pivot._headersContainerElement.appendChild(header);
-                        }
-
-                        var width = 0;
-                        var leftElement = pivot._rtl ? pivot._headersContainerElement.lastElementChild : pivot._headersContainerElement.children[originalLength];
-                        var rightElement = pivot._rtl ? pivot._headersContainerElement.children[originalLength] : pivot._headersContainerElement.lastElementChild;
-                        width = (rightElement.offsetLeft + rightElement.offsetWidth) - leftElement.offsetLeft;
-                        width += 2 * headersStates.common.headerHorizontalMargin;
-
-                        for (var i = 0; i < index; i++) {
-                            pivot._headersContainerElement.removeChild(pivot._headersContainerElement.lastElementChild);
-                        }
-                        return width;
-                    },
-
-                    refreshHeadersState: function headersState_refreshHeadersState(pivot, invalidateCache) {
-                        // Measures the cumulative header length and switches headers states if necessary
-                        if (invalidateCache) {
-                            this._cachedWidth = 0;
-                        }
-                        var width = this._cachedWidth || this.getCumulativeHeaderWidth(pivot, pivot.items.length);
-                        this._cachedWidth = width;
-
-                        if (width > pivot._headerItemsWidth && !(pivot._headersState instanceof headersStates.overflowState)) {
-                            pivot._headersState.exit();
-                            pivot._headersState = new headersStates.overflowState(pivot);
-                        } else if (width <= pivot._headerItemsWidth && !(pivot._headersState instanceof headersStates.staticState)) {
-                            pivot._headersState.exit();
-                            pivot._headersState = new headersStates.staticState(pivot);
-                        }
-                    },
-
-                    renderHeader: function headersState_renderHeader(pivot, index, aria) {
-                        // Renders a single header
-                        var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
-
-                        var item = pivot._items.getAt(index);
-
-                        var headerContainerEl = _Global.document.createElement("BUTTON");
-                        headerContainerEl.setAttribute("type", "button");
-                        headerContainerEl.style.marginLeft = headerContainerEl.style.marginRight = headersStates.common.headerHorizontalMargin + "px";
-                        _ElementUtilities.addClass(headerContainerEl, Pivot._ClassName.pivotHeader);
-                        headerContainerEl._item = item;
-                        headerContainerEl._pivotItemIndex = index;
-                        template(item, headerContainerEl);
-
-                        function ariaSelectedMutated() {
-                            if (pivot._disposed) {
-                                return;
-                            }
-
-                            if (pivot._headersContainerElement.contains(headerContainerEl) &&
-                                index !== pivot.selectedIndex &&
-                                headerContainerEl.getAttribute('aria-selected') === "true") {
-                                // Ignore aria selected changes on selected item.
-                                // By selecting another tab we change to it.
-                                pivot.selectedIndex = index;
-                            }
-                        }
-                        if (aria) {
-                            headerContainerEl.setAttribute('aria-selected', index === pivot.selectedIndex);
-                            headerContainerEl.setAttribute('role', 'tab');
-                            new _ElementUtilities._MutationObserver(ariaSelectedMutated).observe(headerContainerEl, { attributes: true, attributeFilter: ["aria-selected"] });
-                        }
-
-                        return headerContainerEl;
-                    },
-
-                    updateHeader: function headersState_updateHeader(pivot, item) {
-                        // Updates the label of a header
-                        var index = pivot.items.indexOf(item);
-                        var headerElement = pivot._headersContainerElement.children[index];
-                        headerElement.innerHTML = "";
-
-                        var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
-                        template(item, headerElement);
-                    },
-
-                    setActiveHeader: function headersState_setActiveHeader(pivot, newSelectedHeader, currentSelectedHeader) {
-                        // Updates the selected header and clears the previously selected header if applicable
-                        var focusWasInHeaders = false;
-                        if (currentSelectedHeader) {
-                            currentSelectedHeader.classList.remove(Pivot._ClassName.pivotHeaderSelected);
-                            currentSelectedHeader.setAttribute("aria-selected", false);
-                            focusWasInHeaders = pivot._headersContainerElement.contains(_Global.document.activeElement);
-                        }
-
-                        newSelectedHeader.classList.add(Pivot._ClassName.pivotHeaderSelected);
-                        newSelectedHeader.setAttribute("aria-selected", true);
-                        focusWasInHeaders && pivot._headersContainerElement.focus();
-                    }
-                },
-
-                staticState: _Base.Class.define(function staticState_ctor(pivot) {
-                    // This state renders headers statically in the order they appear in the binding list.
-                    // There is no animation when the selectedIndex changes, only the highlighted header changes.
-
-                    this.pivot = pivot;
-                    this._firstRender = true;
-                    this._transitionAnimation = Promise.wrap();
-
-                    if (pivot._headersContainerElement.children.length && _TransitionAnimation.isAnimationEnabled()) {
-                        // We transitioned from another headers state, do transition animation
-
-                        // Calculate the offset from the selected header to where the selected header should be in static layout
-                        var selectedHeader = pivot._headersContainerElement.querySelector("." + Pivot._ClassName.pivotHeaderSelected);
-                        var start = 0;
-                        var end = 0;
-                        if (pivot._rtl) {
-                            start = selectedHeader.offsetLeft + selectedHeader.offsetWidth + headersStates.common.headerHorizontalMargin;
-                            end = pivot._headerItemsWidth - headersStates.common.getCumulativeHeaderWidth(pivot, pivot.selectedIndex) - headersStates.common.headersContainerLeadingMargin;
-                            end += parseFloat(pivot._headersContainerElement.style.marginLeft);
-                        } else {
-                            start = selectedHeader.offsetLeft;
-                            start += parseFloat(pivot._headersContainerElement.style.marginLeft); // overflow state has a hidden first element that we need to account for
-                            end = headersStates.common.getCumulativeHeaderWidth(pivot, pivot.selectedIndex) + headersStates.common.headersContainerLeadingMargin + headersStates.common.headerHorizontalMargin;
-                        }
-                        var offset = start - end;
-
-                        this.render();
-
-                        // Offset every header by the calculated offset so there is no visual difference after the render call
-                        var transformProperty = _BaseUtils._browserStyleEquivalents["transform"].cssName;
-                        var transformValue = "translateX(" + offset + "px)";
-                        for (var i = 0, l = pivot._headersContainerElement.children.length; i < l; i++) {
-                            pivot._headersContainerElement.children[i].style[transformProperty] = transformValue;
-                        }
-
-                        // Transition headers back to their original location
-                        this._transitionAnimation = _TransitionAnimation.executeTransition(
-                            pivot._headersContainerElement.querySelectorAll("." + Pivot._ClassName.pivotHeader), {
-                                property: transformProperty,
-                                delay: 0,
-                                duration: Pivot._headerSlideAnimationDuration,
-                                timing: "ease-out",
-                                to: ""
-                            }
-                        );
-                    }
-                }, {
-                    exit: function staticState_exit() {
-                        this._transitionAnimation.cancel();
-                    },
-
-                    render: function staticState_render() {
-                        var pivot = this.pivot;
-                        if (pivot._pendingRefresh || !pivot._items) {
-                            return;
-                        }
-
-                        _Dispose._disposeElement(pivot._headersContainerElement);
-                        _ElementUtilities.empty(pivot._headersContainerElement);
-
-                        if (pivot._rtl) {
-                            pivot._headersContainerElement.style.marginLeft = "0px";
-                            pivot._headersContainerElement.style.marginRight = headersStates.common.headersContainerLeadingMargin + "px";
-                        } else {
-                            pivot._headersContainerElement.style.marginLeft = headersStates.common.headersContainerLeadingMargin + "px";
-                            pivot._headersContainerElement.style.marginRight = "0px";
-                        }
-                        pivot._viewportElement.style.overflow = pivot.items.length === 1 ? "hidden" : "";
-
-                        if (pivot.items.length) {
-                            for (var i = 0; i < pivot.items.length; i++) {
-                                var header = headersStates.common.renderHeader(pivot, i, true);
-                                pivot._headersContainerElement.appendChild(header);
-
-                                if (i === pivot.selectedIndex) {
-                                    header.classList.add(Pivot._ClassName.pivotHeaderSelected);
-                                }
-                            }
-
-                            pivot._tabContainer.childFocus = pivot._headersContainerElement.children[pivot.selectedIndex];
-                        }
-                        this._firstRender = false;
-                    },
-
-                    activateHeader: function staticState_activateHeader(headerElement) {
-                        var currentActiveHeader = this.pivot._headersContainerElement.children[this.pivot.selectedIndex];
-                        headersStates.common.setActiveHeader(this.pivot, headerElement, currentActiveHeader);
-                        this.pivot._animateToPrevious = headerElement._pivotItemIndex < this.pivot.selectedIndex;
-                        this.pivot.selectedIndex = headerElement._pivotItemIndex;
-                    },
-
-                    handleNavigation: function staticState_handleNavigation(goPrevious, index, oldIndex) {
-                        if (this._firstRender) {
-                            this.render();
-                        }
-                        headersStates.common.setActiveHeader(this.pivot, this.pivot._headersContainerElement.children[index], this.pivot._headersContainerElement.children[oldIndex]);
-                        this.pivot._tabContainer.childFocus = this.pivot._headersContainerElement.children[index];
-                    },
-
-                    handleResize: function staticState_handleResize() {
-                        headersStates.common.refreshHeadersState(this.pivot);
-                    },
-
-                    handleHeaderChanged: function staticState_handleHeaderChanged(pivotItem) {
-                        headersStates.common.updateHeader(this.pivot, pivotItem);
-                        headersStates.common.refreshHeadersState(this.pivot, true);
-                    }
-                }),
-
-                overflowState: _Base.Class.define(function overflowState_ctor(pivot) {
-                    // This state renders the selected header always left-aligned (in ltr) and
-                    // animates the headers when the selectedIndex changes.
-
-                    this.pivot = pivot;
-                    this._blocked = false;
-                    this._firstRender = true;
-                    this._transitionAnimation = Promise.wrap();
-                    pivot._slideHeadersAnimation = Promise.wrap();
-
-                    if (pivot._headersContainerElement.children.length && _TransitionAnimation.isAnimationEnabled()) {
-                        // We transitioned from another headers state, do transition animation
-                        var that = this;
-                        var done = function () {
-                            that._blocked = false;
-                            that.render();
-                        };
-                        this._blocked = true;
-
-                        // Calculate the offset from the selected header to the leading edge of the container
-                        var selectedHeader = pivot._headersContainerElement.querySelector("." + Pivot._ClassName.pivotHeaderSelected);
-                        var start = 0;
-                        var end = 0;
-                        if (pivot._rtl) {
-                            start = pivot._headerItemsWidth - headersStates.common.headersContainerLeadingMargin;
-                            end = selectedHeader.offsetLeft;
-                            end += headersStates.common.headerHorizontalMargin;
-                            end += selectedHeader.offsetWidth;
-                            end += parseFloat(pivot._headersContainerElement.style.marginLeft);
-                        } else {
-                            start = headersStates.common.headersContainerLeadingMargin;
-                            end = selectedHeader.offsetLeft;
-                            end -= headersStates.common.headerHorizontalMargin;
-                            end += parseFloat(pivot._headersContainerElement.style.marginLeft);
-                        }
-                        var offset = start - end;
-
-                        // Duplicate all the headers up to the selected header so when the transition occurs there will be
-                        // headers on the trailing end of the container to replace the ones that are being transitioned off-screen
-                        for (var i = 0; i < pivot.selectedIndex; i++) {
-                            pivot._headersContainerElement.appendChild(pivot._headersContainerElement.children[i].cloneNode(true));
-                        }
-
-                        // Transition headers to the leading edge of the container, then render the container as usual
-                        var transformProperty = _BaseUtils._browserStyleEquivalents["transform"].cssName;
-                        this._transitionAnimation = _TransitionAnimation.executeTransition(
-                            pivot._headersContainerElement.querySelectorAll("." + Pivot._ClassName.pivotHeader), {
-                                property: transformProperty,
-                                delay: 0,
-                                duration: Pivot._headerSlideAnimationDuration,
-                                timing: "ease-out",
-                                to: "translateX(" + offset + "px)"
-                            }).then(done, done);
-                    }
-                }, {
-                    exit: function overflowState_exit() {
-                        this._transitionAnimation.cancel();
-                        this.pivot._slideHeadersAnimation.cancel();
-                    },
-
-                    render: function overflowState_render(goPrevious) {
-                        var pivot = this.pivot;
-                        if (this._blocked || pivot._pendingRefresh || !pivot._items) {
-                            return;
-                        }
-
-                        var restoreFocus = pivot._headersContainerElement.contains(_Global.document.activeElement);
-
-                        _Dispose._disposeElement(pivot._headersContainerElement);
-                        _ElementUtilities.empty(pivot._headersContainerElement);
-
-
-                        if (pivot._items.length === 1) {
-                            var header = headersStates.common.renderHeader(pivot, 0, true);
-                            header.classList.add(Pivot._ClassName.pivotHeaderSelected);
-                            pivot._headersContainerElement.appendChild(header);
-
-                            pivot._viewportElement.style.overflow = "hidden";
-                            pivot._headersContainerElement.style.marginLeft = "0px";
-                            pivot._headersContainerElement.style.marginRight = "0px";
-                        } else if (pivot._items.length > 1) {
-                            // We always render 1 additional header before the current item.
-                            // When going backwards, we render 2 additional headers, the first one as usual, and the second one for
-                            // fading out the previous last header.
-                            var numberOfHeadersToRender = pivot._items.length + (goPrevious ? 2 : 1);
-                            var maxHeaderWidth = pivot._headerItemsWidth * 0.8;
-                            var indexToRender = pivot.selectedIndex - 1;
-
-                            if (pivot._viewportElement.style.overflow) {
-                                pivot._viewportElement.style.overflow = "";
-                            }
-
-                            for (var i = 0; i < numberOfHeadersToRender; i++) {
-                                if (indexToRender === -1) {
-                                    indexToRender = pivot._items.length - 1;
-                                } else if (indexToRender === pivot._items.length) {
-                                    indexToRender = 0;
-                                }
-
-                                var header = headersStates.common.renderHeader(pivot, indexToRender, true);
-                                pivot._headersContainerElement.appendChild(header);
-
-                                if (header.offsetWidth > maxHeaderWidth) {
-                                    header.style.textOverflow = "ellipsis";
-                                    header.style.width = maxHeaderWidth + "px";
-                                }
-
-                                if (indexToRender === pivot.selectedIndex) {
-                                    header.classList.add(Pivot._ClassName.pivotHeaderSelected);
-                                }
-                                indexToRender++;
-                            }
-                            if (!pivot._firstLoad && !this._firstRender) {
-                                var start, end;
-                                if (goPrevious) {
-                                    start = "";
-                                    end = "0";
-                                } else {
-                                    start = "0";
-                                    end = "";
-                                }
-
-                                var lastHeader = pivot._headersContainerElement.children[numberOfHeadersToRender - 1];
-                                lastHeader.style.opacity = start;
-                                var lastHeaderFadeInDuration = 0.167;
-                                lastHeader.style[_BaseUtils._browserStyleEquivalents["transition"].scriptName] = "opacity " + _TransitionAnimation._animationTimeAdjustment(lastHeaderFadeInDuration) + "s";
-                                _Global.getComputedStyle(lastHeader).opacity;
-                                lastHeader.style.opacity = end;
-                            }
-
-                            pivot._headersContainerElement.children[0].setAttribute("aria-hidden", "true");
-                            pivot._headersContainerElement.style.marginLeft = "0px";
-                            pivot._headersContainerElement.style.marginRight = "0px";
-                            var leadingMargin = pivot._rtl ? "marginRight" : "marginLeft";
-                            var firstHeader = pivot._headersContainerElement.children[0];
-                            var leadingSpace = _ElementUtilities.getTotalWidth(firstHeader) - headersStates.common.headersContainerLeadingMargin;
-                            if (firstHeader !== pivot._headersContainerElement.children[0]) {
-                                // Calling getTotalWidth caused a layout which can trigger a synchronous resize which in turn
-                                // calls renderHeaders. We can ignore this one since its the old headers which are not in the DOM.
-                                return;
-                            }
-                            pivot._headersContainerElement.style[leadingMargin] = (-1 * leadingSpace) + "px";
-
-                            // Create header track nav button elements
-                            pivot._prevButton = _Global.document.createElement("button");
-                            pivot._prevButton.setAttribute("type", "button");
-                            _ElementUtilities.addClass(pivot._prevButton, Pivot._ClassName.pivotNavButton);
-                            _ElementUtilities.addClass(pivot._prevButton, Pivot._ClassName.pivotNavButtonPrev);
-                            pivot._prevButton.addEventListener("click", function () {
-                                if (pivot.locked) {
-                                    return;
-                                }
-                                pivot._rtl ? pivot._goNext() : pivot._goPrevious();
-                            });
-                            pivot._headersContainerElement.appendChild(pivot._prevButton);
-                            pivot._prevButton.style.left = pivot._rtl ? "0px" : leadingSpace + "px";
-
-                            pivot._nextButton = _Global.document.createElement("button");
-                            pivot._nextButton.setAttribute("type", "button");
-                            _ElementUtilities.addClass(pivot._nextButton, Pivot._ClassName.pivotNavButton);
-                            _ElementUtilities.addClass(pivot._nextButton, Pivot._ClassName.pivotNavButtonNext);
-                            pivot._nextButton.addEventListener("click", function () {
-                                if (pivot.locked) {
-                                    return;
-                                }
-                                pivot._rtl ? pivot._goPrevious() : pivot._goNext();
-                            });
-                            pivot._headersContainerElement.appendChild(pivot._nextButton);
-                            pivot._nextButton.style.right = pivot._rtl ? leadingSpace + "px" : "0px";
-                        }
-                        var firstHeaderIndex = pivot._headersContainerElement.children.length > 1 ? 1 : 0;
-                        pivot._tabContainer.childFocus = pivot._headersContainerElement.children[firstHeaderIndex];
-                        if (restoreFocus) {
-                            pivot._headersContainerElement.focus();
-                        }
-                        this._firstRender = false;
-                    },
-
-                    activateHeader: function overflowState_activateHeader(headerElement) {
-                        if (!headerElement.previousSibling) {
-                            // prevent clicking the previous header
-                            return;
-                        }
-                        this.pivot.selectedIndex = headerElement._pivotItemIndex;
-                    },
-
-                    handleNavigation: function overflowState_handleNavigation(goPrevious, index, oldIndex) {
-                        var pivot = this.pivot;
-                        if (this._blocked || index < 0 || pivot._firstLoad) {
-                            this.render(goPrevious);
-                            return;
-                        }
-
-                        var targetHeader;
-
-                        if (goPrevious) {
-                            targetHeader = pivot._headersContainerElement.children[0];
-                        } else {
-                            if (index < oldIndex) {
-                                index += pivot._items.length;
-                            }
-                            targetHeader = pivot._headersContainerElement.children[1 + index - oldIndex];
-                        }
-
-                        if (!targetHeader) {
-                            this.render(goPrevious);
-                            return;
-                        }
-
-                        // Update the selected one:
-                        _ElementUtilities.removeClass(pivot._headersContainerElement.children[1], Pivot._ClassName.pivotHeaderSelected);
-                        _ElementUtilities.addClass(targetHeader, Pivot._ClassName.pivotHeaderSelected);
-
-                        var rtl = pivot._rtl;
-
-                        function offset(element) {
-                            if (rtl) {
-                                return element.offsetParent.offsetWidth - element.offsetLeft - element.offsetWidth;
-                            } else {
-                                return element.offsetLeft;
-                            }
-                        }
-
-                        var endPosition = offset(pivot._headersContainerElement.children[1]) - offset(targetHeader);
-                        if (rtl) {
-                            endPosition *= -1;
-                        }
-
-                        function headerCleanup() {
-                            if (pivot._disposed) {
-                                return;
-                            }
-
-                            pivot._headersState.render(goPrevious);
-                            pivot._slideHeadersAnimation = Promise.wrap();
-                        }
-
-                        var headerAnimation;
-                        if (_TransitionAnimation.isAnimationEnabled()) {
-                            headerAnimation = _TransitionAnimation.executeTransition(
-                            pivot._headersContainerElement.querySelectorAll("." + Pivot._ClassName.pivotHeader),
-                            {
-                                property: _BaseUtils._browserStyleEquivalents["transform"].cssName,
-                                delay: 0,
-                                duration: Pivot._headerSlideAnimationDuration,
-                                timing: "ease-out",
-                                to: "translateX(" + endPosition + "px)"
-                            });
-                        } else {
-                            headerAnimation = Promise.wrap();
-                        }
-
-                        pivot._slideHeadersAnimation = headerAnimation.then(headerCleanup, headerCleanup);
-                    },
-
-                    handleResize: function overflowState_handleResize() {
-                        headersStates.common.refreshHeadersState(this.pivot);
-                    },
-
-                    handleHeaderChanged: function overflowState_handleHeaderChanged(pivotItem) {
-                        this.render();
-                        headersStates.common.refreshHeadersState(this.pivot, true);
-                    }
-                })
-            };
-
-            var Pivot = _Base.Class.define(function Pivot_ctor(element, options) {
-                /// <signature helpKeyword="WinJS.UI.Pivot.Pivot">
-                /// <summary locid="WinJS.UI.Pivot.constructor">
-                /// Creates a new Pivot control.
-                /// </summary>
-                /// <param name="element" type="HTMLElement" domElement="true" isOptional="true" locid="WinJS.UI.Pivot.constructor_p:element">
-                /// The DOM element that hosts the Pivot control.
-                /// </param>
-                /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.Pivot.constructor_p:options">
-                /// An object that contains one or more property/value pairs to apply to the new control.
-                /// Each property of the options object corresponds to one of the control's properties or events.
-                /// Event names must begin with "on". For example, to provide a handler for the index changed event,
-                /// add a property named "onselectionchanged" to the options object and set its value to the event handler.
-                /// </param>
-                /// <returns type="WinJS.UI.Pivot" locid="WinJS.UI.Pivot.constructor_returnValue">
-                /// The new Pivot.
-                /// </returns>
-                /// </signature>
-                element = element || _Global.document.createElement("DIV");
-                options = options || {};
-
-                if (element.winControl) {
-                    throw new _ErrorFromName("WinJS.UI.Pivot.DuplicateConstruction", strings.duplicateConstruction);
-                }
-
-                this._handleItemChangedBound = this._handleItemChanged.bind(this);
-                this._handleItemInsertedBound = this._handleItemInserted.bind(this);
-                this._handleItemMovedBound = this._handleItemMoved.bind(this);
-                this._handleItemRemovedBound = this._handleItemRemoved.bind(this);
-                this._handleItemReloadBound = this._handleItemReload.bind(this);
-
-                this._id = element.id || _ElementUtilities._uniqueID(element);
-                this._writeProfilerMark("constructor,StartTM");
-
-                // Attaching JS control to DOM element
-                element.winControl = this;
-                this._element = element;
-                if (!supportsSnap) {
-                    _ElementUtilities.addClass(this.element, Pivot._ClassName.pivotNoSnap);
-                }
-                this._element.setAttribute('role', 'tablist');
-                if (!this._element.getAttribute("aria-label")) {
-                    this._element.setAttribute('aria-label', strings.pivotAriaLabel);
-                }
-                _ElementUtilities.addClass(this.element, Pivot._ClassName.pivot);
-                _ElementUtilities.addClass(this.element, "win-disposable");
-                _ElementUtilities._addEventListener(this.element, "pointerenter", this._updatePointerType.bind(this));
-                _ElementUtilities._addEventListener(this.element, "pointerout", this._updatePointerType.bind(this));
-                this._pointerType = PT_MOUSE;
-
-                // Title element
-                this._titleElement = _Global.document.createElement("DIV");
-                this._titleElement.style.display = "none";
-                _ElementUtilities.addClass(this._titleElement, Pivot._ClassName.pivotTitle);
-                this._element.appendChild(this._titleElement);
-
-                // Header Area
-                this._headerAreaElement = _Global.document.createElement("DIV");
-                _ElementUtilities.addClass(this._headerAreaElement, Pivot._ClassName.pivotHeaderArea);
-                this._element.appendChild(this._headerAreaElement);
-
-                // Header Items
-                this._headerItemsElement = _Global.document.createElement("DIV");
-                _ElementUtilities.addClass(this._headerItemsElement, Pivot._ClassName.pivotHeaderItems);
-                this._headerAreaElement.appendChild(this._headerItemsElement);
-                this._headerItemsElWidth = null;
-
-                // Headers Container
-                this._headersContainerElement = _Global.document.createElement("DIV");
-                this._headersContainerElement.tabindex = 0;
-                _ElementUtilities.addClass(this._headersContainerElement, Pivot._ClassName.pivotHeaders);
-                this._headersContainerElement.addEventListener("keydown", this._headersKeyDown.bind(this));
-                this._headerItemsElement.appendChild(this._headersContainerElement);
-                this._element.addEventListener('click', this._elementClickedHandler.bind(this));
-                _ElementUtilities._addEventListener(this._element, "pointerdown", this._elementPointerDownHandler.bind(this));
-                _ElementUtilities._addEventListener(this._element, "pointerup", this._elementPointerUpHandler.bind(this));
-                _ElementUtilities._addEventListener(this._headersContainerElement, "pointerenter", this._showNavButtons.bind(this));
-                _ElementUtilities._addEventListener(this._headersContainerElement, "pointerout", this._hideNavButtons.bind(this));
-                this._winKeyboard = new _KeyboardBehavior._WinKeyboard(this._headersContainerElement);
-                this._tabContainer = new _TabContainer.TabContainer(this._headersContainerElement);
-
-                // Custom Headers
-                this._customLeftHeader = _Global.document.createElement("DIV");
-                _ElementUtilities.addClass(this._customLeftHeader, Pivot._ClassName.pivotHeaderLeftCustom);
-                this._headerAreaElement.insertBefore(this._customLeftHeader, this._headerAreaElement.children[0]);
-                this._customRightHeader = _Global.document.createElement("DIV");
-                _ElementUtilities.addClass(this._customRightHeader, Pivot._ClassName.pivotHeaderRightCustom);
-                this._headerAreaElement.appendChild(this._customRightHeader);
-
-                // Viewport
-                this._viewportElement = _Global.document.createElement("DIV");
-                this._viewportElement.className = Pivot._ClassName.pivotViewport;
-                this._element.appendChild(this._viewportElement);
-                this._viewportElement.setAttribute("role", "group");
-                this._viewportElement.setAttribute("aria-label", strings.pivotViewportAriaLabel);
-                this._resizeHandlerBound = this._resizeHandler.bind(this);
-                this.element.addEventListener("mselementresize", this._resizeHandlerBound);
-                _ElementUtilities._resizeNotifier.subscribe(this.element, this._resizeHandlerBound);
-                this._viewportElWidth = null;
-                this._viewportElement.addEventListener("scroll", this._scrollHandler.bind(this));
-                this._viewportElement.addEventListener("MSManipulationStateChanged", this._MSManipulationStateChangedHandler.bind(this));
-                _ElementUtilities._addEventListener(this._viewportElement, "pointerdown", this._pointerDownHandler.bind(this));
-
-                // Surface
-                this._surfaceElement = _Global.document.createElement("DIV");
-                this._surfaceElement.className = Pivot._ClassName.pivotSurface;
-                this._viewportElement.appendChild(this._surfaceElement);
-
-                this._offsetFromCenter = 0;
-                this._currentIndexOnScreen = 0;
-                this._loadId = 0;
-                this._navMode = Pivot._NavigationModes.none;
-                this._currentManipulationState = MSManipulationEventStates.MS_MANIPULATION_STATE_STOPPED;
-                this._headersState = headersStates.nop;
-
-                // This internally assigns this.items which causes item to be used (even from options) before selectedIndex
-                this._parse();
-
-                options = _BaseUtils._shallowCopy(options);
-                if (options.items) {
-                    // Set this first so selectedIndex and selectedItem can work against the new items.
-                    this.items = options.items;
-                    delete options.items;
-                }
-
-                _Control.setOptions(this, options);
-
-                this._refresh();
-
-                this._writeProfilerMark("constructor,StopTM");
-            }, {
-                /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.Pivot.element" helpKeyword="WinJS.UI.Pivot.element">
-                /// Gets the DOM element that hosts the Pivot.
-                /// </field>
-                element: {
-                    get: function () {
-                        return this._element;
-                    }
-                },
-
-                /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.Pivot.customLeftHeader" helpKeyword="WinJS.UI.Pivot.customLeftHeader">
-                /// Gets or sets the left custom header.
-                /// </field>
-                customLeftHeader: {
-                    get: function () {
-                        return this._customLeftHeader.firstElementChild;
-                    },
-                    set: function (value) {
-                        _ElementUtilities.empty(this._customLeftHeader);
-                        this._customLeftHeader.appendChild(value);
-                        this.forceLayout();
-                    }
-                },
-
-                /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.Pivot.customRightHeader" helpKeyword="WinJS.UI.Pivot.customRightHeader">
-                /// Gets or sets the right custom header.
-                /// </field>
-                customRightHeader: {
-                    get: function () {
-                        return this._customRightHeader.firstElementChild;
-                    },
-                    set: function (value) {
-                        _ElementUtilities.empty(this._customRightHeader);
-                        this._customRightHeader.appendChild(value);
-                        this.forceLayout();
-                        
-                    }
-                },
-
-                /// <field type="Boolean" locid="WinJS.UI.Pivot.locked" helpKeyword="WinJS.UI.Pivot.locked">
-                /// Gets or sets a value that specifies whether the Pivot is locked to the current item.
-                /// </field>
-                locked: {
-                    get: function () {
-                        return _ElementUtilities.hasClass(this.element, Pivot._ClassName.pivotLocked);
-                    },
-                    set: function (value) {
-                        _ElementUtilities[value ? 'addClass' : 'removeClass'](this.element, Pivot._ClassName.pivotLocked);
-                        if (value) {
-                            this._hideNavButtons();
-                        }
-                    }
-                },
-
-                /// <field type="WinJS.Binding.List" locid="WinJS.UI.Pivot.items" helpKeyword="WinJS.UI.Pivot.items">
-                /// Gets or sets the WinJS.Binding.List of PivotItem objects that belong to this Pivot.
-                /// </field>
-                items: {
-                    get: function () {
-                        if (this._pendingItems) {
-                            return this._pendingItems;
-                        }
-                        return this._items;
-                    },
-                    set: function (value) {
-                        var resetScrollPosition = !this._pendingItems;
-                        this._pendingItems = value;
-                        this._refresh();
-                        if (resetScrollPosition) {
-                            this._pendingIndexOnScreen = 0;
-                        }
-                    }
-                },
-
-                /// <field type="String" locid="WinJS.UI.Pivot.title" helpKeyword="WinJS.UI.Pivot.title">
-                /// Gets or sets the title of the Pivot.
-                /// </field>
-                title: {
-                    get: function () {
-                        return this._titleElement.textContent;
-                    },
-                    set: function (value) {
-                        if (value) {
-                            this._titleElement.style.display = "block";
-                            this._titleElement.textContent = value;
-                        } else {
-                            this._titleElement.style.display = "none";
-                            this._titleElement.textContent = "";
-                        }
-                    }
-                },
-
-                /// <field type="Number" integer="true" locid="WinJS.UI.Pivot.selectedIndex" helpKeyword="WinJS.UI.Pivot.selectedIndex">
-                /// Gets or sets the index of the item in view. This property is useful for restoring a previous view when your app launches or resumes.
-                /// </field>
-                selectedIndex: {
-                    get: function () {
-                        if (this.items.length === 0) {
-                            return -1;
-                        }
-
-                        if (+this._pendingIndexOnScreen === this._pendingIndexOnScreen) {
-                            return this._pendingIndexOnScreen;
-                        }
-
-                        return this._currentIndexOnScreen;
-                    },
-                    set: function (value) {
-                        if (value >= 0 && value < this.items.length) {
-                            if (this._pendingRefresh) {
-                                this._pendingIndexOnScreen = value;
-                            } else {
-                                this._navMode = this._navMode || Pivot._NavigationModes.api;
-                                this._loadItem(value);
-                            }
-                        }
-                    }
-                },
-
-                /// <field type="WinJS.UI.PivotItem" locid="WinJS.UI.Pivot.selectedItem" helpKeyword="WinJS.UI.Pivot.selectedItem">
-                /// Gets or sets the item in view. This property is useful for restoring a previous view when your app launches or resumes.
-                /// </field>
-                selectedItem: {
-                    get: function () {
-                        return this.items.getAt(this.selectedIndex);
-                    },
-                    set: function (value) {
-                        var index = this.items.indexOf(value);
-                        if (index !== -1) {
-                            this.selectedIndex = index;
-                        }
-                    }
-                },
-
-                dispose: function pivot_dispose() {
-                    /// <signature helpKeyword="WinJS.UI.Pivot.dispose">
-                    /// <summary locid="WinJS.UI.Pivot.dispose">
-                    /// Disposes this control.
-                    /// </summary>
-                    /// </signature>
-                    if (this._disposed) {
-                        return;
-                    }
-                    this._disposed = true;
-
-                    this._updateEvents(this._items);
-                    _ElementUtilities._resizeNotifier.unsubscribe(this.element, this._resizeHandlerBound);
-                    this._headersState.exit();
-
-                    _Dispose._disposeElement(this._headersContainerElement);
-
-                    for (var i = 0, len = this.items.length; i < len; i++) {
-                        this.items.getAt(i).dispose();
-                    }
-                },
-
-                forceLayout: function pivot_forceLayout() {
-                    /// <signature helpKeyword="WinJS.UI.Pivot.forceLayout">
-                    /// <summary locid="WinJS.UI.Pivot.forceLayout">
-                    /// Forces the control to relayout its content. This function is expected to be called
-                    /// when the pivot element is manually resized.
-                    /// </summary>
-                    /// </signature>
-                    if (this._disposed) {
-                        return;
-                    }
-                    this._resizeHandler();
-                },
-
-                /// <field type="Function" locid="WinJS.UI.Pivot.onselectionchanged" helpKeyword="WinJS.UI.Pivot.onselectionchanged">
-                /// Raised when the user changes to a different item.
-                /// </field>
-                onselectionchanged: createEvent(eventNames.selectionChanged),
-
-                /// <field type="Function" locid="WinJS.UI.Pivot.onitemanimationstart" helpKeyword="WinJS.UI.Pivot.onitemanimationstart">
-                /// Raised when the item's animation starts.
-                /// </field>
-                onitemanimationstart: createEvent(eventNames.itemAnimationStart),
-
-                /// <field type="Function" locid="WinJS.UI.Pivot.onitemanimationend" helpKeyword="WinJS.UI.Pivot.onitemanimationend">
-                /// Raised when the item's animation ends.
-                /// </field>
-                onitemanimationend: createEvent(eventNames.itemAnimationEnd),
-
-                _currentScrollTargetLocation: {
-                    get: function () {
-                        if (this._viewportWidth === Pivot._invalidViewportWidth) {
-                            // ViewportWidth is invalid, this means that the pivot has not been measured yet. This is either because
-                            // the pivot is not in the DOM, or there is a pending refresh operation.
-                            return 0;
-                        }
-
-                        // 49 pages before + current one is 50. There are also 50 afterwards.
-                        return (50 + this._offsetFromCenter) * Math.ceil(this._viewportWidth);
-                    }
-                },
-
-                _pointerType: {
-                    get: function () {
-                        return this._pointerTypeValue;
-                    },
-                    set: function (value) {
-                        if (this._pointerTypeValue === value) {
-                            return;
-                        }
-
-                        this._pointerTypeValue = value;
-                        if (value === PT_TOUCH) {
-                            _ElementUtilities.removeClass(this.element, Pivot._ClassName.pivotInputTypeMouse);
-                            _ElementUtilities.addClass(this.element, Pivot._ClassName.pivotInputTypeTouch);
-                            this._hideNavButtons();
-                        } else {
-                            _ElementUtilities.removeClass(this.element, Pivot._ClassName.pivotInputTypeTouch);
-                            _ElementUtilities.addClass(this.element, Pivot._ClassName.pivotInputTypeMouse);
-                        }
-                    }
-                },
-
-                _rtl: {
-                    get: function () {
-                        return this._cachedRTL;
-                    }
-                },
-
-                _headerItemsWidth: {
-                    get: function () {
-                        if (!this._headerItemsElWidth) {
-                            this._headerItemsElWidth = parseFloat(_Global.getComputedStyle(this._headerItemsElement).width);
-                        }
-                        return this._headerItemsElWidth || Pivot._invalidViewportWidth;
-                    },
-                },
-
-                _viewportWidth: {
-                    get: function () {
-                        if (!this._viewportElWidth) {
-                            this._viewportElWidth = parseFloat(_Global.getComputedStyle(this._viewportElement).width);
-                            if (supportsSnap) {
-                                this._viewportElement.style[_BaseUtils._browserStyleEquivalents["scroll-snap-points-x"].scriptName] = "snapInterval(0%, " + Math.ceil(this._viewportElWidth) + "px)";
-                            }
-                        }
-                        return this._viewportElWidth || Pivot._invalidViewportWidth;
-                    },
-                },
-
-                _invalidateMeasures: function pivot_invalidateMeasures() {
-                    this._viewportElWidth = this._headerItemsElWidth = null;
-                },
-
-                // Lifecycle
-                _applyProperties: function pivot_applyProperties() {
-                    if (this._disposed) {
-                        return;
-                    }
-
-                    if (this._pendingItems) {
-                        this._updateEvents(this._items, this._pendingItems);
-                        this._items = this._pendingItems;
-                        this._pendingItems = null;
-                        // Remove any declaratively specified pivot items before attachItems.
-                        while (this.element.firstElementChild !== this._titleElement) {
-                            var toRemove = this.element.firstElementChild;
-                            toRemove.parentNode.removeChild(toRemove);
-                        }
-                        _ElementUtilities.empty(this._surfaceElement);
-                    }
-
-                    this._attachItems();
-
-                    var pendingIndexOnScreen = this._pendingIndexOnScreen;
-                    this._pendingIndexOnScreen = null;
-                    this._currentIndexOnScreen = 0;
-                    this._firstLoad = true;
-                    this._cachedRTL = _Global.getComputedStyle(this._element, null).direction === "rtl";
-                    headersStates.common.refreshHeadersState(this, true);
-                    this._pendingRefresh = false;
-
-                    this.selectedIndex = Math.min(pendingIndexOnScreen, this.items.length - 1);
-                    this._firstLoad = false;
-                    this._recenterUI();
-                },
-
-                _attachItems: function pivot_attachItems() {
-                    this._measured = false;
-                    for (var i = 0, len = this.items.length; i < len; i++) {
-                        var item = this._items.getAt(i);
-
-                        if (item.element.parentNode === this._surfaceElement) {
-                            throw new _ErrorFromName("WinJS.UI.Pivot.DuplicateItem", strings.duplicateItem);
-                        }
-
-                        item.element.style.visibility = "hidden";
-                        item.element.style.opacity = 0;
-
-                        this._surfaceElement.appendChild(item.element);
-                    }
-                },
-
-                _parse: function pivot_parse() {
-                    var pivotItems = [];
-                    var pivotItemEl = this.element.firstElementChild;
-
-                    while (pivotItemEl !== this._titleElement) {
-                        ControlProcessor.processAll(pivotItemEl);
-
-                        var pivotItemContent = pivotItemEl.winControl;
-                        if (pivotItemContent) {
-                            pivotItems.push(pivotItemContent);
-                        } else {
-                            throw new _ErrorFromName("WinJS.UI.Pivot.InvalidContent", strings.invalidContent);
-                        }
-
-                        var nextItemEl = pivotItemEl.nextElementSibling;
-                        pivotItemEl = nextItemEl;
-                    }
-
-                    this.items = new BindingList.List(pivotItems);
-                },
-
-                _refresh: function pivot_refresh() {
-                    if (this._pendingRefresh) {
-                        return;
-                    }
-
-                    // This is to coalesce property setting operations such as items and scrollPosition.
-                    this._pendingRefresh = true;
-
-                    Scheduler.schedule(this._applyProperties.bind(this), Scheduler.Priority.high);
-                },
-
-                _resizeHandler: function pivot_resizeHandler() {
-                    if (this._disposed || this._pendingRefresh) {
-                        return;
-                    }
-
-                    var oldViewportWidth = this._viewportWidth;
-                    var oldHeaderItemsWidth = this._headerItemsWidth;
-                    // Invalidate the viewportWidth and header items width, note that _viewportWidth and _headerItemsWidth are
-                    // private properties that remeasure their values on access when their current value is null
-                    this._invalidateMeasures();
-                    if (oldViewportWidth !== this._viewportWidth || oldHeaderItemsWidth !== this._headerItemsWidth) {
-                        _Log.log && _Log.log('_resizeHandler from:' + oldViewportWidth + " to: " + this._viewportWidth);
-
-                        this._hidePivotItemAnimation && this._hidePivotItemAnimation.cancel();
-                        this._showPivotItemAnimation && this._showPivotItemAnimation.cancel();
-                        this._slideHeadersAnimation && this._slideHeadersAnimation.cancel();
-
-                        this._recenterUI();
-                        this._headersState.handleResize();
-                    } else {
-                        _Log.log && _Log.log('_resizeHandler worthless resize');
-                    }
-                },
-
-
-                // Navigation
-                _activateHeader: function pivot_activateHeader(headerElement) {
-                    if (this.locked) {
-                        return;
-                    }
-
-                    var index = this._items.indexOf(headerElement._item);
-                    if (index !== this.selectedIndex) {
-                        this._headersState.activateHeader(headerElement);
-                    } else {
-                        // Move focus into content for Narrator.
-                        _ElementUtilities._setActiveFirstFocusableElement(this.selectedItem.element);
-                    }
-                },
-
-                _goNext: function pivot_goNext() {
-                    if (this.selectedIndex < this._items.length - 1) {
-                        this.selectedIndex++;
-                    } else {
-                        this.selectedIndex = 0;
-                    }
-                },
-
-                _goPrevious: function pivot_goPrevious() {
-                    this._animateToPrevious = true;
-                    if (this.selectedIndex > 0) {
-                        this.selectedIndex--;
-                    } else {
-                        this.selectedIndex = this._items.length - 1;
-                    }
-                    this._animateToPrevious = false;
-                },
-
-                _loadItem: function pivot_loadItem(index) {
-                    var goPrevious = this._animateToPrevious;
-                    this._cachedRTL = _Global.getComputedStyle(this._element, null).direction === "rtl";
-                    this._loadId++;
-                    var loadId = this._loadId;
-
-                    this._hidePivotItemAnimation && this._hidePivotItemAnimation.cancel();
-                    this._showPivotItemAnimation && this._showPivotItemAnimation.cancel();
-                    this._slideHeadersAnimation && this._slideHeadersAnimation.cancel();
-
-                    if (this._currentItem) {
-                        // Hide existing item
-                        this._hidePivotItem(this._currentItem.element, goPrevious);
-                    }
-
-                    var oldIndex = this._currentIndexOnScreen;
-                    this._currentIndexOnScreen = index;
-                    this._headersState.handleNavigation(goPrevious, index, oldIndex);
-
-                    if (index < 0) {
-                        return;
-                    }
-
-                    // Get next item
-                    var item = this._items.getAt(index);
-                    this._currentItem = item;
-
-                    if (goPrevious) {
-                        this._offsetFromCenter--;
-                    } else if (index !== oldIndex) {
-                        this._offsetFromCenter++;
-                    }
-
-                    var zooming = false;
-                    if (supportsSnap && this._currentManipulationState !== MSManipulationEventStates.MS_MANIPULATION_STATE_INERTIA) {
-                        if (this._firstLoad) {
-                            _Log.log && _Log.log('_firstLoad index:' + this.selectedIndex + ' offset: ' + this._offsetFromCenter + ' scrollLeft: ' + this._currentScrollTargetLocation, "winjs pivot", "log");
-                            _ElementUtilities.setScrollPosition(this._viewportElement, { scrollLeft: this._currentScrollTargetLocation });
-                        } else {
-                            _Log.log && _Log.log('zoomTo index:' + this.selectedIndex + ' offset: ' + this._offsetFromCenter + ' scrollLeft: ' + this._currentScrollTargetLocation, "winjs pivot", "log");
-                            this._viewportElement.msZoomTo({ contentX: this._currentScrollTargetLocation, contentY: 0, viewportX: 0, viewportY: 0 });
-                            zooming = this._offsetFromCenter !== 0 && this.items.length > 1;
-                        }
-                    }
-
-                    var that = this;
-                    var selectionChangedDetail = {
-                        index: index,
-                        direction: goPrevious ? "backwards" : "forward",
-                        item: item
-                    };
-                    this._writeProfilerMark("selectionChanged,info");
-                    this._fireEvent(Pivot._EventName.selectionChanged, true, false, selectionChangedDetail);
-
-                    // Start it hidden until it is loaded
-                    item._process().then(function () {
-                        if (that._disposed || loadId !== that._loadId) {
-                            return;
-                        }
-                        if (supportsSnap) {
-                            // Position item:
-                            item.element.style[that._getDirectionAccessor()] = that._currentScrollTargetLocation + "px";
-                            that._showPivotItem(item.element, goPrevious);
-                        } else {
-                            // Since we aren't msZoomTo'ing when snap points aren't supported, both the show and hide animations would be
-                            // executing on top of each other which produces undesirable visuals. Here we wait for the hide to finish before showing.
-                            if (that._hidePivotItemAnimation) {
-                                that._showPivotItemAnimation = that._hidePivotItemAnimation.then(function () {
-                                    if (that._disposed || loadId !== that._loadId) {
-                                        return;
-                                    }
-                                    return that._showPivotItem(item.element, goPrevious);
-                                });
-                            } else {
-                                // During the very first load or when the hide animation is canceled, we just show the pivot item immediately.
-                                that._showPivotItem(item.element, goPrevious);
-                            }
-                        }
-
-                        var recenterPromise;
-                        if (zooming) {
-                            if (!that._stoppedAndRecenteredSignal) {
-                                that._stoppedAndRecenteredSignal = new _Signal();
-                            }
-                            recenterPromise = that._stoppedAndRecenteredSignal.promise;
-                        } else {
-                            recenterPromise = (that._stoppedAndRecenteredSignal && that._stoppedAndRecenteredSignal.promise) || Promise.wrap();
-                        }
-                        Promise.join([that._slideHeadersAnimation, that._showPivotItemAnimation, that._hidePivotItemAnimation]).then(function () {
-                            recenterPromise.then(function () {
-                                Promise.timeout(50).then(function () {
-                                    if (that._disposed || loadId !== that._loadId) {
-                                        return;
-                                    }
-                                    that._navMode = Pivot._NavigationModes.none;
-
-                                    // Fire event even if animation didn't occur:
-                                    that._writeProfilerMark("itemAnimationStop,info");
-                                    that._fireEvent(Pivot._EventName.itemAnimationEnd, true);
-                                });
-                            });
-                        });
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        Pivot: {
+            get: function () {
+                if (!module) {
+                    require(["./Pivot/_Pivot"], function (m) {
+                        module = m;
                     });
-                },
-
-                _MSManipulationStateChangedHandler: function pivot_MSManipulationStateChangedHandler(ev) {
-                    this._currentManipulationState = ev.currentState;
-                    if (!supportsSnap || ev.target !== this._viewportElement) {
-                        // Ignore sub scroller manipulations.
-                        return;
-                    }
-                    if (this._currentManipulationState === MSManipulationEventStates.MS_MANIPULATION_STATE_STOPPED) {
-                        _Log.log && _Log.log('MSManipulation: Stopped', "winjs pivot", "log");
-                    } else if (this._currentManipulationState === MSManipulationEventStates.MS_MANIPULATION_STATE_INERTIA) {
-                        _Log.log && _Log.log('MSManipulation: Inertia', "winjs pivot", "log");
-                    } else {
-                        _Log.log && _Log.log('MSManipulation: Active', "winjs pivot", "log");
-                    }
-
-                    if (!this._stoppedAndRecenteredSignal) {
-                        this._stoppedAndRecenteredSignal = new _Signal();
-                    }
-
-                    this._manipulationRecenterPromise && this._manipulationRecenterPromise.cancel();
-
-                    if (this._currentManipulationState === MSManipulationEventStates.MS_MANIPULATION_STATE_STOPPED) {
-                        if (this._navMode === Pivot._NavigationModes.scroll) {
-                            this._scrollHandler();
-                        }
-                        this._navMode = Pivot._NavigationModes.none;
-
-                        var that = this;
-                        this._manipulationRecenterPromise = Promise._cancelBlocker(
-                            Promise.join([
-                                Scheduler.schedulePromiseNormal(null, "WinJS.UI.Pivot._MSManipulationStateChangedHandler_animationPlaceholder"),
-                                this._hidePivotItemAnimation,
-                                this._showPivotItemAnimation,
-                                this._slideHeadersAnimation
-                            ])
-                        ).then(function () {
-                            if (that._disposed) {
-                                return;
-                            }
-                            if (that._currentManipulationState === MSManipulationEventStates.MS_MANIPULATION_STATE_STOPPED) {
-                                // If we are still "stopped" we should recenter.
-                                _Log.log && _Log.log('Still in Stopped state: calling _recenterUI', "winjs pivot", "log");
-                                that._recenterUI();
-                            } else {
-                                this._stoppedAndRecenteredSignal.complete();
-                                this._stoppedAndRecenteredSignal = null;
-                            }
-                        });
-                    } else if (this._navMode !== Pivot._NavigationModes.api && this._currentManipulationState === MSManipulationEventStates.MS_MANIPULATION_STATE_INERTIA) {
-                        var destinationX = ev.inertiaDestinationX;
-                        if (+destinationX === destinationX) {
-                            _Log.log && _Log.log('MSManipulation: inertiaDestinationX: ' + destinationX);
-                            var diff = destinationX - this._currentScrollTargetLocation;
-                            if (diff > 0) {
-                                _Log.log && _Log.log('MSManipulation: Inertia diff > 1', "winjs pivot", "log");
-                                this._navMode = Pivot._NavigationModes.inertia;
-                                this._goNext();
-                            } else if (diff < 0) {
-                                _Log.log && _Log.log('MSManipulation: Stopped diff < -1', "winjs pivot", "log");
-                                this._navMode = Pivot._NavigationModes.inertia;
-                                this._goPrevious();
-                            }
-                        }
-                    }
-                },
-
-                _scrollHandler: function pivot_scrollHandler() {
-                    if (!supportsSnap || this._disposed) {
-                        return;
-                    }
-
-                    if (this._recentering && this._stoppedAndRecenteredSignal) {
-                        this._stoppedAndRecenteredSignal.complete();
-                        this._stoppedAndRecenteredSignal = null;
-                        this._recentering = false;
-                        return;
-                    }
-
-                    if (this._navMode === Pivot._NavigationModes.none || this._navMode === Pivot._NavigationModes.scroll) {
-                        this._navMode = Pivot._NavigationModes.scroll;
-                        if (this._currentManipulationState === MSManipulationEventStates.MS_MANIPULATION_STATE_STOPPED) {
-                            _Log.log && _Log.log('_scrollHandler ScrollPosition: ' + _ElementUtilities.getScrollPosition(this._viewportElement).scrollLeft, "winjs pivot", "log");
-                            // Check if narrator user panned/scrolled the Pivot and we are now at an unsupported location.
-                            var diff = _ElementUtilities.getScrollPosition(this._viewportElement).scrollLeft - this._currentScrollTargetLocation;
-                            this._cachedRTL = _Global.getComputedStyle(this._element, null).direction === "rtl";
-                            if (diff > 0) {
-                                _Log.log && _Log.log('_scrollHandler diff > 1: ' + diff, "winjs pivot", "log");
-                                this._goNext();
-                            } else if (diff < 0) {
-                                _Log.log && _Log.log('_scrollHandler diff < -1: ' + diff, "winjs pivot", "log");
-                                this._goPrevious();
-                            }
-                        }
-                    }
-                },
-
-                _recenterUI: function pivot_recenterUI() {
-                    if (!supportsSnap) {
-                        return;
-                    }
-
-                    this._offsetFromCenter = 0;
-
-                    if (_ElementUtilities.getScrollPosition(this._viewportElement).scrollLeft !== this._currentScrollTargetLocation) {
-                        // If recentering causes a scroll, then we need to make sure that the next
-                        // scroll event event doesn't trigger another navigation
-                        this._recentering = true;
-                        this._stoppedAndRecenteredSignal = this._stoppedAndRecenteredSignal || new _Signal();
-                    } else if (this._stoppedAndRecenteredSignal) {
-                        this._stoppedAndRecenteredSignal.complete();
-                        this._stoppedAndRecenteredSignal = null;
-                    }
-                    if (this.selectedItem) {
-                        this.selectedItem.element.style[this._getDirectionAccessor()] = this._currentScrollTargetLocation + 'px';
-                    }
-                    _Log.log && _Log.log('_recenterUI index:' + this.selectedIndex + ' offset: ' + this._offsetFromCenter + ' scrollLeft: ' + this._currentScrollTargetLocation);
-                    _ElementUtilities.setScrollPosition(this._viewportElement, { scrollLeft: this._currentScrollTargetLocation });
-                },
-
-                _hidePivotItem: function pivot_hidePivotItem(element, goPrevious) {
-                    var that = this;
-                    function cleanup() {
-                        if (that._disposed) {
-                            return;
-                        }
-
-                        that._hidePivotItemAnimation = null;
-
-                        element.style.visibility = "hidden";
-                        element.style.opacity = 0;
-                    }
-
-                    var negativeTransform = (this._rtl && !goPrevious) || (goPrevious && !this._rtl);
-
-                    if (_TransitionAnimation.isAnimationEnabled()) {
-                        this._hidePivotItemAnimation = Animations[negativeTransform ? "slideRightOut" : "slideLeftOut"](element);
-                    } else {
-                        this._hidePivotItemAnimation = Scheduler.schedulePromiseNormal(null, "WinJS.UI.Pivot._hidePivotItem_animationPlaceholder");
-                    }
-
-                    this._hidePivotItemAnimation.then(cleanup, cleanup);
-                },
-
-                _showPivotItem: function pivot_showPivotItem(element, goPrevious) {
-                    // Fire the event even if animations are disabled to enable apps to know what is happening
-                    this._writeProfilerMark("itemAnimationStart,info");
-                    this._fireEvent(Pivot._EventName.itemAnimationStart, true);
-
-                    if (!_TransitionAnimation.isAnimationEnabled()) {
-                        element.style.visibility = "";
-                        element.style.opacity = "";
-                        this._showPivotItemAnimation = null;
-                        return;
-                    }
-
-                    // Find the elements to slide in
-                    var slideGroup1Els = element.querySelectorAll(".win-pivot-slide1");
-                    var slideGroup2Els = element.querySelectorAll(".win-pivot-slide2");
-                    var slideGroup3Els = element.querySelectorAll(".win-pivot-slide3");
-
-                    var viewportBoundingClientRect = this._viewportElement.getBoundingClientRect();
-                    function filterOnScreen(element) {
-                        var elementBoundingClientRect = element.getBoundingClientRect();
-                        // Can't check left/right since it might be scrolled off.
-                        return elementBoundingClientRect.top < viewportBoundingClientRect.bottom &&
-                            elementBoundingClientRect.bottom > viewportBoundingClientRect.top;
-                    }
-
-                    //Filter the slide groups to the elements actually on screen to avoid animating extra elements
-                    slideGroup1Els = Array.prototype.filter.call(slideGroup1Els, filterOnScreen);
-                    slideGroup2Els = Array.prototype.filter.call(slideGroup2Els, filterOnScreen);
-                    slideGroup3Els = Array.prototype.filter.call(slideGroup3Els, filterOnScreen);
-
-                    var negativeTransform = (this._rtl && !goPrevious) || (goPrevious && !this._rtl);
-
-                    element.style.visibility = "";
-
-                    this._showPivotItemAnimation = Animations[negativeTransform ? "slideRightIn" : "slideLeftIn"](element, slideGroup1Els, slideGroup2Els, slideGroup3Els);
-
-                    var that = this;
-                    function showCleanup() {
-                        if (that._disposed) {
-                            return;
-                        }
-
-                        that._showPivotItemAnimation = null;
-                    }
-
-                    this._showPivotItemAnimation.then(showCleanup, showCleanup);
-                    return this._showPivotItemAnimation;
-                },
-
-
-                // Input Handlers
-                _elementClickedHandler: function pivot_elementClickedHandler(ev) {
-                    if (this.locked || this._navigationHandled) {
-                        this._navigationHandled = false;
-                        return;
-                    }
-
-                    var header;
-                    var src = ev.target;
-                    if (_ElementUtilities.hasClass(src, Pivot._ClassName.pivotHeader)) {
-                        // UIA invoke clicks on the real header elements.
-                        header = src;
-                    } else {
-                        var hitSrcElement = false;
-                        var hitTargets = _ElementUtilities._elementsFromPoint(ev.clientX, ev.clientY);
-                        if (hitTargets &&
-                            // Make sure there aren't any elements obscuring the Pivot headers.
-                            // WinJS.Utilities._elementsFromPoint sorts by z order.
-                                hitTargets[0] === this._viewportElement) {
-                            for (var i = 0, len = hitTargets.length; i < len; i++) {
-                                if (hitTargets[i] === src) {
-                                    hitSrcElement = true;
-                                }
-                                if (_ElementUtilities.hasClass(hitTargets[i], Pivot._ClassName.pivotHeader)) {
-                                    header = hitTargets[i];
-                                }
-                            }
-                        }
-
-                        if (!hitSrcElement) {
-                            // The click's coordinates and source element do not correspond so we
-                            // can't trust the coordinates. Ignore the click. This case happens in
-                            // clicks triggered by UIA invoke because UIA invoke uses the top left
-                            // of the window as the coordinates of every click.
-                            header = null;
-                        }
-                    }
-
-                    if (header) {
-                        this._activateHeader(header);
-                    }
-                },
-
-                _headersKeyDown: function pivot_headersKeydown(e) {
-                    if (this.locked) {
-                        return;
-                    }
-
-                    if (e.keyCode === Keys.leftArrow || e.keyCode === Keys.pageUp) {
-                        this._rtl ? this._goNext() : this._goPrevious();
-                        e.preventDefault();
-                    } else if (e.keyCode === Keys.rightArrow || e.keyCode === Keys.pageDown) {
-                        this._rtl ? this._goPrevious() : this._goNext();
-                        e.preventDefault();
-                    }
-                },
-
-                _elementPointerDownHandler: function pivot_elementPointerDownHandler(e) {
-                    if (supportsSnap) {
-                        return;
-                    }
-                    this._elementPointerDownPoint = { x: e.clientX, y: e.clientY, type: e.pointerType || "mouse", time: Date.now(), inHeaders: this._headersContainerElement.contains(e.target) };
-                },
-
-                _elementPointerUpHandler: function pivot_elementPointerUpHandler(e) {
-                    if (!this._elementPointerDownPoint || this.locked) {
-                        this._elementPointerDownPoint = null;
-                        return;
-                    }
-
-                    var filterDistance = 32;
-                    var dyDxThresholdRatio = 0.4;
-
-                    var dy = Math.abs(e.clientY - this._elementPointerDownPoint.y);
-                    var dx = e.clientX - this._elementPointerDownPoint.x;
-                    var thresholdY = Math.abs(dx * dyDxThresholdRatio);
-
-                    var doSwipeDetection =
-                        // Check vertical threshold to prevent accidental swipe detection during vertical pan
-                        dy < thresholdY
-                        // Check horizontal threshold to prevent accidental swipe detection when tapping
-                        && Math.abs(dx) > filterDistance
-                        // Check that input type is Touch, however, if touch detection is not supported then we do detection for any input type
-                        && (!_ElementUtilities._supportsTouchDetection || (this._elementPointerDownPoint.type === e.pointerType && e.pointerType === PT_TOUCH))
-                        // Check if content swipe navigation is disabled, if it is we still run swipe detection if both the up and down points are in the headers container element
-                        && (!this.element.classList.contains(_Constants._ClassName.pivotDisableContentSwipeNavigation) || (this._elementPointerDownPoint.inHeaders && this._headersContainerElement.contains(e.target)));
-
-                    this._navigationHandled = false;
-                    if (doSwipeDetection) {
-                        // Swipe navigation detection
-
-                        // Simulate inertia by multiplying dx by a polynomial function of dt
-                        var dt = Date.now() - this._elementPointerDownPoint.time;
-                        dx *= Math.max(1, Math.pow(350 / dt, 2));
-                        dx = this._rtl ? -dx : dx;
-
-                        var vwDiv4 = this._viewportWidth / 4;
-                        if (dx < -vwDiv4) {
-                            this._goNext();
-                            this._navigationHandled = true;
-                        } else if (dx > vwDiv4) {
-                            this._goPrevious();
-                            this._navigationHandled = true;
-                        }
-                    }
-                    if (!this._navigationHandled) {
-                        // Detect header click
-                        var element = e.target;
-                        while (element !== null && !_ElementUtilities.hasClass(element, Pivot._ClassName.pivotHeader)) {
-                            element = element.parentElement;
-                        }
-                        if (element !== null) {
-                            this._activateHeader(element);
-                            this._navigationHandled = true;
-                        }
-                    }
-                    this._elementPointerDownPoint = null;
-                },
-
-                _hideNavButtons: function pivot_hideNavButtons(e) {
-                    if (e && this._headersContainerElement.contains(e.relatedTarget)) {
-                        // Don't hide the nav button if the pointerout event is being fired from going
-                        // from one element to another within the header track.
-                        return;
-                    }
-                    _ElementUtilities.removeClass(this._headersContainerElement, Pivot._ClassName.pivotShowNavButtons);
-                },
-
-                _pointerDownHandler: function pivot_pointerDownHandler() {
-                    _Log.log && _Log.log('_pointerDown', "winjs pivot", "log");
-                    // Don't do recentering if a finger is down.
-                    this._manipulationRecenterPromise && this._manipulationRecenterPromise.cancel();
-                    // If another finger comes down stop animations.
-                    this._slideHeadersAnimation && this._slideHeadersAnimation.cancel();
-                    this._hidePivotItemAnimation && this._hidePivotItemAnimation.cancel();
-                },
-
-                _showNavButtons: function pivot_showNavButtons(e) {
-                    if (this.locked || (e && e.pointerType === PT_TOUCH)) {
-                        return;
-                    }
-                    _ElementUtilities.addClass(this._headersContainerElement, Pivot._ClassName.pivotShowNavButtons);
-                },
-
-
-                // Datasource Mutation Handlers
-                _handleItemChanged: function pivot_handleItemChanged(ev) {
-                    // Change is triggered by binding list setAt() API.
-                    if (this._pendingItems) {
-                        return;
-                    }
-
-                    var index = ev.detail.index;
-                    var newItem = ev.detail.newValue;
-                    var oldItem = ev.detail.oldValue;
-                    if (newItem.element !== oldItem.element) {
-                        if (newItem.element.parentNode === this._surfaceElement) {
-                            throw new _ErrorFromName("WinJS.UI.Pivot.DuplicateItem", strings.duplicateItem);
-                        }
-
-                        newItem.element.style.visibility = "hidden";
-                        newItem.element.style.opacity = 0;
-
-                        this._surfaceElement.insertBefore(newItem.element, oldItem.element);
-                        this._surfaceElement.removeChild(oldItem.element);
-
-                        if (index === this._currentIndexOnScreen) {
-                            this.selectedIndex = this._currentIndexOnScreen;
-                        }
-                    }
-
-                    this._headersState.render();
-                    headersStates.common.refreshHeadersState(this, true);
-                },
-
-                _handleItemInserted: function pivot_handleItemInserted(ev) {
-                    // Insert is triggered by binding list insert APIs such as splice(), push(), and unshift().
-                    if (this._pendingItems) {
-                        return;
-                    }
-
-                    var index = ev.detail.index;
-                    var item = ev.detail.value;
-
-                    if (item.element.parentNode === this._surfaceElement) {
-                        throw new _ErrorFromName("WinJS.UI.Pivot.DuplicateItem", strings.duplicateItem);
-                    }
-
-                    item.element.style.visibility = "hidden";
-                    item.element.style.opacity = 0;
-
-                    if (index < this.items.length - 1) {
-                        this._surfaceElement.insertBefore(item.element, this.items.getAt(index + 1).element);
-                    } else {
-                        this._surfaceElement.appendChild(item.element);
-                    }
-
-                    if (index <= this._currentIndexOnScreen) {
-                        this._currentIndexOnScreen++;
-                    }
-
-                    if (this._items.length === 1) {
-                        this.selectedIndex = 0;
-                    }
-
-                    this._headersState.render();
-                    headersStates.common.refreshHeadersState(this, true);
-                },
-
-                _handleItemMoved: function pivot_handleItemMoved(ev) {
-                    // Move is triggered by binding list move() API.
-                    if (this._pendingItems) {
-                        return;
-                    }
-
-                    var oldIndex = ev.detail.oldIndex;
-                    var newIndex = ev.detail.newIndex;
-                    var item = ev.detail.value;
-
-                    if (newIndex < this.items.length - 1) {
-                        this._surfaceElement.insertBefore(item.element, this.items.getAt(newIndex + 1).element);
-                    } else {
-                        this._surfaceElement.appendChild(item.element);
-                    }
-
-                    if (oldIndex < this._currentIndexOnScreen && newIndex >= this._currentIndexOnScreen) {
-                        this._currentIndexOnScreen--;
-                    } else if (newIndex > this._currentIndexOnScreen && oldIndex <= this._currentIndexOnScreen) {
-                        this._currentIndexOnScreen++;
-                    } else if (oldIndex === this._currentIndexOnScreen) {
-                        this.selectedIndex = newIndex;
-                    }
-
-                    this._headersState.render();
-                    headersStates.common.refreshHeadersState(this, true);
-                },
-
-                _handleItemReload: function pivot_handleItemReload() {
-                    // Reload is triggered by large operations on the binding list such as reverse(). This causes
-                    // _pendingItems to be true which ignores future insert/remove/modified/moved events until the new
-                    // items list is applied.
-                    this.items = this.items;
-                },
-
-                _handleItemRemoved: function pivot_handleItemRemoved(ev) {
-                    // Removed is triggered by binding list removal APIs such as splice(), pop(), and shift().
-                    if (this._pendingItems) {
-                        return;
-                    }
-
-                    var item = ev.detail.value;
-                    var index = ev.detail.index;
-
-                    this._surfaceElement.removeChild(item.element);
-
-                    if (index < this._currentIndexOnScreen) {
-                        this._currentIndexOnScreen--;
-                    } else if (index === this._currentIndexOnScreen) {
-                        this.selectedIndex = Math.min(this.items.length - 1, this._currentIndexOnScreen);
-                    }
-
-                    this._headersState.render();
-                    headersStates.common.refreshHeadersState(this, true);
-                },
-
-
-                // Misc helpers
-                _fireEvent: function pivot_fireEvent(type, canBubble, cancelable, detail) {
-                    // Returns true if ev.preventDefault() was not called
-                    var event = _Global.document.createEvent("CustomEvent");
-                    event.initCustomEvent(type, !!canBubble, !!cancelable, detail);
-                    return this.element.dispatchEvent(event);
-                },
-
-                _getDirectionAccessor: function () {
-                    return this._rtl ? "right" : "left";
-                },
-
-                _updateEvents: function pivot_updateEvents(oldItems, newItems) {
-                    if (oldItems) {
-                        oldItems.removeEventListener("itemchanged", this._handleItemChangedBound);
-                        oldItems.removeEventListener("iteminserted", this._handleItemInsertedBound);
-                        oldItems.removeEventListener("itemmoved", this._handleItemMovedBound);
-                        oldItems.removeEventListener("itemremoved", this._handleItemRemovedBound);
-                        oldItems.removeEventListener("reload", this._handleItemReloadBound);
-                    }
-
-                    if (newItems) {
-                        newItems.addEventListener("itemchanged", this._handleItemChangedBound);
-                        newItems.addEventListener("iteminserted", this._handleItemInsertedBound);
-                        newItems.addEventListener("itemmoved", this._handleItemMovedBound);
-                        newItems.addEventListener("itemremoved", this._handleItemRemovedBound);
-                        newItems.addEventListener("reload", this._handleItemReloadBound);
-                    }
-                },
-
-                _updatePointerType: function pivot_updatePointerType(e) {
-                    this._pointerType = e.pointerType || PT_MOUSE;
-                },
-
-                _writeProfilerMark: function pivot_writeProfilerMark(text) {
-                    var message = "WinJS.UI.Pivot:" + this._id + ":" + text;
-                    _WriteProfilerMark(message);
-                    _Log.log && _Log.log(message, null, "pivotprofiler");
-                },
-            }, {
-                _invalidViewportWidth: -1,
-
-                _headerSlideAnimationDuration: 250,
-
-                // Names of classes used by the Pivot.
-                _ClassName: _Constants._ClassName,
-                // Names of events fired by the Pivot.
-                _EventName: {
-                    selectionChanged: eventNames.selectionChanged,
-                    itemAnimationStart: eventNames.itemAnimationStart,
-                    itemAnimationEnd: eventNames.itemAnimationEnd,
-                },
-                // These modes keep track of what initiated a scroll/item navigation.
-                // The precedence for these modes is inertia > api = scroll, meaning
-                // if there is an ongoing pan (inertia), scroll and api calls are
-                // ignored. If there is an api call, then scrolling is ignored, and
-                // only if there is neither a pan nor api call, scrolling code will
-                // execute.
-                _NavigationModes: {
-                    api: "api",
-                    inertia: "inertia",
-                    none: "",
-                    scroll: "scroll",
                 }
-            });
-            _Base.Class.mix(Pivot, _Control.DOMEventMixin);
-
-            var strings = {
-                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
-                get duplicateItem() { return _Resources._getWinJSString("ui/duplicateItem").value; },
-                get invalidContent() { return "Invalid content: Pivot content must be made up of PivotItems."; },
-                get pivotAriaLabel() { return _Resources._getWinJSString("ui/pivotAriaLabel").value; },
-                get pivotViewportAriaLabel() { return _Resources._getWinJSString("ui/pivotViewportAriaLabel").value; }
-            };
-
-            return Pivot;
-        }),
+                return module.Pivot;
+            }
+        }
     });
 });
+
 // Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 define('WinJS/Controls/Hub/_Section',[
     'exports',
@@ -36448,8 +36040,8 @@ define('WinJS/Controls/Hub/_Section',[
         /// <part name="headercontent" class="win-hub-section-header-content" locid="WinJS.UI.HubSection_part:headercontent">The content region of the header region of the HubSection.</part>
         /// <part name="headerchevron" class="win-hub-section-header-chevron" locid="WinJS.UI.HubSection_part:headerchevron">The chevron region of the header region of the HubSection.</part>
         /// <part name="content" class="win-hub-section-content" locid="WinJS.UI.HubSection_part:content">The content region of the HubSection.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         HubSection: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -36704,8 +36296,8 @@ define('WinJS/Controls/Hub',[
         /// <part name="progress" class="win-hub-progress" locid="WinJS.UI.Hub_part:progress">The progress indicator for the Hub.</part>
         /// <part name="viewport" class="win-hub-viewport" locid="WinJS.UI.Hub_part:viewport">The viewport of the Hub.</part>
         /// <part name="surface" class="win-hub-surface" locid="WinJS.UI.Hub_part:surface">The scrollable region of the Hub.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         Hub: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -37539,7 +37131,7 @@ define('WinJS/Controls/Hub',[
                     // Helper method to skip keyboarding and clicks
 
                     while (element && element !== _Global.document.body) {
-                        if (element.classList.contains("win-interactive")) {
+                        if (_ElementUtilities.hasClass(element, "win-interactive")) {
                             return true;
                         }
                         element = element.parentElement;
@@ -38933,7 +38525,7 @@ define('WinJS/Controls/Flyout/_Overlay',[
          .win-menu-containsflyoutcommand button.win-command-flyout-activated:before", [
         { name: "background-color", value: _Accents.ColorTypes.accent },
         { name: "border-color", value: _Accents.ColorTypes.accent },
-    ]);
+         ]);
 
     _Accents.createAccentRule(".win-flyout, .win-settingsflyout", [{ name: "border-color", value: _Accents.ColorTypes.accent }]);
 
@@ -39201,9 +38793,9 @@ define('WinJS/Controls/Flyout/_Overlay',[
                     set: function (hidden) {
                         var currentlyHidden = this.hidden;
                         if (!hidden && currentlyHidden) {
-                            this._show();
+                            this.show();
                         } else if (hidden && !currentlyHidden) {
-                            this._hide();
+                            this.hide();
                         }
                     }
                 },
@@ -39255,11 +38847,14 @@ define('WinJS/Controls/Flyout/_Overlay',[
                             this._queuedToHide = [];
                         }
 
+                        // Do our derived classes show stuff 
+                        this._beforeShow();
+
                         // Send our "beforeShow" event
                         this._sendEvent(_Overlay.beforeShow);
 
                         // Need to measure
-                        this._findPosition();
+                        this._ensurePosition();
 
                         // Make sure it's visible, and fully opaque.
                         // Do the popup thing, sending event afterward.
@@ -39275,8 +38870,13 @@ define('WinJS/Controls/Flyout/_Overlay',[
                     return false;
                 },
 
+                _beforeShow: function _Overlay_beforeShow() {
+                    // Nothing by default
+                },
+
                 // Flyout in particular will need to measure our positioning.
-                _findPosition: function _Overlay_findPosition() {
+                _ensurePosition: function _Overlay_ensurePosition() {
+                    // Nothing by default
                 },
 
                 _baseEndShow: function _Overlay_baseEndShow() {
@@ -39289,9 +38889,6 @@ define('WinJS/Controls/Flyout/_Overlay',[
 
                     this._element.winAnimating = "";
 
-                    // Do our derived classes show stuff
-                    this._endShow();
-
                     // We're shown now
                     if (this._doNext === "show") {
                         this._doNext = "";
@@ -39303,11 +38900,6 @@ define('WinJS/Controls/Flyout/_Overlay',[
 
                     // If we had something queued, do that
                     Scheduler.schedule(this._checkDoNext, Scheduler.Priority.normal, this, "WinJS.UI._Overlay._checkDoNext");
-
-                },
-
-                _endShow: function _Overlay_endShow() {
-                    // Nothing by default
                 },
 
                 _baseHide: function _Overlay_baseHide() {
@@ -39378,6 +38970,9 @@ define('WinJS/Controls/Flyout/_Overlay',[
                         this._doNext = "";
                     }
 
+                    // Do our derived classes hide stuff
+                    this._afterHide();
+
                     // After hiding, send our "afterHide" event
                     this._sendEvent(_Overlay.afterHide);
                     this._writeProfilerMark("hide,StopTM"); // Overlay writes the stop profiler mark for all of its derived classes.
@@ -39396,6 +38991,10 @@ define('WinJS/Controls/Flyout/_Overlay',[
                 // focus move events. _beforeEndHide is a good hook for the Overlay to move focus
                 // elsewhere before its DOM element gets hidden.
                 _beforeEndHide: function _Overlay_beforeEndHide() {
+                    // Nothing by default
+                },
+
+                _afterHide: function _Overlay_afterHide() {
                     // Nothing by default
                 },
 
@@ -40080,8 +39679,8 @@ define('WinJS/Controls/Flyout',[
         /// <event name="beforehide" locid="WinJS.UI.Flyout_e:beforehide">Raised just before hiding a flyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.Flyout_e:afterhide">Raised immediately after a flyout is fully hidden.</event>
         /// <part name="flyout" class="win-flyout" locid="WinJS.UI.Flyout_part:flyout">The Flyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         Flyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -40089,11 +39688,25 @@ define('WinJS/Controls/Flyout',[
                 return _ElementUtilities.convertToPixels(element, _Global.getComputedStyle(element, null)[property]);
             }
 
+            function measureElement(element) {
+                return {
+                    marginTop: getDimension(element, "marginTop"),
+                    marginBottom: getDimension(element, "marginBottom"),
+                    marginLeft: getDimension(element, "marginLeft"),
+                    marginRight: getDimension(element, "marginRight"),
+                    totalWidth: _ElementUtilities.getTotalWidth(element),
+                    totalHeight: _ElementUtilities.getTotalHeight(element),
+                    contentWidth: _ElementUtilities.getContentWidth(element),
+                    contentHeight: _ElementUtilities.getContentHeight(element),
+                };
+            }
+
             var strings = {
                 get ariaLabel() { return _Resources._getWinJSString("ui/flyoutAriaLabel").value; },
                 get noAnchor() { return "Invalid argument: Flyout anchor element not found in DOM."; },
                 get badPlacement() { return "Invalid argument: Flyout placement should be 'top' (default), 'bottom', 'left', 'right', 'auto', 'autohorizontal', or 'autovertical'."; },
-                get badAlignment() { return "Invalid argument: Flyout alignment should be 'center' (default), 'left', or 'right'."; }
+                get badAlignment() { return "Invalid argument: Flyout alignment should be 'center' (default), 'left', or 'right'."; },
+                get noCoordinates() { return "Invalid argument: Flyout coordinates must contain a valid x,y pair."; },
             };
 
             var createEvent = _Events._createEventProperty;
@@ -40150,7 +39763,7 @@ define('WinJS/Controls/Flyout',[
                         }
                     }
                 },
-                
+
                 keyDown: function _LightDismissableLayer_keyDown(client /*: ILightDismissable */, eventObject) {
                     _LightDismissService.keyDown(this, eventObject);
                 },
@@ -40282,31 +39895,37 @@ define('WinJS/Controls/Flyout',[
             },
             {
                 appendFlyout: function _CascadeManager_appendFlyout(flyoutToAdd) {
-                    // PRECONDITION: flyoutToAdd must not already be in the cascade.
-                    _Log.log && this.indexOf(flyoutToAdd) >= 0 && _Log.log('_CascadeManager is attempting to append a Flyout that is already in the cascade.', "winjs _CascadeManager", "error");
                     // PRECONDITION: this.reentrancyLock must be false. appendFlyout should only be called from baseFlyoutShow() which is the function responsible for preventing reentrancy.
                     _Log.log && this.reentrancyLock && _Log.log('_CascadeManager is attempting to append a Flyout through reentrancy.', "winjs _CascadeManager", "error");
 
-                    // IF the anchor element for flyoutToAdd is contained within another flyout,
-                    // && that flyout is currently in the cascadingStack, consider that flyout to be the parent of flyoutToAdd:
-                    //  Remove from the cascadingStack, any subflyout descendants of the parent flyout.
-                    // ELSE flyoutToAdd isn't anchored to any of the Flyouts in the existing cascade
-                    //  Collapse the entire cascadingStack to start a new cascade.
-                    // FINALLY:
-                    //  add flyoutToAdd to the end of the cascading stack. Monitor it for events.
-                    var indexOfParentFlyout = this.indexOfElement(flyoutToAdd._currentAnchor);
-                    if (indexOfParentFlyout >= 0) {
-                        this.collapseFlyout(this.getAt(indexOfParentFlyout + 1));
-                    } else {
-                        this.collapseAll();
-                    }
+                    if (this.indexOf(flyoutToAdd) < 0) {
+                        // IF the anchor element for flyoutToAdd is contained within another flyout,
+                        // && that flyout is currently in the cascadingStack, consider that flyout to be the parent of flyoutToAdd:
+                        //  Remove from the cascadingStack, any subflyout descendants of the parent flyout.
+                        // ELSE flyoutToAdd isn't anchored to any of the Flyouts in the existing cascade
+                        //  Collapse the entire cascadingStack to start a new cascade.
+                        // FINALLY:
+                        //  add flyoutToAdd to the end of the cascading stack. Monitor it for events.
 
-                    flyoutToAdd.element.addEventListener("keydown", this._handleKeyDownInCascade_bound, false);
-                    this._cascadingStack.push(flyoutToAdd);
-                    this._dismissableLayer.shown(flyoutToAdd._dismissable);
+                        var collapseFn = this.collapseAll;
+                        if (flyoutToAdd._positionRequest instanceof PositionRequests.AnchorPositioning) {
+                            var indexOfParentFlyout = this.indexOfElement(flyoutToAdd._positionRequest.anchor);
+                            if (indexOfParentFlyout >= 0) {
+                                collapseFn = function collapseFn() {
+                                    this.collapseFlyout(this.getAt(indexOfParentFlyout + 1));
+                                };
+                            }
+                        }
+                        collapseFn.call(this);
+
+                        flyoutToAdd.element.addEventListener("keydown", this._handleKeyDownInCascade_bound, false);
+                        this._cascadingStack.push(flyoutToAdd);
+                    }
                 },
                 collapseFlyout: function _CascadeManager_collapseFlyout(flyout) {
-                    // Removes flyout param and its subflyout descendants from the _cascadingStack.
+                    // Synchronously removes flyout param and its subflyout descendants from the _cascadingStack.
+                    // Synchronously calls hide on all removed flyouts.
+
                     if (!this.reentrancyLock && flyout && this.indexOf(flyout) >= 0) {
                         this.reentrancyLock = true;
                         var signal = new _Signal();
@@ -40329,6 +39948,9 @@ define('WinJS/Controls/Flyout',[
                         this.unlocked = null;
                         signal.complete();
                     }
+                },
+                flyoutShown: function _CascadeManager_flyoutShown(flyout) {
+                    this._dismissableLayer.shown(flyout._dismissable);
                 },
                 flyoutHiding: function _CascadeManager_flyoutHiding(flyout) {
                     this._dismissableLayer.hiding(flyout._dismissable);
@@ -40417,6 +40039,365 @@ define('WinJS/Controls/Flyout',[
                 bottom: { top: "-50px", left: "0px", keyframe: "WinJS-showFlyoutBottom" },
                 left: { top: "0px", left: "50px", keyframe: "WinJS-showFlyoutLeft" },
                 right: { top: "0px", left: "-50px", keyframe: "WinJS-showFlyoutRight" },
+            };
+
+            var PositionRequests = {
+                AnchorPositioning: _Base.Class.define(function AnchorPositioning_ctor(anchor, placement, alignment) {
+
+                    // We want to position relative to an anchor element. Anchor element is required.
+
+                    // Dereference the anchor if necessary
+                    if (typeof anchor === "string") {
+                        anchor = _Global.document.getElementById(anchor);
+                    } else if (anchor && anchor.element) {
+                        anchor = anchor.element;
+                    }
+
+                    if (!anchor) {
+                        // We expect an anchor
+                        throw new _ErrorFromName("WinJS.UI.Flyout.NoAnchor", strings.noAnchor);
+                    }
+
+                    this.anchor = anchor;
+                    this.placement = placement;
+                    this.alignment = alignment;
+                },
+                {
+                    getTopLeft: function AnchorPositioning_getTopLeft(flyoutMeasurements, isRtl) {
+                        // This determines our positioning.  We have 8 placements, the 1st four are explicit, the last 4 are automatic:
+                        // * top - position explicitly on the top of the anchor, shrinking and adding scrollbar as needed.
+                        // * bottom - position explicitly below the anchor, shrinking and adding scrollbar as needed.
+                        // * left - position left of the anchor, shrinking and adding a vertical scrollbar as needed.
+                        // * right - position right of the anchor, shrinking and adding a vertical scroolbar as needed.
+                        // * _cascade - Private placement algorithm used by MenuCommand._activateFlyoutCommand.
+                        // * auto - Automatic placement.
+                        // * autohorizontal - Automatic placement (only left or right).
+                        // * autovertical - Automatic placement (only top or bottom).
+                        // Auto tests the height of the anchor and the flyout.  For consistency in orientation, we imagine
+                        // that the anchor is placed in the vertical center of the display.  If the flyout would fit above
+                        // that centered anchor, then we will place the flyout vertically in relation to the anchor, otherwise
+                        // placement will be horizontal.
+                        // Vertical auto or autovertical placement will be positioned on top of the anchor if room, otherwise below the anchor.
+                        //   - this is because touch users would be more likely to obscure flyouts below the anchor.
+                        // Horizontal auto or autohorizontal placement will be positioned to the left of the anchor if room, otherwise to the right.
+                        //   - this is because right handed users would be more likely to obscure a flyout on the right of the anchor.
+                        // All three auto placements will add a vertical scrollbar if necessary.
+                        // 
+
+                        var anchorBorderBox;
+
+                        try {
+                            // Anchor needs to be in DOM.
+                            anchorBorderBox = this.anchor.getBoundingClientRect();
+                        }
+                        catch (e) {
+                            throw new _ErrorFromName("WinJS.UI.Flyout.NoAnchor", strings.noAnchor);
+                        }
+
+                        var nextLeft;
+                        var nextTop;
+                        var doesScroll;
+                        var nextAnimOffset;
+                        var verticalMarginBorderPadding = (flyoutMeasurements.totalHeight - flyoutMeasurements.contentHeight);
+                        var nextContentHeight = flyoutMeasurements.contentHeight;
+
+                        function configureVerticalWithScroll(anchorBorderBox) {
+                            // Won't fit top or bottom. Pick the one with the most space and add a scrollbar.
+                            if (topHasMoreRoom(anchorBorderBox)) {
+                                // Top
+                                nextContentHeight = spaceAbove(anchorBorderBox) - verticalMarginBorderPadding;
+                                nextTop = _Overlay._Overlay._keyboardInfo._visibleDocTop;
+                                nextAnimOffset = AnimationOffsets.top;
+                            } else {
+                                // Bottom
+                                nextContentHeight = spaceBelow(anchorBorderBox) - verticalMarginBorderPadding;
+                                nextTop = _Constants.pinToBottomEdge;
+                                nextAnimOffset = AnimationOffsets.bottom;
+                            }
+                            doesScroll = true;
+                        }
+
+                        // If the anchor is centered vertically, would the flyout fit above it?
+                        function fitsVerticallyWithCenteredAnchor(anchorBorderBox, flyoutMeasurements) {
+                            // Returns true if the flyout would always fit at least top 
+                            // or bottom of its anchor, regardless of the position of the anchor, 
+                            // as long as the anchor never changed its height, nor did the height of 
+                            // the visualViewport change.
+                            return ((_Overlay._Overlay._keyboardInfo._visibleDocHeight - anchorBorderBox.height) / 2) >= flyoutMeasurements.totalHeight;
+                        }
+
+                        function spaceAbove(anchorBorderBox) {
+                            return anchorBorderBox.top - _Overlay._Overlay._keyboardInfo._visibleDocTop;
+                        }
+
+                        function spaceBelow(anchorBorderBox) {
+                            return _Overlay._Overlay._keyboardInfo._visibleDocBottom - anchorBorderBox.bottom;
+                        }
+
+                        function topHasMoreRoom(anchorBorderBox) {
+                            return spaceAbove(anchorBorderBox) > spaceBelow(anchorBorderBox);
+                        }
+
+                        // See if we can fit in various places, fitting in the main view,
+                        // ignoring viewport changes, like for the IHM.
+                        function fitTop(bottomConstraint, flyoutMeasurements) {
+                            nextTop = bottomConstraint - flyoutMeasurements.totalHeight;
+                            nextAnimOffset = AnimationOffsets.top;
+                            return (nextTop >= _Overlay._Overlay._keyboardInfo._visibleDocTop &&
+                                    nextTop + flyoutMeasurements.totalHeight <= _Overlay._Overlay._keyboardInfo._visibleDocBottom);
+                        }
+
+                        function fitBottom(topConstraint, flyoutMeasurements) {
+                            nextTop = topConstraint;
+                            nextAnimOffset = AnimationOffsets.bottom;
+                            return (nextTop >= _Overlay._Overlay._keyboardInfo._visibleDocTop &&
+                                    nextTop + flyoutMeasurements.totalHeight <= _Overlay._Overlay._keyboardInfo._visibleDocBottom);
+                        }
+
+                        function fitLeft(leftConstraint, flyoutMeasurements) {
+                            nextLeft = leftConstraint - flyoutMeasurements.totalWidth;
+                            nextAnimOffset = AnimationOffsets.left;
+                            return (nextLeft >= 0 && nextLeft + flyoutMeasurements.totalWidth <= _Overlay._Overlay._keyboardInfo._visualViewportWidth);
+                        }
+
+                        function fitRight(rightConstraint, flyoutMeasurements) {
+                            nextLeft = rightConstraint;
+                            nextAnimOffset = AnimationOffsets.right;
+                            return (nextLeft >= 0 && nextLeft + flyoutMeasurements.totalWidth <= _Overlay._Overlay._keyboardInfo._visualViewportWidth);
+                        }
+
+                        function centerVertically(anchorBorderBox, flyoutMeasurements) {
+                            nextTop = anchorBorderBox.top + anchorBorderBox.height / 2 - flyoutMeasurements.totalHeight / 2;
+                            if (nextTop < _Overlay._Overlay._keyboardInfo._visibleDocTop) {
+                                nextTop = _Overlay._Overlay._keyboardInfo._visibleDocTop;
+                            } else if (nextTop + flyoutMeasurements.totalHeight >= _Overlay._Overlay._keyboardInfo._visibleDocBottom) {
+                                // Flag to pin to bottom edge of visual document.
+                                nextTop = _Constants.pinToBottomEdge;
+                            }
+                        }
+
+                        function alignHorizontally(anchorBorderBox, flyoutMeasurements, alignment) {
+                            if (alignment === "center") {
+                                nextLeft = anchorBorderBox.left + anchorBorderBox.width / 2 - flyoutMeasurements.totalWidth / 2;
+                            } else if (alignment === "left") {
+                                nextLeft = anchorBorderBox.left;
+                            } else if (alignment === "right") {
+                                nextLeft = anchorBorderBox.right - flyoutMeasurements.totalWidth;
+                            } else {
+                                throw new _ErrorFromName("WinJS.UI.Flyout.BadAlignment", strings.badAlignment);
+                            }
+                            if (nextLeft < 0) {
+                                nextLeft = 0;
+                            } else if (nextLeft + flyoutMeasurements.totalWidth >= _Overlay._Overlay._keyboardInfo._visualViewportWidth) {
+                                // Flag to pin to right edge of visible document.
+                                nextLeft = _Constants.pinToRightEdge;
+                            }
+                        }
+
+                        var currentAlignment = this.alignment;
+
+                        // Check fit for requested placement, doing fallback if necessary
+                        switch (this.placement) {
+                            case "top":
+                                if (!fitTop(anchorBorderBox.top, flyoutMeasurements)) {
+                                    // Didn't fit, needs scrollbar
+                                    nextTop = _Overlay._Overlay._keyboardInfo._visibleDocTop;
+                                    doesScroll = true;
+                                    nextContentHeight = spaceAbove(anchorBorderBox) - verticalMarginBorderPadding;
+                                }
+                                alignHorizontally(anchorBorderBox, flyoutMeasurements, currentAlignment);
+                                break;
+                            case "bottom":
+                                if (!fitBottom(anchorBorderBox.bottom, flyoutMeasurements)) {
+                                    // Didn't fit, needs scrollbar
+                                    nextTop = _Constants.pinToBottomEdge;
+                                    doesScroll = true;
+                                    nextContentHeight = spaceBelow(anchorBorderBox) - verticalMarginBorderPadding;
+                                }
+                                alignHorizontally(anchorBorderBox, flyoutMeasurements, currentAlignment);
+                                break;
+                            case "left":
+                                if (!fitLeft(anchorBorderBox.left, flyoutMeasurements)) {
+                                    // Didn't fit, just shove it to edge
+                                    nextLeft = 0;
+                                }
+                                centerVertically(anchorBorderBox, flyoutMeasurements);
+                                break;
+                            case "right":
+                                if (!fitRight(anchorBorderBox.right, flyoutMeasurements)) {
+                                    // Didn't fit, just shove it to edge
+                                    nextLeft = _Constants.pinToRightEdge;
+                                }
+                                centerVertically(anchorBorderBox, flyoutMeasurements);
+                                break;
+                            case "autovertical":
+                                if (!fitTop(anchorBorderBox.top, flyoutMeasurements)) {
+                                    // Didn't fit above (preferred), so go below.
+                                    if (!fitBottom(anchorBorderBox.bottom, flyoutMeasurements)) {
+                                        // Didn't fit, needs scrollbar
+                                        configureVerticalWithScroll(anchorBorderBox);
+                                    }
+                                }
+                                alignHorizontally(anchorBorderBox, flyoutMeasurements, currentAlignment);
+                                break;
+                            case "autohorizontal":
+                                if (!fitLeft(anchorBorderBox.left, flyoutMeasurements)) {
+                                    // Didn't fit left (preferred), so go right.
+                                    if (!fitRight(anchorBorderBox.right, flyoutMeasurements)) {
+                                        // Didn't fit,just shove it to edge
+                                        nextLeft = _Constants.pinToRightEdge;
+                                    }
+                                }
+                                centerVertically(anchorBorderBox, flyoutMeasurements);
+                                break;
+                            case "auto":
+                                // Auto, if the anchor was in the vertical center of the display would we fit above it?
+                                if (fitsVerticallyWithCenteredAnchor(anchorBorderBox, flyoutMeasurements)) {
+                                    // It will fit above or below the anchor
+                                    if (!fitTop(anchorBorderBox.top, flyoutMeasurements)) {
+                                        // Didn't fit above (preferred), so go below.
+                                        fitBottom(anchorBorderBox.bottom, flyoutMeasurements);
+                                    }
+                                    alignHorizontally(anchorBorderBox, flyoutMeasurements, currentAlignment);
+                                } else {
+                                    // Won't fit above or below, try a side
+                                    if (!fitLeft(anchorBorderBox.left, flyoutMeasurements) &&
+                                        !fitRight(anchorBorderBox.right, flyoutMeasurements)) {
+                                        // Didn't fit left or right either
+                                        configureVerticalWithScroll(anchorBorderBox);
+                                        alignHorizontally(anchorBorderBox, flyoutMeasurements, currentAlignment);
+                                    } else {
+                                        centerVertically(anchorBorderBox, flyoutMeasurements);
+                                    }
+                                }
+                                break;
+                            case "_cascade":
+
+                                // Vertical Alignment:
+                                // PREFERRED:
+                                // When there is enough room to align a subMenu to either the top or the bottom of its
+                                // anchor element, the subMenu prefers to be top aligned.
+                                // FALLBACK:
+                                // When there is enough room to bottom align a subMenu but not enough room to top align it, 
+                                // then the subMenu will align to the bottom of its anchor element.
+                                // LASTRESORT:
+                                // When there is not enough room to top align or bottom align the subMenu to its anchor,
+                                // then the subMenu will be center aligned to it's anchor's vertical midpoint.
+                                if (!fitBottom(anchorBorderBox.top - flyoutMeasurements.marginTop, flyoutMeasurements) && !fitTop(anchorBorderBox.bottom + flyoutMeasurements.marginBottom, flyoutMeasurements)) {
+                                    centerVertically(anchorBorderBox, flyoutMeasurements);
+                                }
+
+                                // Cascading Menus should overlap their ancestor menu horizontally by 4 pixels and we have a 
+                                // unit test to verify that behavior. Because we don't have access to the ancestor flyout we 
+                                // need to specify the overlap in terms of our anchor element. There is a 1px border around 
+                                // the menu that contains our anchor we need to overlap our anchor by 3px to ensure that we 
+                                // overlap the containing Menu by 4px.
+                                var horizontalOverlap = 3;
+
+                                // Horizontal Placement:
+                                // PREFERRED:
+                                // When there is enough room to fit a subMenu on either side of the anchor,
+                                // the subMenu prefers to go on the right hand side.
+                                // FALLBACK:
+                                // When there is only enough room to fit a subMenu on the left side of the anchor,
+                                // the subMenu is placed to the left of the parent menu.
+                                // LASTRESORT:
+                                // When there is not enough room to fit a subMenu on either side of the anchor,
+                                // the subMenu is pinned to the right edge of the window.
+                                var beginRight = anchorBorderBox.right - flyoutMeasurements.marginLeft - horizontalOverlap;
+                                var beginLeft = anchorBorderBox.left + flyoutMeasurements.marginRight + horizontalOverlap;
+
+                                if (isRtl) {
+                                    if (!fitLeft(beginLeft, flyoutMeasurements) && !fitRight(beginRight, flyoutMeasurements)) {
+                                        // Doesn't fit on either side, pin to the left edge.
+                                        nextLeft = 0;
+                                        nextAnimOffset = AnimationOffsets.left;
+                                    }
+                                } else {
+                                    if (!fitRight(beginRight, flyoutMeasurements) && !fitLeft(beginLeft, flyoutMeasurements)) {
+                                        // Doesn't fit on either side, pin to the right edge of the visible document.
+                                        nextLeft = _Constants.pinToRightEdge;
+                                        nextAnimOffset = AnimationOffsets.right;
+                                    }
+                                }
+
+                                break;
+                            default:
+                                // Not a legal placement value
+                                throw new _ErrorFromName("WinJS.UI.Flyout.BadPlacement", strings.badPlacement);
+                        }
+
+                        return {
+                            left: nextLeft,
+                            top: nextTop,
+                            animOffset: nextAnimOffset,
+                            doesScroll: doesScroll,
+                            contentHeight: nextContentHeight,
+                            verticalMarginBorderPadding: verticalMarginBorderPadding,
+                        };
+                    },
+                }),
+                CoordinatePositioning: _Base.Class.define(function CoordinatePositioning_ctor(coordinates) {
+                    // Normalize coordinates since they could be a mouse/pointer event object or an {x,y} pair.
+                    if (coordinates.clientX === +coordinates.clientX &&
+                        coordinates.clientY === +coordinates.clientY) {
+
+                        var temp = coordinates;
+
+                        coordinates = {
+                            x: temp.clientX,
+                            y: temp.clientY,
+                        };
+
+                    } else if (coordinates.x !== +coordinates.x ||
+                        coordinates.y !== +coordinates.y) {
+
+                        // We expect an x,y pair of numbers.
+                        throw new _ErrorFromName("WinJS.UI.Flyout.NoCoordinates", strings.noCoordinates);
+                    }
+                    this.coordinates = coordinates;
+                }, {
+                    getTopLeft: function CoordinatePositioning_getTopLeft(flyoutMeasurements, isRtl) {
+                        // This determines our positioning.
+                        // The top left corner of the Flyout border box is rendered at the specified coordinates
+
+                        // Place the top left of the Flyout's border box at the specified coordinates.
+                        // If we are in RTL, position the top right of the Flyout's border box instead.
+                        var currentCoordinates = this.coordinates;
+                        var widthOfBorderBox = (flyoutMeasurements.totalWidth - flyoutMeasurements.marginLeft - flyoutMeasurements.marginRight);
+                        var adjustForRTL = isRtl ? widthOfBorderBox : 0;
+
+                        var verticalMarginBorderPadding = (flyoutMeasurements.totalHeight - flyoutMeasurements.contentHeight);
+                        var nextContentHeight = flyoutMeasurements.contentHeight;
+                        var nextTop = currentCoordinates.y - flyoutMeasurements.marginTop;
+                        var nextLeft = currentCoordinates.x - flyoutMeasurements.marginLeft - adjustForRTL;
+
+                        if (nextTop < 0) {
+                            // Overran top, pin to top edge.
+                            nextTop = 0;
+                        } else if (nextTop + flyoutMeasurements.totalHeight > _Overlay._Overlay._keyboardInfo._visibleDocBottom) {
+                            // Overran bottom, pin to bottom edge.
+                            nextTop = _Constants.pinToBottomEdge;
+                        }
+
+                        if (nextLeft < 0) {
+                            // Overran left, pin to left edge.
+                            nextLeft = 0;
+                        } else if (nextLeft + flyoutMeasurements.totalWidth > _Overlay._Overlay._keyboardInfo._visualViewportWidth) {
+                            // Overran right, pin to right edge.
+                            nextLeft = _Constants.pinToRightEdge;
+                        }
+
+                        return {
+                            left: nextLeft,
+                            top: nextTop,
+                            verticalMarginBorderPadding: verticalMarginBorderPadding,
+                            contentHeight: nextContentHeight,
+                            doesScroll: false,
+                            animOffset: AnimationOffsets.top,
+                        };
+                    },
+                }),
             };
 
             var Flyout = _Base.Class.derive(_Overlay._Overlay, function Flyout_ctor(element, options) {
@@ -40630,11 +40611,36 @@ define('WinJS/Controls/Flyout',[
                     /// <compatibleWith platform="Windows" minVersion="8.0"/>
                     /// </signature>
                     this._writeProfilerMark("show,StartTM"); // The corresponding "stop" profiler mark is handled in _Overlay._baseEndShow().
-                    this._show(anchor, placement, alignment);
+
+                    // Pick up defaults
+                    this._positionRequest = new PositionRequests.AnchorPositioning(
+                        anchor || this._anchor,
+                        placement || this._placement,
+                        alignment || this._alignment
+                    );
+
+                    this._show();
                 },
 
-                _show: function Flyout_show(anchor, placement, alignment) {
-                    this._baseFlyoutShow(anchor, placement, alignment);
+                _show: function Flyout_show() {
+                    this._baseFlyoutShow();
+                },
+
+                /// <signature helpKeyword="WinJS.UI.Flyout.showAt">
+                /// <summary locid="WinJS.UI.Flyout.showAt">
+                /// Shows the Flyout, if hidden, at the specified (x,y) coordinates.
+                /// </summary>
+                /// <param name="coordinates" type="Object" locid="WinJS.UI.Flyout.showAt_p:coordinates">
+                /// An Object specifying the (X,Y) position to render the top left corner of the Flyout. commands to show. 
+                /// The coordinates object may be a MouseEventObj, or an Object in the shape of {x:number, y:number}.
+                /// </param>
+                /// </signature>
+                showAt: function Flyout_showAt(coordinates) {
+                    this._writeProfilerMark("show,StartTM"); // The corresponding "stop" profiler mark is handled in _Overlay._baseEndShow().
+
+                    this._positionRequest = new PositionRequests.CoordinatePositioning(coordinates);
+
+                    this._show();
                 },
 
                 hide: function () {
@@ -40664,55 +40670,25 @@ define('WinJS/Controls/Flyout',[
                     Flyout._cascadeManager.flyoutHidden(this);
                 },
 
-                _baseFlyoutShow: function Flyout_baseFlyoutShow(anchor, placement, alignment) {
+                _baseFlyoutShow: function Flyout_baseFlyoutShow() {
                     if (this.disabled || this._disposed) {
                         // Don't do anything.
                         return;
                     }
 
-                    // Pick up defaults
-                    if (!anchor) {
-                        anchor = this._anchor;
-                    }
-                    if (!placement) {
-                        placement = this._placement;
-                    }
-                    if (!alignment) {
-                        alignment = this._alignment;
-                    }
+                    // If we're animating (eg baseShow is going to fail), or the cascadeManager is in the middle of 
+                    // updating the cascade, then don't mess up our current state.
+                    // Add this flyout to the correct position in the cascadingStack, first collapsing flyouts 
+                    // in the current stack that are not anchored ancestors to this flyout.
+                    Flyout._cascadeManager.appendFlyout(this);
 
-                    // Dereference the anchor if necessary
-                    if (typeof anchor === "string") {
-                        anchor = _Global.document.getElementById(anchor);
-                    } else if (anchor && anchor.element) {
-                        anchor = anchor.element;
-                    }
-
-                    // We expect an anchor
-                    if (!anchor) {
-                        // If we have _nextLeft, etc., then we were continuing an old animation, so that's OK
-                        if (!this._reuseCurrent) {
-                            throw new _ErrorFromName("WinJS.UI.Flyout.NoAnchor", strings.noAnchor);
-                        }
-                        // Last call was incomplete, so reuse the previous _current values.
-                        this._reuseCurrent = null;
-                    } else {
-                        // Remember the anchor so that if we lose focus we can go back
-                        this._currentAnchor = anchor;
-                        // Remember current values
-                        this._currentPlacement = placement;
-                        this._currentAlignment = alignment;
-                    }
-
-                    // If we're animating (eg baseShow is going to fail), or the cascadeManager is in the middle of a updating the cascade,
-                    // then don't mess up our current state.
+                    // If we're animating (eg baseShow is going to fail), or the cascadeManager is in the 
+                    // middle of updating the cascade, then we have to try again later.
                     if (this._element.winAnimating) {
-                        this._reuseCurrent = true;
                         // Queue us up to wait for the current animation to finish.
                         // _checkDoNext() is always scheduled after the current animation completes.
                         this._doNext = "show";
                     } else if (Flyout._cascadeManager.reentrancyLock) {
-                        this._reuseCurrent = true;
                         // Queue us up to wait for the current animation to finish.
                         // Schedule a call to _checkDoNext() for when the cascadeManager unlocks.
                         this._doNext = "show";
@@ -40749,7 +40725,7 @@ define('WinJS/Controls/Flyout',[
                                 finalDiv.tabIndex = _ElementUtilities._getHighestTabIndexInList(_elms);
                             }
 
-                            Flyout._cascadeManager.appendFlyout(this);
+                            Flyout._cascadeManager.flyoutShown(this);
                         }
                     }
                 },
@@ -40759,51 +40735,44 @@ define('WinJS/Controls/Flyout',[
                 },
 
                 // Find our new flyout position.
-                _findPosition: function Flyout_findPosition() {
-                    this._adjustedHeight = 0;
-                    this._nextTop = 0;
-                    this._nextLeft = 0;
+                _ensurePosition: function Flyout_ensurePosition() {
                     this._keyboardMovedUs = false;
-                    this._doesScroll = false;
-
-                    // Make sure menu commands display correctly
-                    if (this._checkMenuCommands) {
-                        this._checkMenuCommands();
-                    }
 
                     // Remove old height restrictions and scrolling.
                     this._clearAdjustedStyles();
 
-                    this._setAlignment(this._currentAlignment);
+                    this._setAlignment();
 
                     // Set up the new position, and prep the offset for showPopup.
-                    this._getTopLeft();
+                    var flyoutMeasurements = measureElement(this._element);
+                    var isRtl = _Global.getComputedStyle(this._element).direction === "rtl";
+                    this._currentPosition = this._positionRequest.getTopLeft(flyoutMeasurements, isRtl);
 
                     // Adjust position
-                    if (this._nextTop < 0) {
+                    if (this._currentPosition.top < 0) {
                         // Overran bottom, attach to bottom.
                         this._element.style.bottom = _Overlay._Overlay._keyboardInfo._visibleDocBottomOffset + "px";
                         this._element.style.top = "auto";
                     } else {
                         // Normal, set top
-                        this._element.style.top = this._nextTop + "px";
+                        this._element.style.top = this._currentPosition.top + "px";
                         this._element.style.bottom = "auto";
                     }
-                    if (this._nextLeft < 0) {
+                    if (this._currentPosition.left < 0) {
                         // Overran right, attach to right
                         this._element.style.right = "0px";
                         this._element.style.left = "auto";
                     } else {
                         // Normal, set left
-                        this._element.style.left = this._nextLeft + "px";
+                        this._element.style.left = this._currentPosition.left + "px";
                         this._element.style.right = "auto";
                     }
 
                     // Adjust height/scrollbar
-                    if (this._doesScroll) {
+                    if (this._currentPosition.doesScroll) {
                         _ElementUtilities.addClass(this._element, _Constants.scrollsClass);
                         this._lastMaxHeight = this._element.style.maxHeight;
-                        this._element.style.maxHeight = this._adjustedHeight + "px";
+                        this._element.style.maxHeight = this._currentPosition.contentHeight + "px";
                     }
 
                     // May need to adjust if the IHM is showing.
@@ -40817,279 +40786,6 @@ define('WinJS/Controls/Flyout',[
                     }
                 },
 
-                // This determines our positioning.  We have 8 modes, the 1st four are explicit, the last 4 are automatic:
-                // * top - position explicitly on the top of the anchor, shrinking and adding scrollbar as needed.
-                // * bottom - position explicitly below the anchor, shrinking and adding scrollbar as needed.
-                // * left - position left of the anchor, shrinking and adding a vertical scrollbar as needed.
-                // * right - position right of the anchor, shrinking and adding a vertical scroolbar as needed.
-                // * auto - Automatic placement.
-                // * autohorizontal - Automatic placement (only left or right).
-                // * autovertical - Automatic placement (only top or bottom).
-                // * _cascasde - Private placement used by MenuCommand._activateFlyoutCommand
-                // Auto tests the height of the anchor and the flyout.  For consistency in orientation, we imagine
-                // that the anchor is placed in the vertical center of the display.  If the flyout would fit above
-                // that centered anchor, then we will place the flyout vertically in relation to the anchor, otherwise
-                // placement will be horizontal.
-                // Vertical auto or autovertical placement will be positioned on top of the anchor if room, otherwise below the anchor.
-                //   - this is because touch users would be more likely to obscure flyouts below the anchor.
-                // Horizontal auto or autohorizontal placement will be positioned to the left of the anchor if room, otherwise to the right.
-                //   - this is because right handed users would be more likely to obscure a flyout on the right of the anchor.
-                // All three auto placements will add a vertical scrollbar if necessary.
-                // 
-                _getTopLeft: function Flyout_getTopLeft() {
-
-                    var that = this;
-
-                    function configureVerticalWithScroll(anchor) {
-                        // Won't fit top or bottom. Pick the one with the most space and add a scrollbar.
-                        if (topHasMoreRoom(anchor)) {
-                            // Top
-                            that._adjustedHeight = spaceAbove(anchor) - that._verticalMarginBorderPadding;
-                            that._nextTop = _Overlay._Overlay._keyboardInfo._visibleDocTop;
-                            that._nextAnimOffset = AnimationOffsets.top;
-                        } else {
-                            // Bottom
-                            that._adjustedHeight = spaceBelow(anchor) - that._verticalMarginBorderPadding;
-                            that._nextTop = _Constants.pinToBottomEdge;
-                            that._nextAnimOffset = AnimationOffsets.bottom;
-                        }
-                        that._doesScroll = true;
-                    }
-
-                    // If the anchor is centered vertically, would the flyout fit above it?
-                    function fitsVerticallyWithCenteredAnchor(anchor, flyout) {
-                        // Returns true if the flyout would always fit at least top 
-                        // or bottom of its anchor, regardless of the position of the anchor, 
-                        // as long as the anchor never changed its height, nor did the height of 
-                        // the visualViewport change.
-                        return ((_Overlay._Overlay._keyboardInfo._visibleDocHeight - anchor.height) / 2) >= flyout.totalHeight;
-                    }
-
-                    function spaceAbove(anchor) {
-                        return anchor.top - _Overlay._Overlay._keyboardInfo._visibleDocTop;
-                    }
-
-                    function spaceBelow(anchor) {
-                        return _Overlay._Overlay._keyboardInfo._visibleDocBottom - anchor.bottom;
-                    }
-
-                    function topHasMoreRoom(anchor) {
-                        return spaceAbove(anchor) > spaceBelow(anchor);
-                    }
-
-                    // See if we can fit in various places, fitting in the main view,
-                    // ignoring viewport changes, like for the IHM.
-                    function fitTop(bottomConstraint, flyout) {
-                        that._nextTop = bottomConstraint - flyout.totalHeight;
-                        that._nextAnimOffset = AnimationOffsets.top;
-                        return (that._nextTop >= _Overlay._Overlay._keyboardInfo._visibleDocTop &&
-                                that._nextTop + flyout.totalHeight <= _Overlay._Overlay._keyboardInfo._visibleDocBottom);
-                    }
-
-                    function fitBottom(topConstraint, flyout) {
-                        that._nextTop = topConstraint;
-                        that._nextAnimOffset = AnimationOffsets.bottom;
-                        return (that._nextTop >= _Overlay._Overlay._keyboardInfo._visibleDocTop &&
-                                that._nextTop + flyout.totalHeight <= _Overlay._Overlay._keyboardInfo._visibleDocBottom);
-                    }
-
-                    function fitLeft(leftConstraint, flyout) {
-                        that._nextLeft = leftConstraint - flyout.totalWidth;
-                        that._nextAnimOffset = AnimationOffsets.left;
-                        return (that._nextLeft >= 0 && that._nextLeft + flyout.totalWidth <= _Overlay._Overlay._keyboardInfo._visualViewportWidth);
-                    }
-
-                    function fitRight(rightConstraint, flyout) {
-                        that._nextLeft = rightConstraint;
-                        that._nextAnimOffset = AnimationOffsets.right;
-                        return (that._nextLeft >= 0 && that._nextLeft + flyout.totalWidth <= _Overlay._Overlay._keyboardInfo._visualViewportWidth);
-                    }
-
-                    function centerVertically(anchor, flyout) {
-                        that._nextTop = anchor.top + anchor.height / 2 - flyout.totalHeight / 2;
-                        if (that._nextTop < _Overlay._Overlay._keyboardInfo._visibleDocTop) {
-                            that._nextTop = _Overlay._Overlay._keyboardInfo._visibleDocTop;
-                        } else if (that._nextTop + flyout.totalHeight >= _Overlay._Overlay._keyboardInfo._visibleDocBottom) {
-                            // Flag to pin to bottom edge of visual document.
-                            that._nextTop = _Constants.pinToBottomEdge;
-                        }
-                    }
-
-                    function alignHorizontally(anchor, flyout, alignment) {
-                        if (alignment === "center") {
-                            that._nextLeft = anchor.left + anchor.width / 2 - flyout.totalWidth / 2;
-                        } else if (alignment === "left") {
-                            that._nextLeft = anchor.left;
-                        } else if (alignment === "right") {
-                            that._nextLeft = anchor.right - flyout.totalWidth;
-                        } else {
-                            throw new _ErrorFromName("WinJS.UI.Flyout.BadAlignment", strings.badAlignment);
-                        }
-                        if (that._nextLeft < 0) {
-                            that._nextLeft = 0;
-                        } else if (that._nextLeft + flyout.totalWidth >= _Overlay._Overlay._keyboardInfo._visualViewportWidth) {
-                            // Flag to pin to right edge of visible document.
-                            that._nextLeft = _Constants.pinToRightEdge;
-                        }
-                    }
-
-                    var anchorRawRectangle,
-                        flyout = {},
-                        anchor = {};
-
-                    try {
-                        anchorRawRectangle = this._currentAnchor.getBoundingClientRect();
-                    }
-                    catch (e) {
-                        throw new _ErrorFromName("WinJS.UI.Flyout.NoAnchor", strings.noAnchor);
-                    }
-
-                    // Adjust for the anchor's margins.
-                    anchor.top = anchorRawRectangle.top;
-                    anchor.bottom = anchorRawRectangle.bottom;
-                    anchor.left = anchorRawRectangle.left;
-                    anchor.right = anchorRawRectangle.right;
-                    anchor.height = anchor.bottom - anchor.top;
-                    anchor.width = anchor.right - anchor.left;
-
-                    // Get our flyout and margins, note that getDimension calls
-                    // window.getComputedStyle, which ensures layout is updated.
-                    flyout.marginTop = getDimension(this._element, "marginTop");
-                    flyout.marginBottom = getDimension(this._element, "marginBottom");
-                    flyout.marginLeft = getDimension(this._element, "marginLeft");
-                    flyout.marginRight = getDimension(this._element, "marginRight");
-                    flyout.totalWidth = _ElementUtilities.getTotalWidth(this._element);
-                    flyout.totalHeight = _ElementUtilities.getTotalHeight(this._element);
-                    flyout.contentWidth = _ElementUtilities.getContentWidth(this._element);
-                    flyout.contentHeight = _ElementUtilities.getContentHeight(this._element);
-                    this._verticalMarginBorderPadding = (flyout.totalHeight - flyout.contentHeight);
-                    this._adjustedHeight = flyout.contentHeight;
-
-                    // Check fit for requested this._currentPlacement, doing fallback if necessary
-                    switch (this._currentPlacement) {
-                        case "top":
-                            if (!fitTop(anchor.top, flyout)) {
-                                // Didn't fit, needs scrollbar
-                                this._nextTop = _Overlay._Overlay._keyboardInfo._visibleDocTop;
-                                this._doesScroll = true;
-                                this._adjustedHeight = spaceAbove(anchor) - this._verticalMarginBorderPadding;
-                            }
-                            alignHorizontally(anchor, flyout, this._currentAlignment);
-                            break;
-                        case "bottom":
-                            if (!fitBottom(anchor.bottom, flyout)) {
-                                // Didn't fit, needs scrollbar
-                                this._nextTop = _Constants.pinToBottomEdge;
-                                this._doesScroll = true;
-                                this._adjustedHeight = spaceBelow(anchor) - this._verticalMarginBorderPadding;
-                            }
-                            alignHorizontally(anchor, flyout, this._currentAlignment);
-                            break;
-                        case "left":
-                            if (!fitLeft(anchor.left, flyout)) {
-                                // Didn't fit, just shove it to edge
-                                this._nextLeft = 0;
-                            }
-                            centerVertically(anchor, flyout);
-                            break;
-                        case "right":
-                            if (!fitRight(anchor.right, flyout)) {
-                                // Didn't fit, just shove it to edge
-                                this._nextLeft = _Constants.pinToRightEdge;
-                            }
-                            centerVertically(anchor, flyout);
-                            break;
-                        case "autovertical":
-                            if (!fitTop(anchor.top, flyout)) {
-                                // Didn't fit above (preferred), so go below.
-                                if (!fitBottom(anchor.bottom, flyout)) {
-                                    // Didn't fit, needs scrollbar
-                                    configureVerticalWithScroll(anchor);
-                                }
-                            }
-                            alignHorizontally(anchor, flyout, this._currentAlignment);
-                            break;
-                        case "autohorizontal":
-                            if (!fitLeft(anchor.left, flyout)) {
-                                // Didn't fit left (preferred), so go right.
-                                if (!fitRight(anchor.right, flyout)) {
-                                    // Didn't fit,just shove it to edge
-                                    this._nextLeft = _Constants.pinToRightEdge;
-                                }
-                            }
-                            centerVertically(anchor, flyout);
-                            break;
-                        case "auto":
-                            // Auto, if the anchor was in the vertical center of the display would we fit above it?
-                            if (fitsVerticallyWithCenteredAnchor(anchor, flyout)) {
-                                // It will fit above or below the anchor
-                                if (!fitTop(anchor.top, flyout)) {
-                                    // Didn't fit above (preferred), so go below.
-                                    fitBottom(anchor.bottom, flyout);
-                                }
-                                alignHorizontally(anchor, flyout, this._currentAlignment);
-                            } else {
-                                // Won't fit above or below, try a side
-                                if (!fitLeft(anchor.left, flyout) &&
-                                    !fitRight(anchor.right, flyout)) {
-                                    // Didn't fit left or right either
-                                    configureVerticalWithScroll(anchor);
-                                    alignHorizontally(anchor, flyout, this._currentAlignment);
-                                } else {
-                                    centerVertically(anchor, flyout);
-                                }
-                            }
-                            break;
-                        case "_cascade": 
-                            // Align vertically
-                            // PREFERRED: When there is enough room to align a subMenu to either the top or the bottom of its
-                            // anchor element, the subMenu prefers to be top aligned.
-                            // FALLBACK: When there is enough room to bottom align a subMenu but not enough room to top align it, 
-                            // then the subMenu will align to the bottom of its anchor element.
-                            // LASTRESORT: When there is not enough room to top align or bottom align the subMenu to its anchor,
-                            // then the subMenu will be center aligned to it's anchor's vertical midpoint.
-                            if (!fitBottom(anchor.top - flyout.marginTop, flyout) && !fitTop(anchor.bottom + flyout.marginBottom, flyout)) {
-                                centerVertically(anchor, flyout);
-                            }
-                            // Determine horizontal direction
-                            // PREFERRED: When there is enough room to fit a subMenu on either side of the anchor,
-                            // the subMenu prefers to go on the right hand side.
-                            // FALLBACK: When there is only enough room to fit a subMenu on the left side of the anchor,
-                            // the subMenu is placed to the left of the parent menu.
-                            // LASTRESORT: When there is not enough room to fit a subMenu on either side of the anchor,
-                            // the subMenu is pinned to the right edge of the window.
-                            var rtl = _Global.getComputedStyle(this._element).direction === "rtl";
-
-                            // Cascading Menus should overlap their ancestor menu by 4 pixels and we have a unit test to 
-                            // verify that behavior. Because we don't have access to the ancestor flyout we need to specify
-                            // the overlap in terms of our anchor element. There is a 1px border around the menu that 
-                            // contains our anchor we need to overlap our anchor by 3px to ensure that we overlap the containing 
-                            // Menu by 4px.
-                            var pixelsToOverlapAnchor = 3;
-
-                            var beginRight = anchor.right - flyout.marginLeft - pixelsToOverlapAnchor;
-                            var beginLeft = anchor.left + flyout.marginRight + pixelsToOverlapAnchor;
-
-                            if (rtl) {
-                                if (!fitLeft(beginLeft, flyout) && !fitRight(beginRight, flyout)) {
-                                    // Doesn't fit on either side, pin to the left edge.
-                                    that._nextLeft = 0;
-                                    that._nextAnimOffset = AnimationOffsets.left;
-                                }
-                            } else {
-                                if (!fitRight(beginRight, flyout) && !fitLeft(beginLeft, flyout)) {
-                                    // Doesn't fit on either side, pin to the right edge of the visible document.
-                                    that._nextLeft = _Constants.pinToRightEdge;
-                                    that._nextAnimOffset = AnimationOffsets.right;
-                                }
-                            }
-
-                            break;
-                        default:
-                            // Not a legal this._currentPlacement value
-                            throw new _ErrorFromName("WinJS.UI.Flyout.BadPlacement", strings.badPlacement);
-                    }
-                },
 
                 _clearAdjustedStyles: function Flyout_clearAdjustedStyles() {
                     // Move to 0,0 in case it is off screen, so that it lays out at a reasonable size
@@ -41110,17 +40806,16 @@ define('WinJS/Controls/Flyout',[
                     _ElementUtilities.removeClass(this._element, "win-leftalign");
                 },
 
-                _setAlignment: function Flyout_setAlignment(alignment) {
+                _setAlignment: function Flyout_setAlignment() {
                     // Alignment
-                    switch (alignment) {
+                    switch (this._positionRequest.alignment) {
                         case "left":
                             _ElementUtilities.addClass(this._element, "win-leftalign");
                             break;
                         case "right":
                             _ElementUtilities.addClass(this._element, "win-rightalign");
                             break;
-                        case "center":
-                        case "none":
+                        default:
                             break;
                     }
                 },
@@ -41158,7 +40853,7 @@ define('WinJS/Controls/Flyout',[
                             var that = this;
                             _BaseUtils._setImmediate(function () {
                                 if (!that.hidden || that._animating) {
-                                    that._findPosition();
+                                    that._ensurePosition();
                                 }
                             });
                             this._needToHandleHidingKeyboard = false;
@@ -41175,19 +40870,19 @@ define('WinJS/Controls/Flyout',[
 
                     var keyboardMovedUs = false;
                     var viewportHeight = _Overlay._Overlay._keyboardInfo._visibleDocHeight;
-                    var adjustedMarginBoxHeight = this._adjustedHeight + this._verticalMarginBorderPadding;
+                    var adjustedMarginBoxHeight = this._currentPosition.contentHeight + this._currentPosition.verticalMarginBorderPadding;
                     if (adjustedMarginBoxHeight > viewportHeight) {
                         // The Flyout is now too tall to fit in the viewport, pin to top and adjust height.
                         keyboardMovedUs = true;
-                        this._nextTop = _Constants.pinToBottomEdge;
-                        this._adjustedHeight = viewportHeight - this._verticalMarginBorderPadding;
-                        this._doesScroll = true;
-                    } else if (this._nextTop >= 0 &&
-                        this._nextTop + adjustedMarginBoxHeight > _Overlay._Overlay._keyboardInfo._visibleDocBottom) {
+                        this._currentPosition.top = _Constants.pinToBottomEdge;
+                        this._currentPosition.contentHeight = viewportHeight - this._currentPosition.verticalMarginBorderPadding;
+                        this._currentPosition.doesScroll = true;
+                    } else if (this._currentPosition.top >= 0 &&
+                        this._currentPosition.top + adjustedMarginBoxHeight > _Overlay._Overlay._keyboardInfo._visibleDocBottom) {
                         // Flyout clips the bottom of the viewport. Pin to bottom.
-                        this._nextTop = _Constants.pinToBottomEdge;
+                        this._currentPosition.top = _Constants.pinToBottomEdge;
                         keyboardMovedUs = true;
-                    } else if (this._nextTop === _Constants.pinToBottomEdge) {
+                    } else if (this._currentPosition.top === _Constants.pinToBottomEdge) {
                         // We were already pinned to the bottom, so our position on screen will change
                         keyboardMovedUs = true;
                     }
@@ -41198,14 +40893,14 @@ define('WinJS/Controls/Flyout',[
 
                 _adjustForKeyboard: function Flyout_adjustForKeyboard() {
                     // Keyboard moved us, update our metrics as needed
-                    if (this._doesScroll) {
+                    if (this._currentPosition.doesScroll) {
                         // Add scrollbar if we didn't already have scrollsClass
                         if (!this._lastMaxHeight) {
                             _ElementUtilities.addClass(this._element, _Constants.scrollsClass);
                             this._lastMaxHeight = this._element.style.maxHeight;
                         }
                         // Adjust height
-                        this._element.style.maxHeight = this._adjustedHeight + "px";
+                        this._element.style.maxHeight = this._currentPosition.contentHeight + "px";
                     }
 
                     // Update top/bottom
@@ -41227,7 +40922,7 @@ define('WinJS/Controls/Flyout',[
                             var that = this;
                             _BaseUtils._setImmediate(function () {
                                 if (!that.hidden || that._animating) {
-                                    that._findPosition();
+                                    that._ensurePosition();
                                 }
                             });
                         }
@@ -41240,13 +40935,13 @@ define('WinJS/Controls/Flyout',[
                     }
 
                     // May need to adjust top by viewport offset
-                    if (this._nextTop < 0) {
+                    if (this._currentPosition.top < 0) {
                         // Need to attach to bottom
                         this._element.style.bottom = _Overlay._Overlay._keyboardInfo._visibleDocBottomOffset + "px";
                         this._element.style.top = "auto";
                     } else {
                         // Normal, attach to top
-                        this._element.style.top = this._nextTop + "px";
+                        this._element.style.top = this._currentPosition.top + "px";
                         this._element.style.bottom = "auto";
                     }
                 },
@@ -41258,7 +40953,7 @@ define('WinJS/Controls/Flyout',[
                     } else {
                         this._element.style.opacity = 1;
                         this._element.style.visibility = "visible";
-                        return Animations.showPopup(this._element, this._nextAnimOffset);
+                        return Animations.showPopup(this._element, this._currentPosition.animOffset);
                     }
                 },
 
@@ -41267,7 +40962,7 @@ define('WinJS/Controls/Flyout',[
                         return this._baseAnimateOut();
                     } else {
                         this._element.style.opacity = 0;
-                        return Animations.hidePopup(this._element, this._nextAnimOffset);
+                        return Animations.hidePopup(this._element, this._currentPosition.animOffset);
                     }
                 },
 
@@ -41370,6 +41065,8 @@ define('WinJS/Controls/CommandingSurface/_Constants',["require", "exports"], fun
         emptyCommandingSurfaceCssClass: "win-commandingsurface-empty",
         menuCssClass: "win-menu",
         menuContainsToggleCommandClass: "win-menu-containstogglecommand",
+        insetOutlineClass: "win-commandingsurface-insetoutline",
+        openingClass: "win-commandingsurface-opening",
         openedClass: "win-commandingsurface-opened",
         closingClass: "win-commandingsurface-closing",
         closedClass: "win-commandingsurface-closed",
@@ -41713,8 +41410,8 @@ define('WinJS/Controls/AppBar/_Command',[
         /// <part name="appBarCommandIcon" class="win-commandicon" locid="WinJS.UI.AppBarCommand_part:appBarCommandIcon">The AppBarCommand's icon box.</part>
         /// <part name="appBarCommandImage" class="win-commandimage" locid="WinJS.UI.AppBarCommand_part:appBarCommandImage">The AppBarCommand's icon's image formatting.</part>
         /// <part name="appBarCommandLabel" class="win-label" locid="WinJS.UI.AppBarCommand_part:appBarCommandLabel">The AppBarCommand's label</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         AppBarCommand: _Base.Namespace._lazy(function () {
 
             function _handleClick(event) {
@@ -42480,8 +42177,8 @@ define('WinJS/Controls/Menu/_Command',[
         /// <icon src="ui_winjs.ui.menucommand.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.MenuCommand" data-win-options="{type:'button',label:'Button'}"></button>]]></htmlSnippet>
         /// <part name="MenuCommand" class="win-command" locid="WinJS.UI.MenuCommand_name">The MenuCommand control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         MenuCommand: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -43497,6 +43194,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
     require(["require-style!less/styles-commandingsurface"]);
     require(["require-style!less/colors-commandingsurface"]);
     "use strict";
+    ;
     var strings = {
         get overflowButtonAriaLabel() {
             return _Resources._getWinJSString("ui/commandingSurfaceOverflowButtonAriaLabel").value;
@@ -43510,12 +43208,6 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
         get duplicateConstruction() {
             return "Invalid argument: Controls may only be instantiated one time for each DOM element";
         }
-    };
-    var CommandLayoutPipeline = {
-        newDataStage: 3,
-        measuringStage: 2,
-        layoutStage: 1,
-        idle: 0,
     };
     var OverflowDirection = {
         /// The _CommandingSurface expands towards the bottom of the screen when opened and the overflow area renders below the actionarea.
@@ -43566,17 +43258,127 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             if (options === void 0) { options = {}; }
             this._hoverable = _Hoverable.isHoverable; /* force dependency on hoverable module */
             this._dataChangedEvents = ["itemchanged", "iteminserted", "itemmoved", "itemremoved", "reload"];
-            // State private to _updateDomImpl_renderDisplayMode. No other method should make use of it.
-            //
-            // Nothing has been rendered yet so these are all initialized to undefined. Because
-            // they are undefined, the first time _updateDomImpl is called, they will all be
-            // rendered.
-            this._updateDomImpl_renderedState = {
-                closedDisplayMode: undefined,
-                isOpenedMode: undefined,
-                overflowDirection: undefined,
-                overflowAlignmentOffset: undefined,
-            };
+            this._updateDomImpl = (function () {
+                // Self executing function returns a JavaScript Object literal that
+                // implements the ICommandingSurface_UpdateDomImpl Inteface.
+                // State private to _renderDisplayMode. No other method should make use of it.
+                //
+                // Nothing has been rendered yet so these are all initialized to undefined. Because
+                // they are undefined, the first time _updateDomImpl.update is called, they will all be
+                // rendered.
+                var _renderedState = {
+                    closedDisplayMode: undefined,
+                    isOpenedMode: undefined,
+                    overflowDirection: undefined,
+                    overflowAlignmentOffset: undefined,
+                };
+                var _renderDisplayMode = function () {
+                    var rendered = _renderedState;
+                    if (rendered.isOpenedMode !== _this._isOpenedMode) {
+                        if (_this._isOpenedMode) {
+                            // Render opened
+                            removeClass(_this._dom.root, _Constants.ClassNames.closedClass);
+                            addClass(_this._dom.root, _Constants.ClassNames.openedClass);
+                        }
+                        else {
+                            // Render closed
+                            removeClass(_this._dom.root, _Constants.ClassNames.openedClass);
+                            addClass(_this._dom.root, _Constants.ClassNames.closedClass);
+                        }
+                        rendered.isOpenedMode = _this._isOpenedMode;
+                    }
+                    if (rendered.closedDisplayMode !== _this.closedDisplayMode) {
+                        removeClass(_this._dom.root, closedDisplayModeClassMap[rendered.closedDisplayMode]);
+                        addClass(_this._dom.root, closedDisplayModeClassMap[_this.closedDisplayMode]);
+                        rendered.closedDisplayMode = _this.closedDisplayMode;
+                    }
+                    if (rendered.overflowDirection !== _this.overflowDirection) {
+                        removeClass(_this._dom.root, overflowDirectionClassMap[rendered.overflowDirection]);
+                        addClass(_this._dom.root, overflowDirectionClassMap[_this.overflowDirection]);
+                        rendered.overflowDirection = _this.overflowDirection;
+                    }
+                    if (_this._overflowAlignmentOffset !== rendered.overflowAlignmentOffset) {
+                        var offsetProperty = (_this._rtl ? "left" : "right");
+                        var offsetTextValue = _this._overflowAlignmentOffset + "px";
+                        _this._dom.overflowAreaContainer.style[offsetProperty] = offsetTextValue;
+                    }
+                };
+                var CommandLayoutPipeline = {
+                    newDataStage: 3,
+                    measuringStage: 2,
+                    layoutStage: 1,
+                    idle: 0,
+                };
+                var _currentLayoutStage = CommandLayoutPipeline.idle;
+                var _updateCommands = function () {
+                    _this._writeProfilerMark("_updateDomImpl_updateCommands,info");
+                    var currentStage = _currentLayoutStage;
+                    while (currentStage !== CommandLayoutPipeline.idle) {
+                        var prevStage = currentStage;
+                        var okToProceed = false;
+                        switch (currentStage) {
+                            case CommandLayoutPipeline.newDataStage:
+                                currentStage = CommandLayoutPipeline.measuringStage;
+                                okToProceed = _this._processNewData();
+                                break;
+                            case CommandLayoutPipeline.measuringStage:
+                                currentStage = CommandLayoutPipeline.layoutStage;
+                                okToProceed = _this._measure();
+                                break;
+                            case CommandLayoutPipeline.layoutStage:
+                                currentStage = CommandLayoutPipeline.idle;
+                                okToProceed = _this._layoutCommands();
+                                break;
+                        }
+                        if (!okToProceed) {
+                            // If a stage fails, exit the loop and track that stage
+                            // to be restarted the next time _updateCommands is run.
+                            currentStage = prevStage;
+                            break;
+                        }
+                    }
+                    _currentLayoutStage = currentStage;
+                    if (currentStage === CommandLayoutPipeline.idle) {
+                        // Callback for unit tests.
+                        _this._layoutCompleteCallback && _this._layoutCompleteCallback();
+                    }
+                };
+                return {
+                    get renderedState() {
+                        return {
+                            get closedDisplayMode() {
+                                return _renderedState.closedDisplayMode;
+                            },
+                            get isOpenedMode() {
+                                return _renderedState.isOpenedMode;
+                            },
+                            get overflowDirection() {
+                                return _renderedState.overflowDirection;
+                            },
+                            get overflowAlignmentOffset() {
+                                return _renderedState.overflowAlignmentOffset;
+                            },
+                        };
+                    },
+                    update: function () {
+                        _renderDisplayMode();
+                        _updateCommands();
+                    },
+                    dataDirty: function () {
+                        _currentLayoutStage = Math.max(CommandLayoutPipeline.newDataStage, _currentLayoutStage);
+                    },
+                    measurementsDirty: function () {
+                        _currentLayoutStage = Math.max(CommandLayoutPipeline.measuringStage, _currentLayoutStage);
+                    },
+                    layoutDirty: function () {
+                        _currentLayoutStage = Math.max(CommandLayoutPipeline.layoutStage, _currentLayoutStage);
+                    },
+                    get _currentLayoutStage() {
+                        // Expose this for its usefulness in F12 debugging.
+                        return _currentLayoutStage;
+                    },
+                };
+            })();
             this._writeProfilerMark("constructor,StartTM");
             // Check to make sure we weren't duplicated
             if (element && element["winControl"]) {
@@ -43594,7 +43396,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                     return Promise.wrap();
                 },
                 onUpdateDom: function () {
-                    _this.updateDomImpl();
+                    _this._updateDomImpl.update();
                 },
                 onUpdateDomWithIsOpened: function (isOpened) {
                     if (isOpened) {
@@ -43615,7 +43417,6 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             this._refreshPending = false;
             this._rtl = false;
             this._initializedSignal = new _Signal();
-            this._nextLayoutStage = CommandLayoutPipeline.idle;
             this._isOpenedMode = _Constants.defaultOpened;
             this._menuCommandProjections = [];
             // Initialize public properties.
@@ -43740,7 +43541,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
         _CommandingSurface.prototype.forceLayout = function () {
             /// Forces the CommandingSurface to update its layout. Use this function when the window did not change 
             /// size, but the container of the CommandingSurface changed size.
-            this._meaurementsDirty();
+            this._updateDomImpl.measurementsDirty();
             this._machine.updateDom();
         };
         _CommandingSurface.prototype.getBoundingRects = function () {
@@ -43783,11 +43584,12 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             // to call createOpenAnimation() before it opens the surface, then open the commanding surface, then call .execute() to start the animation.
             // This function is overridden by our unit tests.
             if (_Log.log) {
-                this._updateDomImpl_renderedState.isOpenedMode && _Log.log("The CommandingSurface should only attempt to create an open animation when it's not already opened");
+                this._updateDomImpl.renderedState.isOpenedMode && _Log.log("The CommandingSurface should only attempt to create an open animation when it's not already opened");
             }
             var that = this;
             return {
                 execute: function () {
+                    _ElementUtilities.addClass(that.element, _Constants.ClassNames.openingClass);
                     var boundingRects = that.getBoundingRects();
                     // The overflowAreaContainer has no size by default. Measure the overflowArea's size and apply it to the overflowAreaContainer before animating
                     that._dom.overflowAreaContainer.style.width = boundingRects.overflowArea.width + "px";
@@ -43802,6 +43604,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                         overflowAreaHeight: boundingRects.overflowArea.height,
                         menuPositionedAbove: (that.overflowDirection === OverflowDirection.top),
                     }).then(function () {
+                        _ElementUtilities.removeClass(that.element, _Constants.ClassNames.openingClass);
                         that._clearAnimation();
                     });
                 }
@@ -43813,7 +43616,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             // should close the commanding surface.
             // This function is overridden by our unit tests.
             if (_Log.log) {
-                !this._updateDomImpl_renderedState.isOpenedMode && _Log.log("The CommandingSurface should only attempt to create an closed animation when it's not already closed");
+                !this._updateDomImpl.renderedState.isOpenedMode && _Log.log("The CommandingSurface should only attempt to create an closed animation when it's not already closed");
             }
             var openedHeight = this.getBoundingRects().commandingSurface.height, overflowAreaOpenedHeight = this._dom.overflowArea.offsetHeight, oldOverflowTop = this._dom.overflowArea.offsetTop, that = this;
             return {
@@ -43859,9 +43662,12 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             var actionArea = _Global.document.createElement("div");
             _ElementUtilities.addClass(actionArea, _Constants.ClassNames.actionAreaCssClass);
             _ElementUtilities._reparentChildren(root, actionArea);
+            var actionAreaInsetOutline = document.createElement("DIV");
+            _ElementUtilities.addClass(actionAreaInsetOutline, _Constants.ClassNames.insetOutlineClass);
             var actionAreaContainer = _Global.document.createElement("div");
             _ElementUtilities.addClass(actionAreaContainer, _Constants.ClassNames.actionAreaContainerCssClass);
             actionAreaContainer.appendChild(actionArea);
+            actionAreaContainer.appendChild(actionAreaInsetOutline);
             root.appendChild(actionAreaContainer);
             var spacer = _Global.document.createElement("div");
             _ElementUtilities.addClass(spacer, _Constants.ClassNames.spacerCssClass);
@@ -43877,9 +43683,12 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             var overflowArea = _Global.document.createElement("div");
             _ElementUtilities.addClass(overflowArea, _Constants.ClassNames.overflowAreaCssClass);
             _ElementUtilities.addClass(overflowArea, _Constants.ClassNames.menuCssClass);
+            var overflowInsetOutline = _Global.document.createElement("DIV");
+            _ElementUtilities.addClass(overflowInsetOutline, _Constants.ClassNames.insetOutlineClass);
             var overflowAreaContainer = _Global.document.createElement("div");
             _ElementUtilities.addClass(overflowAreaContainer, _Constants.ClassNames.overflowAreaContainerCssClass);
             overflowAreaContainer.appendChild(overflowArea);
+            overflowAreaContainer.appendChild(overflowInsetOutline);
             root.appendChild(overflowAreaContainer);
             this._dom = {
                 root: root,
@@ -43926,7 +43735,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                     }
                 });
             }
-            this._dataDirty();
+            this._updateDomImpl.dataDirty();
             this._machine.updateDom();
         };
         _CommandingSurface.prototype._refresh = function () {
@@ -44043,39 +43852,36 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             }
             return new BindingList.List(commands);
         };
+        _CommandingSurface.prototype._canMeasure = function () {
+            return (this._updateDomImpl.renderedState.isOpenedMode || this._updateDomImpl.renderedState.closedDisplayMode === ClosedDisplayMode.compact || this._updateDomImpl.renderedState.closedDisplayMode === ClosedDisplayMode.full) && _Global.document.body.contains(this._dom.root) && this._dom.actionArea.offsetWidth > 0;
+        };
         _CommandingSurface.prototype._resizeHandler = function () {
-            if (this._dom.root.offsetWidth) {
+            if (this._canMeasure()) {
                 var currentActionAreaWidth = _ElementUtilities._getPreciseContentWidth(this._dom.actionArea);
                 if (this._cachedMeasurements && this._cachedMeasurements.actionAreaContentBoxWidth !== currentActionAreaWidth) {
                     this._cachedMeasurements.actionAreaContentBoxWidth = currentActionAreaWidth;
-                    this._layoutDirty();
+                    this._updateDomImpl.layoutDirty();
                     this._machine.updateDom();
                 }
             }
-        };
-        _CommandingSurface.prototype._dataDirty = function () {
-            this._nextLayoutStage = Math.max(CommandLayoutPipeline.newDataStage, this._nextLayoutStage);
-        };
-        _CommandingSurface.prototype._meaurementsDirty = function () {
-            this._nextLayoutStage = Math.max(CommandLayoutPipeline.measuringStage, this._nextLayoutStage);
-        };
-        _CommandingSurface.prototype._layoutDirty = function () {
-            this._nextLayoutStage = Math.max(CommandLayoutPipeline.layoutStage, this._nextLayoutStage);
+            else {
+                this._updateDomImpl.measurementsDirty();
+            }
         };
         _CommandingSurface.prototype.synchronousOpen = function () {
             this._overflowAlignmentOffset = 0;
             this._isOpenedMode = true;
-            this.updateDomImpl();
+            this._updateDomImpl.update();
             this._overflowAlignmentOffset = this._computeAdjustedOverflowAreaOffset();
-            this.updateDomImpl();
+            this._updateDomImpl.update();
         };
         _CommandingSurface.prototype._computeAdjustedOverflowAreaOffset = function () {
             // Returns any negative offset needed to prevent the shown overflowarea from clipping outside of the viewport.
             // This function should only be called when CommandingSurface has been rendered in the opened state with
             // an overflowAlignmentOffset of 0.
             if (_Log.log) {
-                !this._updateDomImpl_renderedState.isOpenedMode && _Log.log("The CommandingSurface should only attempt to compute adjusted overflowArea offset " + " when it has been rendered opened");
-                this._updateDomImpl_renderedState.overflowAlignmentOffset !== 0 && _Log.log("The CommandingSurface should only attempt to compute adjusted overflowArea offset " + " when it has been rendered with an overflowAlignementOffset of 0");
+                !this._updateDomImpl.renderedState.isOpenedMode && _Log.log("The CommandingSurface should only attempt to compute adjusted overflowArea offset " + " when it has been rendered opened");
+                this._updateDomImpl.renderedState.overflowAlignmentOffset !== 0 && _Log.log("The CommandingSurface should only attempt to compute adjusted overflowArea offset " + " when it has been rendered with an overflowAlignementOffset of 0");
             }
             var overflowArea = this._dom.overflowArea, boundingClientRects = this.getBoundingRects(), adjustedOffset = 0;
             if (this._rtl) {
@@ -44094,75 +43900,10 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
         };
         _CommandingSurface.prototype.synchronousClose = function () {
             this._isOpenedMode = false;
-            this.updateDomImpl();
+            this._updateDomImpl.update();
         };
-        _CommandingSurface.prototype.updateDomImpl = function () {
-            this._updateDomImpl_renderDisplayMode();
-            this._updateDomImpl_updateCommands();
-        };
-        _CommandingSurface.prototype._updateDomImpl_renderDisplayMode = function () {
-            var rendered = this._updateDomImpl_renderedState;
-            if (rendered.isOpenedMode !== this._isOpenedMode) {
-                if (this._isOpenedMode) {
-                    // Render opened
-                    removeClass(this._dom.root, _Constants.ClassNames.closedClass);
-                    addClass(this._dom.root, _Constants.ClassNames.openedClass);
-                }
-                else {
-                    // Render closed
-                    removeClass(this._dom.root, _Constants.ClassNames.openedClass);
-                    addClass(this._dom.root, _Constants.ClassNames.closedClass);
-                }
-                rendered.isOpenedMode = this._isOpenedMode;
-            }
-            if (rendered.closedDisplayMode !== this.closedDisplayMode) {
-                removeClass(this._dom.root, closedDisplayModeClassMap[rendered.closedDisplayMode]);
-                addClass(this._dom.root, closedDisplayModeClassMap[this.closedDisplayMode]);
-                rendered.closedDisplayMode = this.closedDisplayMode;
-            }
-            if (rendered.overflowDirection !== this.overflowDirection) {
-                removeClass(this._dom.root, overflowDirectionClassMap[rendered.overflowDirection]);
-                addClass(this._dom.root, overflowDirectionClassMap[this.overflowDirection]);
-                rendered.overflowDirection = this.overflowDirection;
-            }
-            if (this._overflowAlignmentOffset !== rendered.overflowAlignmentOffset) {
-                var offsetProperty = (this._rtl ? "left" : "right");
-                var offsetTextValue = this._overflowAlignmentOffset + "px";
-                this._dom.overflowAreaContainer.style[offsetProperty] = offsetTextValue;
-            }
-        };
-        _CommandingSurface.prototype._updateDomImpl_updateCommands = function () {
-            this._writeProfilerMark("_updateDomImpl_updateCommands,info");
-            var nextStage = this._nextLayoutStage;
-            while (nextStage !== CommandLayoutPipeline.idle) {
-                var currentStage = nextStage;
-                var okToProceed = false;
-                switch (currentStage) {
-                    case CommandLayoutPipeline.newDataStage:
-                        nextStage = CommandLayoutPipeline.measuringStage;
-                        okToProceed = this._processNewData();
-                        break;
-                    case CommandLayoutPipeline.measuringStage:
-                        nextStage = CommandLayoutPipeline.layoutStage;
-                        okToProceed = this._measure();
-                        break;
-                    case CommandLayoutPipeline.layoutStage:
-                        nextStage = CommandLayoutPipeline.idle;
-                        okToProceed = this._layoutCommands();
-                        break;
-                }
-                if (!okToProceed) {
-                    // If a stage fails, exit the loop and track that stage
-                    // to be restarted the next time _updateCommands is run.
-                    nextStage = currentStage;
-                    break;
-                }
-            }
-            this._nextLayoutStage = nextStage;
-            if (nextStage === CommandLayoutPipeline.idle) {
-                // Callback for unit tests.
-                this._layoutCompleteCallback && this._layoutCompleteCallback();
-            }
+        _CommandingSurface.prototype.updateDom = function () {
+            this._updateDomImpl.update();
         };
         _CommandingSurface.prototype._getDataChangeInfo = function () {
             var i = 0, len = 0;
@@ -44249,8 +43990,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
         _CommandingSurface.prototype._measure = function () {
             var _this = this;
             this._writeProfilerMark("_measure,info");
-            var canMeasure = (_Global.document.body.contains(this._dom.root) && this._dom.actionArea.offsetWidth > 0);
-            if (canMeasure) {
+            if (this._canMeasure()) {
                 var overflowButtonWidth = _ElementUtilities._getPreciseTotalWidth(this._dom.overflowButton), actionAreaContentBoxWidth = _ElementUtilities._getPreciseContentWidth(this._dom.actionArea), separatorWidth = 0, standardCommandWidth = 0, contentCommandWidths = {};
                 this._primaryCommands.forEach(function (command) {
                     // Ensure that the element we are measuring does not have display: none (e.g. it was just added, and it
@@ -44340,10 +44080,6 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             // Clean up previous MenuCommand projections
             _ElementUtilities.empty(this._dom.overflowArea);
             this._menuCommandProjections.map(function (menuCommand) {
-                if (_this._contentFlyout && menuCommand.flyout === _this._contentFlyout) {
-                    // Prevent our _contentFlyout from being disposed with the MenuCommand.
-                    menuCommand.flyout = null;
-                }
                 menuCommand.dispose();
             });
             var hasToggleCommands = false, menuCommandProjections = [];
@@ -44602,8 +44338,8 @@ define('WinJS/Controls/ToolBar/_ToolBar',["require", "exports", "../../Core/_Bas
     /// <part name="toolbar" class="win-toolbar" locid="WinJS.UI.ToolBar_part:toolbar">The entire ToolBar control.</part>
     /// <part name="toolbar-overflowbutton" class="win-toolbar-overflowbutton" locid="WinJS.UI.ToolBar_part:ToolBar-overflowbutton">The toolbar overflow button.</part>
     /// <part name="toolbar-overflowarea" class="win-toolbar-overflowarea" locid="WinJS.UI.ToolBar_part:ToolBar-overflowarea">The container for toolbar commands that overflow.</part>
-    /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
     var ToolBar = (function () {
         function ToolBar(element, options) {
             /// <signature helpKeyword="WinJS.UI.ToolBar.ToolBar">
@@ -44887,7 +44623,7 @@ define('WinJS/Controls/ToolBar/_ToolBar',["require", "exports", "../../Core/_Bas
                 addClass(this._dom.root, closedDisplayModeClassMap[this.closedDisplayMode]);
                 rendered.closedDisplayMode = this.closedDisplayMode;
             }
-            this._commandingSurface.updateDomImpl();
+            this._commandingSurface.updateDom();
         };
         ToolBar.prototype._getClosedHeight = function () {
             if (this._cachedClosedHeight === null) {
@@ -45958,8 +45694,8 @@ define('WinJS/Controls/_LegacyAppBar',[
         /// <event name="afterclose" locid="WinJS.UI._LegacyAppBar_e:afterclose">Raised immediately after the _LegacyAppBar is fully hidden.</event>
         /// <part name="appbar" class="win-commandlayout" locid="WinJS.UI._LegacyAppBar_part:appbar">The _LegacyAppBar control itself.</part>
         /// <part name="appBarCustom" class="win-navbar" locid="WinJS.UI._LegacyAppBar_part:appBarCustom">Style for a custom layout _LegacyAppBar.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         _LegacyAppBar: _Base.Namespace._lazy(function () {
             var EVENTS = {
                 beforeOpen: "beforeopen",
@@ -47122,8 +46858,8 @@ define('WinJS/Controls/Menu',[
         /// <event name="beforehide" locid="WinJS.UI.Menu_e:beforehide">Raised just before hiding a menu.</event>
         /// <event name="afterhide" locid="WinJS.UI.Menu_e:afterhide">Raised immediately after a menu is fully hidden.</event>
         /// <part name="menu" class="win-menu" locid="WinJS.UI.Menu_part:menu">The Menu control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         Menu: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -47310,30 +47046,20 @@ define('WinJS/Controls/Menu',[
                     this._showOnlyCommands(commands, true);
                 },
 
-                show: function (anchor, placement, alignment) {
-                    /// <signature helpKeyword="WinJS.UI.Menu.show">
-                    /// <summary locid="WinJS.UI.Menu.show">
-                    /// Shows the Menu, if hidden, regardless of other states.
-                    /// </summary>
-                    /// <param name="anchor" type="HTMLElement" domElement="true" locid="WinJS.UI.Menu.show_p:anchor">
-                    /// The DOM element, or ID of a DOM element,  to anchor the Menu. This parameter overrides the anchor property for this method call only.
-                    /// </param>
-                    /// <param name="placement" type="object" domElement="false" locid="WinJS.UI.Menu.show_p:placement">
-                    /// The placement of the Menu to the anchor: 'auto' (default), 'autohorizontal', 'autovertical', 'top', 'bottom', 'left', or 'right'. This parameter overrides the placement
-                    /// property for this method call only.
-                    /// </param>
-                    /// <param name="alignment" type="object" domElement="false" locid="WinJS.UI.Menu.show_p:alignment">
-                    /// For 'top' or 'bottom' placement, the alignment of the Menu to the anchor's edge: 'center' (default), 'left', or 'right'. This parameter
-                    /// overrides the alignment property for this method call only.
-                    /// </param>
-                    /// <compatibleWith platform="Windows" minVersion="8.0"/>
-                    /// </signature>
-                    // Just call private version to make appbar flags happy
-                    this._writeProfilerMark("show,StartTM"); // The corresponding "stop" profiler mark is handled in _Overlay._baseEndShow().
-                    this._show(anchor, placement, alignment);
+                _hide: function Menu_hide() {
+                    if (this._hoverPromise) {
+                        this._hoverPromise.cancel();
+                    }
+                    Flyout.Flyout.prototype._hide.call(this);
+                },
+                
+                _afterHide: function Menu_afterHide() {
+                    _ElementUtilities.removeClass(this.element, _Constants.menuMouseSpacingClass);
+                    _ElementUtilities.removeClass(this.element, _Constants.menuTouchSpacingClass);
                 },
 
-                _show: function Menu_show(anchor, placement, alignment) {
+                _beforeShow: function Menu_beforeShow() {
+                    // Make sure menu commands display correctly
                     if (!_ElementUtilities.hasClass(this.element, _Constants.menuMouseSpacingClass) && !_ElementUtilities.hasClass(this.element, _Constants.menuTouchSpacingClass)) {
                         // The Menu's spacing shouldn't change while it is already shown. Only
                         // add a spacing class if it doesn't already have one. It will get
@@ -47345,26 +47071,8 @@ define('WinJS/Controls/Menu',[
                                 _Constants.menuTouchSpacingClass
                         );
                     }
-                    // Call flyout show 
-                    this._baseFlyoutShow(anchor, placement, alignment);
 
-                    // Menu will need to adjust MenuCommand layouts based on the various 
-                    // types of commands visible in our Menu, but only after we send the beforeshow
-                    // event, so the developer has a chance to show or hide more commands.
-                    // Flyout's _findPosition will make that call.
-                },
-
-                _hide: function Menu_hide() {
-                    if (this._hoverPromise) {
-                        this._hoverPromise.cancel();
-                    }
-                    Flyout.Flyout.prototype._hide.call(this);
-                },
-                
-                _beforeEndHide: function Menu_beforeEndHide() {
-                    _ElementUtilities.removeClass(this.element, _Constants.menuMouseSpacingClass);
-                    _ElementUtilities.removeClass(this.element, _Constants.menuTouchSpacingClass);
-                    Flyout.Flyout.prototype._beforeEndHide.call(this);
+                    this._checkMenuCommands();
                 },
 
                 _addCommand: function Menu_addCommand(command) {
@@ -47399,8 +47107,10 @@ define('WinJS/Controls/Menu',[
                     }
                 },
 
-                // Called when we show/hide commands or by flyout's _findPosition when the Menu is showing.
                 _checkMenuCommands: function Menu_checkMenuCommands() {
+                    // Make sure menu commands display correctly.
+                    // Called when we show/hide commands or by _beforeShow() when the Menu is showing
+
                     var menuCommands = this._element.querySelectorAll(".win-command"),
                         hasToggleCommands = false,
                         hasFlyoutCommands = false;
@@ -47417,7 +47127,7 @@ define('WinJS/Controls/Menu',[
                             }
                         }
                     }
-
+                    
                     _ElementUtilities[hasToggleCommands ? 'addClass' : 'removeClass'](this._element, _Constants.menuContainsToggleCommandClass);
                     _ElementUtilities[hasFlyoutCommands ? 'addClass' : 'removeClass'](this._element, _Constants.menuContainsFlyoutCommandClass);
                 },
@@ -47881,8 +47591,8 @@ define('WinJS/Controls/AutoSuggestBox',[
         /// <part name="autosuggestbox-suggestion-result" class="win-autosuggestbox-suggestion-result" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Result">Styles the result type suggestion.</part>
         /// <part name="autosuggestbox-suggestion-selected" class="win-autosuggestbox-suggestion-selected" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Selected">Styles the currently selected suggestion.</part>
         /// <part name="autosuggestbox-suggestion-separator" class="win-autosuggestbox-suggestion-separator" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Separator">Styles the separator type suggestion.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         AutoSuggestBox: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -49201,8 +48911,8 @@ define('WinJS/Controls/SearchBox',[
         /// <part name="searchbox-suggestion-selected" class="win-searchbox-suggestion-selected" locid="WinJS.UI.SearchBox_part:Suggestion_Selected">
         /// Styles the currently selected suggestion.
         /// </part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         SearchBox: _Base.Namespace._lazy(function () {
 
             // Enums
@@ -49440,8 +49150,13 @@ define('WinJS/Controls/SearchBox',[
                     /// <param name="url" type="string" locid="WinJS.UI.SearchBox.SearchBox_createResultSuggestionImage_p:url">
                     /// The url of the image.
                     /// </param>
+                    /// <deprecated type="deprecate">
+                    /// SearchBox is deprecated and may not be available in future releases. Instead use AutoSuggestBox.
+                    /// </deprecated>
                     /// <compatibleWith platform="Windows" minVersion="8.1"/>
                     /// </signature>
+                    _ElementUtilities._deprecated(strings.searchBoxDeprecated);
+
                     if (_WinRT.Windows.Foundation.Uri && _WinRT.Windows.Storage.Streams.RandomAccessStreamReference) {
                         return _WinRT.Windows.Storage.Streams.RandomAccessStreamReference.createFromUri(new _WinRT.Windows.Foundation.Uri(url));
                     }
@@ -49528,8 +49243,8 @@ define('WinJS/Controls/SettingsFlyout',[
         /// <event name="beforehide" locid="WinJS.UI.SettingsFlyout_e:beforehide">Raised just before hiding a SettingsFlyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.SettingsFlyout_e:afterhide">Raised immediately after a SettingsFlyout is fully hidden.</event>
         /// <part name="settings" class="win-settingsflyout" locid="WinJS.UI.SettingsFlyout_part:settings">The SettingsFlyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         SettingsFlyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -50272,8 +49987,8 @@ define('WinJS/Controls/NavBar/_Command',[
         /// <part name="splitbutton" class="win-navbarcommand-splitbutton" locid="WinJS.UI.NavBarCommand_part:splitbutton">Styles the split button in a NavBarCommand</part>
         /// <part name="icon" class="win-navbarcommand-icon" locid="WinJS.UI.NavBarCommand_part:icon">Styles the icon in the main button of a NavBarCommand.</part>
         /// <part name="label" class="win-navbarcommand-label" locid="WinJS.UI.NavBarCommand_part:label">Styles the label in the main button of a NavBarCommand.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         NavBarCommand: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -50671,8 +50386,8 @@ define('WinJS/Controls/NavBar/_Container',[
         /// <part name="navigationArrow" class="win-navbarcontainer-navarrow" locid="WinJS.UI.NavBarContainer_part:navigationArrow">Styles left and right navigation arrows.</part>
         /// <part name="leftNavigationArrow" class="win-navbarcontainer-navleft" locid="WinJS.UI.NavBarContainer_part:leftNavigationArrow">Styles the left navigation arrow.</part>
         /// <part name="rightNavigationArrow" class="win-navbarcontainer-navright" locid="WinJS.UI.NavBarContainer_part:rightNavigationArrow">Styles the right navigation arrow.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         NavBarContainer: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -52070,8 +51785,8 @@ define('WinJS/Controls/NavBar',[
         /// <event name="afterclose" locid="WinJS.UI.NavBar_e:afterclose">Raised immediately after the NavBar is fully closed.</event>
         /// <event name="childrenprocessed" locid="WinJS.UI.NavBar_e:childrenprocessed">Fired when children of NavBar control have been processed from a WinJS.UI.processAll call.</event>
         /// <part name="navbar" class="win-navbar" locid="WinJS.UI.NavBar_part:navbar">Styles the entire NavBar.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         NavBar: _Base.Namespace._lazy(function () {
             var childrenProcessedEventName = "childrenprocessed";
             var createEvent = _Events._createEventProperty;
@@ -52266,8 +51981,8 @@ define('WinJS/Controls/ViewBox',[
         /// <icon src="ui_winjs.ui.viewbox.12x12.png" width="12" height="12" />
         /// <icon src="ui_winjs.ui.viewbox.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.ViewBox"><div>ViewBox</div></div>]]></htmlSnippet>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         ViewBox: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -52466,8 +52181,8 @@ define('WinJS/Controls/ContentDialog',[
         /// <part name="contentdialog-commands" class="win-contentdialog-commands" locid="WinJS.UI.ContentDialog_part:contentdialog-commands">The element which contains the dialog's primary and secondary commands.</part>
         /// <part name="contentdialog-primarycommand" class="win-contentdialog-primarycommand" locid="WinJS.UI.ContentDialog_part:contentdialog-primarycommand">The dialog's primary button.</part>
         /// <part name="contentdialog-secondarycommand" class="win-contentdialog-secondarycommand" locid="WinJS.UI.ContentDialog_part:contentdialog-secondarycommand">The dialog's secondary button.</part>
-        /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
         ContentDialog: _Base.Namespace._lazy(function () {
             var Strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -53479,8 +53194,8 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
     /// <part name="splitview" class="win-splitview" locid="WinJS.UI.SplitView_part:splitview">The entire SplitView control.</part>
     /// <part name="splitview-pane" class="win-splitview-pane" locid="WinJS.UI.SplitView_part:splitview-pane">The element which hosts the SplitView's pane.</part>
     /// <part name="splitview-content" class="win-splitview-content" locid="WinJS.UI.SplitView_part:splitview-content">The element which hosts the SplitView's content.</part>
-    /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
     var SplitView = (function () {
         function SplitView(element, options) {
             /// <signature helpKeyword="WinJS.UI.SplitView.SplitView">
@@ -54094,8 +53809,8 @@ define('WinJS/Controls/SplitViewPaneToggle/_SplitViewPaneToggle',["require", "ex
     /// <icon src="ui_winjs.ui.splitviewpanetoggle.16x16.png" width="16" height="16" />
     /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.SplitViewPaneToggle"></button>]]></htmlSnippet>
     /// <part name="splitviewpanetoggle" class="win-splitviewpanetoggle" locid="WinJS.UI.SplitViewPaneToggle_part:splitviewpanetoggle">The SplitViewPaneToggle control itself.</part>
-    /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
     var SplitViewPaneToggle = (function () {
         function SplitViewPaneToggle(element, options) {
             /// <signature helpKeyword="WinJS.UI.SplitViewPaneToggle.SplitViewPaneToggle">
@@ -54425,8 +54140,8 @@ define('WinJS/Controls/AppBar/_AppBar',["require", "exports", "../../Core/_Base"
     /// <part name="appbar" class="win-appbar" locid="WinJS.UI.AppBar_part:appbar">The entire AppBar control.</part>
     /// <part name="appbar-overflowbutton" class="win-appbar-overflowbutton" locid="WinJS.UI.AppBar_part:AppBar-overflowbutton">The appbar overflow button.</part>
     /// <part name="appbar-overflowarea" class="win-appbar-overflowarea" locid="WinJS.UI.AppBar_part:AppBar-overflowarea">The container for appbar commands that overflow.</part>
-    /// <resource type="javascript" src="//WinJS.4.0/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.0/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
     var AppBar = (function () {
         function AppBar(element, options) {
             /// <signature helpKeyword="WinJS.UI.AppBar.AppBar">
@@ -54801,7 +54516,7 @@ define('WinJS/Controls/AppBar/_AppBar',["require", "exports", "../../Core/_Base"
                 this._dom.root.style.bottom = this._adjustedOffsets.bottom;
                 rendered.adjustedOffsets.bottom = this._adjustedOffsets.bottom;
             }
-            this._commandingSurface.updateDomImpl();
+            this._commandingSurface.updateDom();
         };
         AppBar.prototype._getClosedHeight = function () {
             if (this._cachedClosedHeight === null) {
