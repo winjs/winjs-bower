@@ -12,7 +12,7 @@
             // amd
             define(["./base"], factory);
         } else {
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.1 4.1.0.winjs.2015.7.10 ui.js,StartTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.2 4.2.0.winjs.2015.8.17 ui.js,StartTM');
             if (typeof module !== 'undefined') {
                 // CommonJS
                 factory(require("./base"));
@@ -20,7 +20,7 @@
                 // No module system
                 factory(globalObject.WinJS);
             }
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.1 4.1.0.winjs.2015.7.10 ui.js,StopTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.2 4.2.0.winjs.2015.8.17 ui.js,StopTM');
         }
     }(function (WinJS) {
 
@@ -7478,7 +7478,95 @@ define('WinJS/VirtualizedDataSource',[
 
     //wrapper module
 });
-define('WinJS/_Accents',["require", "exports", "./Core/_Global", "./Core/_WinRT", "./Core/_Base", "./Core/_BaseUtils"], function (require, exports, _Global, _WinRT, _Base, _BaseUtils) {
+define('WinJS/Vui',["require", "exports", "./Core/_Global", "./Utilities/_ElementUtilities"], function (require, exports, _Global, _ElementUtilities) {
+    var Properties = {
+        vuiData: "_winVuiData"
+    };
+    var ClassNames = {
+        active: "win-vui-active",
+        disambiguation: "win-vui-disambiguation",
+    };
+    var EventNames = {
+        ListeningModeStateChanged: "ListeningStateChanged"
+    };
+    var ListeningModeStates = {
+        active: "active",
+        disambiguation: "disambiguation",
+        inactive: "inactive",
+    };
+    function _handleListeningModeStateChanged(e) {
+        if (e.defaultPrevented) {
+            return;
+        }
+        var target = e.target;
+        var transitionHandler = Handlers[target.tagName];
+        if (!transitionHandler) {
+            return;
+        }
+        switch (e.state) {
+            case ListeningModeStates.active:
+                if (target[Properties.vuiData] || _ElementUtilities.hasClass(target, ClassNames.active)) {
+                    _ElementUtilities.removeClass(target, ClassNames.disambiguation);
+                    transitionHandler.reactivate(target, e.label);
+                }
+                else {
+                    _ElementUtilities.addClass(target, ClassNames.active);
+                    transitionHandler.activate(target, e.label);
+                }
+                break;
+            case ListeningModeStates.disambiguation:
+                _ElementUtilities.addClass(target, ClassNames.active);
+                _ElementUtilities.addClass(target, ClassNames.disambiguation);
+                transitionHandler.disambiguate(target, e.label);
+                break;
+            case ListeningModeStates.inactive:
+                _ElementUtilities.removeClass(target, ClassNames.active);
+                _ElementUtilities.removeClass(target, ClassNames.disambiguation);
+                transitionHandler.deactivate(target);
+                break;
+        }
+    }
+    var Handlers;
+    (function (Handlers) {
+        Handlers.BUTTON = {
+            activate: function (element, label) {
+                var vuiData = {
+                    nodes: [],
+                    width: element.style.width,
+                    height: element.style.height
+                };
+                // Freeze button size
+                var cs = _ElementUtilities._getComputedStyle(element);
+                element.style.width = cs.width;
+                element.style.height = cs.height;
+                while (element.childNodes.length) {
+                    vuiData.nodes.push(element.removeChild(element.childNodes[0]));
+                }
+                element[Properties.vuiData] = vuiData;
+                element.textContent = label;
+            },
+            disambiguate: function (element, label) {
+                element.textContent = label;
+            },
+            reactivate: function (element, label) {
+                element.textContent = label;
+            },
+            deactivate: function (element) {
+                element.innerHTML = "";
+                var vuiData = element[Properties.vuiData];
+                element.style.width = vuiData.width;
+                element.style.height = vuiData.height;
+                vuiData.nodes.forEach(function (node) { return element.appendChild(node); });
+                delete element[Properties.vuiData];
+            }
+        };
+    })(Handlers || (Handlers = {}));
+    if (_Global.document) {
+        _Global.document.addEventListener(EventNames.ListeningModeStateChanged, _handleListeningModeStateChanged);
+    }
+});
+
+define('WinJS/_Accents',["require", "exports", "./Core/_Global", "./Core/_WinRT", "./Core/_Base", "./Core/_BaseUtils", './Utilities/_ElementUtilities'], function (require, exports, _Global, _WinRT, _Base, _BaseUtils, _ElementUtilities) {
     var Constants = {
         accentStyleId: "WinJSAccentsStyle",
         themeDetectionTag: "winjs-themedetection-tag",
@@ -7591,8 +7679,8 @@ define('WinJS/_Accents',["require", "exports", "./Core/_Global", "./Core/_WinRT"
     // Figure out color theme
     var tag = _Global.document.createElement(Constants.themeDetectionTag);
     _Global.document.head.appendChild(tag);
-    var cs = _Global.getComputedStyle(tag);
-    isDarkTheme = cs && cs.opacity === "0";
+    var cs = _ElementUtilities._getComputedStyle(tag);
+    isDarkTheme = cs.opacity === "0";
     tag.parentElement.removeChild(tag);
     try {
         UISettings = new _WinRT.Windows.UI.ViewManagement.UISettings();
@@ -10060,7 +10148,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                     }
                     catch (err) { }
 
-                    var computedStyle = _Global.getComputedStyle(element, null),
+                    var computedStyle = _ElementUtilities._getComputedStyle(element, null),
                         paddingLeft = parseInt(computedStyle["paddingLeft"]),
                         paddingTop = parseInt(computedStyle["paddingTop"]),
                         borderLeft = parseInt(computedStyle["borderLeftWidth"]),
@@ -11805,7 +11893,7 @@ define('WinJS/Controls/ListView/_Layouts',[
     }
 
     function getDimension(element, property) {
-        return _ElementUtilities.convertToPixels(element, _Global.getComputedStyle(element, null)[property]);
+        return _ElementUtilities.convertToPixels(element, _ElementUtilities._getComputedStyle(element, null)[property]);
     }
 
     // Returns the sum of the margin, border, and padding for the side of the
@@ -19739,8 +19827,8 @@ define('WinJS/Controls/ListView',[
         /// <event name="itemdragleave" bubbles="true" locid="WinJS.UI.ListView_e:itemdragleave">Raised when the user drags outside of the ListView region.</event>
         /// <event name="itemdragchanged" bubbles="true" locid="WinJS.UI.ListView_e:itemdragchanged">Raised when the items being dragged are changed due to a datasource modification.</event>
         /// <event name="itemdragdrop" bubbles="true" locid="WinJS.UI.ListView_e:itemdragdrop">Raised when the user drops items into the ListView.</event>
-        /// <event name="headervisibilitychanged" bubbles="true" locid="WinJS.UI.ListView_e:headervisibilitychanged">Raised when the layout header becomes visible or invisible</event>
-        /// <event name="footervisibilitychanged" bubbles="true" locid="WinJS.UI.ListView_e:footervisibilitychanged">Raised when the layout footer becomes visible or invisible</event>
+        /// <event name="headervisibilitychanged" bubbles="true" locid="WinJS.UI.ListView_e:headervisibilitychanged">Raised when the header's visibility property changes. </event>
+        /// <event name="footervisibilitychanged" bubbles="true" locid="WinJS.UI.ListView_e:footervisibilitychanged">Raised when the footer's visibility property changes. </event>
         /// <event name="accessibilityannotationcomplete" bubbles="true" locid="WinJS.UI.ListView_e:accessibilityannotationcomplete">Raised when the accessibility attributes have been added to the ListView items.</event>
         /// <part name="listView" class="win-listview" locid="WinJS.UI.ListView_part:listView">The entire ListView control.</part>
         /// <part name="viewport" class="win-viewport" locid="WinJS.UI.ListView_part:viewport">The viewport of the ListView. </part>
@@ -19750,8 +19838,8 @@ define('WinJS/Controls/ListView',[
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ListView_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="groupHeader" class="win-groupheader" locid="WinJS.UI.ListView_part:groupHeader">The header of a group.</part>
         /// <part name="progressbar" class="win-progress" locid="WinJS.UI.ListView_part:progressbar">The progress indicator of the ListView.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         ListView: _Base.Namespace._lazy(function () {
             var AffectedRange = _Base.Class.define(function () {
                 this.clear();
@@ -22790,7 +22878,7 @@ define('WinJS/Controls/ListView',[
 
                 _rtl: function ListView_rtl() {
                     if (typeof this._cachedRTL !== "boolean") {
-                        this._cachedRTL = _Global.getComputedStyle(this._element, null).direction === "rtl";
+                        this._cachedRTL = _ElementUtilities._getComputedStyle(this._element, null).direction === "rtl";
                     }
                     return this._cachedRTL;
                 },
@@ -24338,7 +24426,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                         }
                         if (dirChanged) {
                             that._cachedStyleDir = element.style.direction;
-                            that._pageManager._rtl = _Global.getComputedStyle(that._pageManager._flipperDiv, null).direction === "rtl";
+                            that._pageManager._rtl = _ElementUtilities._getComputedStyle(that._pageManager._flipperDiv, null).direction === "rtl";
                             that._pageManager.resized();
                         }
                     }
@@ -24353,7 +24441,7 @@ define('WinJS/Controls/FlipView/_PageManager',[
                 this._panningDivContainer = panningDivContainer;
                 this._buttonVisibilityHandler = buttonVisibilityHandler;
                 this._currentPage = null;
-                this._rtl = _Global.getComputedStyle(this._flipperDiv, null).direction === "rtl";
+                this._rtl = _ElementUtilities._getComputedStyle(this._flipperDiv, null).direction === "rtl";
                 this._itemsManager = itemsManager;
                 this._itemSpacing = itemSpacing;
                 this._tabIndex = _ElementUtilities.getTabIndex(flipperDiv);
@@ -26266,8 +26354,8 @@ define('WinJS/Controls/FlipView',[
         /// <part name="rightNavigationButton" class="win-navright" locid="WinJS.UI.FlipView_part:rightNavigationButton">The right navigation button.</part>
         /// <part name="topNavigationButton" class="win-navtop" locid="WinJS.UI.FlipView_part:topNavigationButton">The top navigation button.</part>
         /// <part name="bottomNavigationButton" class="win-navbottom" locid="WinJS.UI.FlipView_part:bottomNavigationButton">The bottom navigation button.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         FlipView: _Base.Namespace._lazy(function () {
 
             // Class names
@@ -26303,7 +26391,7 @@ define('WinJS/Controls/FlipView',[
                     }
                     })) {
                         that._cachedStyleDir = that._flipviewDiv.style.direction;
-                        that._rtl = _Global.getComputedStyle(that._flipviewDiv, null).direction === "rtl";
+                        that._rtl = _ElementUtilities._getComputedStyle(that._flipviewDiv, null).direction === "rtl";
                         that._setupOrientation();
                     }
                 }
@@ -27367,7 +27455,7 @@ define('WinJS/Controls/FlipView',[
                     if (this._isHorizontal) {
                         this._panningDivContainer.style["overflowX"] = (this._environmentSupportsTouch ? "scroll" : "hidden");
                         this._panningDivContainer.style["overflowY"] = "hidden";
-                        var rtl = _Global.getComputedStyle(this._flipviewDiv, null).direction === "rtl";
+                        var rtl = _ElementUtilities._getComputedStyle(this._flipviewDiv, null).direction === "rtl";
                         this._rtl = rtl;
                         if (rtl) {
                             this._prevButton.className = navButtonClass + " " + navButtonRightClass;
@@ -27553,8 +27641,8 @@ define('WinJS/Controls/ItemContainer',[
         /// <part name="selectionbackground" class="win-selectionbackground" locid="WinJS.UI.ItemContainer_part:selectionbackground">The background of a selection checkmark.</part>
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ItemContainer_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="focusedoutline" class="win-focusedoutline" locid="WinJS.UI.ItemContainer_part:focusedoutline">Used to display an outline when the main container has keyboard focus.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         ItemContainer: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -28048,7 +28136,7 @@ define('WinJS/Controls/ItemContainer',[
 
                 _rtl: function ItemContainer_rtl() {
                     if (typeof this._cachedRTL !== "boolean") {
-                        this._cachedRTL = _Global.getComputedStyle(this.element, null).direction === "rtl";
+                        this._cachedRTL = _ElementUtilities._getComputedStyle(this.element, null).direction === "rtl";
                     }
                     return this._cachedRTL;
                 },
@@ -28058,7 +28146,7 @@ define('WinJS/Controls/ItemContainer',[
                 },
 
                 _forceLayout: function ItemContainer_forceLayout() {
-                    this._cachedRTL = _Global.getComputedStyle(this.element, null).direction === "rtl";
+                    this._cachedRTL = _ElementUtilities._getComputedStyle(this.element, null).direction === "rtl";
                     this._setDirectionClass();
                 },
 
@@ -28291,8 +28379,8 @@ define('WinJS/Controls/Repeater',[
         /// <icon src="ui_winjs.ui.repeater.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.Repeater"></div>]]></htmlSnippet>
         /// <part name="repeater" class="win-repeater" locid="WinJS.UI.Repeater_part:repeater">The Repeater control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         Repeater: _Base.Namespace._lazy(function () {
 
             // Constants
@@ -28804,8 +28892,8 @@ define('WinJS/Controls/DatePicker',[
         /// <icon src="ui_winjs.ui.datepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.DatePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.DatePicker_e:change">Occurs when the current date changes.</event>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         DatePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_DAY_PATTERN = 'day',
@@ -29560,8 +29648,8 @@ define('WinJS/Controls/TimePicker',[
         /// <icon src="ui_winjs.ui.timepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.TimePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.TimePicker_e:change">Occurs when the time changes.</event>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         TimePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_MINUTE_PATTERN = "{minute.integer(2)}",
@@ -30224,8 +30312,8 @@ define('WinJS/Controls/BackButton',[
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.BackButton"></button>]]></htmlSnippet>
         /// <part name="BackButton" class="win-navigation-backbutton" locid="WinJS.UI.BackButton_part:BackButton">The BackButton control itself</part>
         /// <part name="BackArrowGlyph" class="win-back" locid="WinJS.UI.BackButton_part:BackArrowGlyph">The Back Arrow glyph</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         BackButton: _Base.Namespace._lazy(function () {
             // Statics
             var strings = {
@@ -30413,8 +30501,8 @@ define('WinJS/Controls/Tooltip',[
         /// <event name="beforeclose" bubbles="false" locid="WinJS.UI.Tooltip_e:beforeclose">Raised when the tooltip is about to become hidden.</event>
         /// <event name="closed" bubbles="false" locid="WinJS.UI.Tooltip_e:close">Raised when the tooltip is hidden.</event>
         /// <part name="tooltip" class="win-tooltip" locid="WinJS.UI.Tooltip_e:tooltip">The entire Tooltip control.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         Tooltip: _Base.Namespace._lazy(function () {
             var lastCloseTime = 0;
             var Key = _ElementUtilities.Key;
@@ -30801,7 +30889,7 @@ define('WinJS/Controls/Tooltip',[
                     this._domElement.setAttribute("id", id);
 
                     // Set the direction of tooltip according to anchor element's
-                    var computedStyle = _Global.document.defaultView.getComputedStyle(this._anchorElement, null);
+                    var computedStyle = _ElementUtilities._getComputedStyle(this._anchorElement, null);
                     var elemStyle = this._domElement.style;
                     elemStyle.direction = computedStyle.direction;
                     elemStyle.writingMode = computedStyle["writing-mode"]; // must use CSS name, not JS name
@@ -30833,7 +30921,7 @@ define('WinJS/Controls/Tooltip',[
                     this._phantomDiv.setAttribute("tabindex", -1);
                     _Global.document.body.appendChild(this._phantomDiv);
                     _ElementUtilities.addClass(this._phantomDiv, msTooltipPhantom);
-                    var zIndex = _Global.document.defaultView.getComputedStyle(this._domElement, null).zIndex + 1;
+                    var zIndex = _ElementUtilities._getComputedStyle(this._domElement, null).zIndex + 1;
                     this._phantomDiv.style.zIndex = zIndex;
                 },
 
@@ -31099,7 +31187,7 @@ define('WinJS/Controls/Tooltip',[
 
                     viewport.width = _Global.document.documentElement.clientWidth;
                     viewport.height = _Global.document.documentElement.clientHeight;
-                    if (_Global.document.defaultView.getComputedStyle(_Global.document.body, null)["writing-mode"] === "tb-rl") {
+                    if (_ElementUtilities._getComputedStyle(_Global.document.body, null)["writing-mode"] === "tb-rl") {
                         viewport.width = _Global.document.documentElement.clientHeight;
                         viewport.height = _Global.document.documentElement.clientWidth;
                     }
@@ -31378,8 +31466,8 @@ define('WinJS/Controls/Rating',[
         /// <part name="tentative-full" class="win-star win-tentative win-full" locid="WinJS.UI.Rating_part:tentative-full">The full star when the Rating control shows the tentative rating.</part>
         /// <part name="disabled-empty" class="win-star win-disabled win-empty" locid="WinJS.UI.Rating_part:disabled-empty">The empty star when the control is disabled.</part>
         /// <part name="disabled-full" class="win-star win-disabled win-full" locid="WinJS.UI.Rating_part:disabled-full">The full star when the control is disabled.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         Rating: _Base.Namespace._lazy(function () {
             var createEvent = _Events._createEventProperty;
 
@@ -31892,9 +31980,9 @@ define('WinJS/Controls/Rating',[
                     if (this._averageRating === 1) {
                         j = 1;
                     }
-                    var style = _Global.getComputedStyle(this._elements[j]);
+                    var style = _ElementUtilities._getComputedStyle(this._elements[j]);
                     this._elementWidth = style.width;
-                    if (_Global.getComputedStyle(this._element).direction === "rtl") {
+                    if (_ElementUtilities._getComputedStyle(this._element).direction === "rtl") {
                         this._elementPadding = style.paddingRight;
                         this._elementBorder = style.borderRight;
                     } else {
@@ -32011,7 +32099,7 @@ define('WinJS/Controls/Rating',[
                         starNum = _ElementUtilities.data(star).msStarRating || 0;
                     } else {
                         var left = 0, right = this.maxRating;
-                        if (_Global.getComputedStyle(this._element).direction === "rtl") {
+                        if (_ElementUtilities._getComputedStyle(this._element).direction === "rtl") {
                             left = right;
                             right = 0;
                         }
@@ -32099,7 +32187,7 @@ define('WinJS/Controls/Rating',[
                 _onKeyDown: function (eventObject) {
                     var Key = _ElementUtilities.Key;
                     var keyCode = eventObject.keyCode;
-                    var rtlString = _Global.getComputedStyle(this._element).direction;
+                    var rtlString = _ElementUtilities._getComputedStyle(this._element).direction;
                     var handled = true;
                     switch (keyCode) {
                         case Key.enter: // Enter
@@ -32221,7 +32309,7 @@ define('WinJS/Controls/Rating',[
                     if (this._averageRatingElement.nextSibling !== null) {
                         _ElementUtilities._setFlexStyle(this._averageRatingElement.nextSibling, { grow: 1, shrink: 1 });
                         var style = this._averageRatingElement.nextSibling.style;
-                        var direction = _Global.getComputedStyle(this._element).direction;
+                        var direction = _ElementUtilities._getComputedStyle(this._element).direction;
                         if (prevState) {
                             if (direction === "rtl") {
                                 direction = "ltr";
@@ -32306,7 +32394,7 @@ define('WinJS/Controls/Rating',[
                 _updateAverageStar: function () {
                     var style = this._averageRatingElement.style;
                     var nextStyle = this._averageRatingElement.nextSibling.style;
-                    if (_Global.getComputedStyle(this._element).direction === "rtl") {
+                    if (_ElementUtilities._getComputedStyle(this._element).direction === "rtl") {
                         style.backgroundPosition = "right";
                         style.paddingRight = this._elementPadding;
                         style.borderRight = this._elementBorder;
@@ -32325,7 +32413,7 @@ define('WinJS/Controls/Rating',[
                     _ElementUtilities._setFlexStyle(this._averageRatingElement, { grow: this._floatingValue, shrink: this._floatingValue });
                     style.width = this._resizeStringValue(this._elementWidth, this._floatingValue, style.width);
                     style.backgroundSize = (100 / this._floatingValue) + "% 100%";
-                    style.display = _Global.getComputedStyle(this._averageRatingElement.nextSibling).display;
+                    style.display = _ElementUtilities._getComputedStyle(this._averageRatingElement.nextSibling).display;
                     this._averageRatingHidden = false;
                     _ElementUtilities._setFlexStyle(this._averageRatingElement.nextSibling, { grow: 1 - this._floatingValue, shrink: 1 - this._floatingValue });
                     nextStyle.width = this._resizeStringValue(this._elementWidth, 1 - this._floatingValue, nextStyle.width);
@@ -32373,7 +32461,7 @@ define('WinJS/Controls/Rating',[
                     } else if (this._tentativeRating === 0) {
                         this._clearElement = _Global.document.createElement("div");
                         var distance = this._elements[0].offsetWidth + parseInt(this._elementPadding, 10);
-                        if (_Global.getComputedStyle(this._element).direction === "ltr") {
+                        if (_ElementUtilities._getComputedStyle(this._element).direction === "ltr") {
                             distance *= -1;
                         }
                         this._clearElement.style.cssText = "visiblity:hidden; position:absolute; width:0px; height:100%; left:" + distance + "px; top:0px;";
@@ -32445,10 +32533,10 @@ define('WinJS/Controls/Rating',[
                                     this._element.insertBefore(this._averageRatingElement, this._elements[i]);
 
                                     this._floatingValue = this._averageRating - i;
-                                    var elementStyle = _Global.getComputedStyle(this._elements[i]);
+                                    var elementStyle = _ElementUtilities._getComputedStyle(this._elements[i]);
                                     this._elementWidth = elementStyle.width;
 
-                                    if (_Global.getComputedStyle(this._element).direction === "rtl") {
+                                    if (_ElementUtilities._getComputedStyle(this._element).direction === "rtl") {
                                         this._elementPadding = elementStyle.paddingRight;
                                         this._elementBorder = elementStyle.borderRight;
                                     } else {
@@ -32539,8 +32627,8 @@ define('WinJS/Controls/ToggleSwitch',[
             /// <part name="title" class="win-toggleswitch-header" locid="WinJS.UI.ToggleSwitch_part:title">The main text for the ToggleSwitch control.</part>
             /// <part name="label-on" class="win-toggleswitch-value" locid="WinJS.UI.ToggleSwitch_part:label-on">The text for when the switch is on.</part>
             /// <part name="label-off" class="win-toggleswitch-value" locid="WinJS.UI.ToggleSwitch_part:label-off:">The text for when the switch is off.</part>
-            /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-            /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+            /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+            /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
             ToggleSwitch: _Base.Namespace._lazy(function () {
 
                 // Store some class names
@@ -32842,7 +32930,7 @@ define('WinJS/Controls/ToggleSwitch',[
                         // was closest to
                         var trackRect = this._trackElement.getBoundingClientRect();
                         var thumbRect = this._thumbElement.getBoundingClientRect();
-                        var isRTL = _Global.getComputedStyle(this._domElement).direction === 'rtl';
+                        var isRTL = _ElementUtilities._getComputedStyle(this._domElement).direction === 'rtl';
                         if (this._dragging) {
                             var maxX = trackRect.width - thumbRect.width;
                             this.checked = isRTL ? this._dragX < maxX / 2 : this._dragX >= maxX / 2;
@@ -32950,8 +33038,8 @@ define('WinJS/Controls/SemanticZoom',[
         /// <icon src="ui_winjs.ui.semanticzoom.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.SemanticZoom"><div class="zoomedInContainer" data-win-control="WinJS.UI.ListView"></div><div class="zoomedOutContainer" data-win-control="WinJS.UI.ListView"></div></div>]]></htmlSnippet>
         /// <part name="semanticZoom" class="win-semanticzoom" locid="WinJS.UI.SemanticZoom_part:semanticZoom">The entire SemanticZoom control.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         SemanticZoom: _Base.Namespace._lazy(function () {
             var browserStyleEquivalents = _BaseUtils._browserStyleEquivalents;
 
@@ -33498,7 +33586,7 @@ define('WinJS/Controls/SemanticZoom',[
                             style.height = height + "px";
                         };
 
-                        var sezoComputedStyle = _Global.getComputedStyle(this._element, null),
+                        var sezoComputedStyle = _ElementUtilities._getComputedStyle(this._element, null),
                             computedWidth = parseFloat(sezoComputedStyle.width),
                             computedHeight = parseFloat(sezoComputedStyle.height),
                             sezoPaddingLeft = getDimension(this._element, sezoComputedStyle["paddingLeft"]),
@@ -34063,8 +34151,8 @@ define('WinJS/Controls/SemanticZoom',[
                     }
                     this._zoomingOut = zoomOut;
                     // Force style resolution
-                    _Global.getComputedStyle(this._canvasIn).opacity;
-                    _Global.getComputedStyle(this._canvasOut).opacity;
+                    _ElementUtilities._getComputedStyle(this._canvasIn).opacity;
+                    _ElementUtilities._getComputedStyle(this._canvasOut).opacity;
                     _WriteProfilerMark("WinJS.UI.SemanticZoom:prepareForZoom,StopTM");
                     this._startAnimations(zoomOut, customViewAnimationPromise);
                 },
@@ -34391,7 +34479,7 @@ define('WinJS/Controls/SemanticZoom',[
                     }
                     catch (err) { }  // an exception can be thrown if SeZoDiv is no longer available
 
-                    var sezoComputedStyle = _Global.getComputedStyle(this._element, null),
+                    var sezoComputedStyle = _ElementUtilities._getComputedStyle(this._element, null),
                         sezoPaddingLeft = getDimension(this._element, sezoComputedStyle["paddingLeft"]),
                         sezoPaddingTop = getDimension(this._element, sezoComputedStyle["paddingTop"]),
                         sezoBorderLeft = getDimension(this._element, sezoComputedStyle["borderLeftWidth"]);
@@ -34441,7 +34529,7 @@ define('WinJS/Controls/SemanticZoom',[
                 },
 
                 _rtl: function () {
-                    return _Global.getComputedStyle(this._element, null).direction === "rtl";
+                    return _ElementUtilities._getComputedStyle(this._element, null).direction === "rtl";
                 },
 
                 _pinching: {
@@ -34466,6 +34554,7 @@ define('WinJS/Controls/Pivot/_Constants',["require", "exports"], function (requi
     // Names of classes used by the Pivot.
     exports._ClassNames = {
         pivot: "win-pivot",
+        pivotCustomHeaders: "win-pivot-customheaders",
         pivotLocked: "win-pivot-locked",
         pivotTitle: "win-pivot-title",
         pivotHeaderArea: "win-pivot-header-area",
@@ -34518,8 +34607,8 @@ define('WinJS/Controls/Pivot/_Item',[
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.PivotItem" data-win-options="{header: 'PivotItem Header'}">PivotItem Content</div>]]></htmlSnippet>
         /// <part name="pivotitem" class="win-pivot-item" locid="WinJS.UI.PivotItem_part:pivotitem">The entire PivotItem control.</part>
         /// <part name="content" class="win-pivot-item-content" locid="WinJS.UI.PivotItem_part:content">The content region of the PivotItem.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         PivotItem: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
@@ -34685,10 +34774,9 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global", "../../Animations", "../../BindingList", "../../ControlProcessor", "../../Promise", "../../Scheduler", "../../Core/_Base", "../../Core/_BaseUtils", "../../Utilities/_Control", "../../Utilities/_Dispose", "../../Utilities/_ElementUtilities", "../../Core/_ErrorFromName", "../../Core/_Events", "../../Utilities/_Hoverable", "../../Utilities/_KeyboardBehavior", "../../Core/_Log", "../../Core/_Resources", "../../Utilities/_TabContainer", "../../Animations/_TransitionAnimation", "../../Core/_WriteProfilerMark", "./_Constants", "./_Item"], function (require, exports, _Global, Animations, BindingList, ControlProcessor, Promise, Scheduler, _Base, _BaseUtils, _Control, _Dispose, _ElementUtilities, _ErrorFromName, _Events, _Hoverable, _KeyboardBehavior, _Log, _Resources, _TabContainer, _TransitionAnimation, _WriteProfilerMark, _Constants, _PivotItem) {
+define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global", "../../Animations", "../../BindingList", "../../ControlProcessor", "../../Promise", "../../Scheduler", "../../Core/_Base", "../../Core/_BaseUtils", "../../Utilities/_Control", "../../Utilities/_Dispose", "../../Utilities/_ElementUtilities", "../../Core/_ErrorFromName", "../../Core/_Events", "../../Utilities/_Hoverable", "../../Utilities/_KeyboardBehavior", "../../Core/_Log", "../../Core/_Resources", "../../Utilities/_TabContainer", "../../Animations/_TransitionAnimation", "../../Core/_WriteProfilerMark", "./_Constants"], function (require, exports, _Global, Animations, BindingList, ControlProcessor, Promise, Scheduler, _Base, _BaseUtils, _Control, _Dispose, _ElementUtilities, _ErrorFromName, _Events, _Hoverable, _KeyboardBehavior, _Log, _Resources, _TabContainer, _TransitionAnimation, _WriteProfilerMark, _Constants) {
     // Force-load Dependencies
     _Hoverable.isHoverable;
-    _PivotItem.PivotItem;
     require(["require-style!less/styles-pivot"]);
     require(["require-style!less/colors-pivot"]);
     "use strict";
@@ -34862,7 +34950,15 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
             },
             set: function (value) {
                 _ElementUtilities.empty(this._customLeftHeader);
-                value && this._customLeftHeader.appendChild(value);
+                if (value) {
+                    this._customLeftHeader.appendChild(value);
+                    _ElementUtilities.addClass(this._element, _Constants._ClassNames.pivotCustomHeaders);
+                }
+                else {
+                    if (!this._customLeftHeader.children.length && !this._customRightHeader.childNodes.length) {
+                        _ElementUtilities.removeClass(this._element, _Constants._ClassNames.pivotCustomHeaders);
+                    }
+                }
                 this.forceLayout();
             },
             enumerable: true,
@@ -34877,7 +34973,15 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
             },
             set: function (value) {
                 _ElementUtilities.empty(this._customRightHeader);
-                value && this._customRightHeader.appendChild(value);
+                if (value) {
+                    this._customRightHeader.appendChild(value);
+                    _ElementUtilities.addClass(this._element, _Constants._ClassNames.pivotCustomHeaders);
+                }
+                else {
+                    if (!this._customLeftHeader.children.length && !this._customRightHeader.childNodes.length) {
+                        _ElementUtilities.removeClass(this._element, _Constants._ClassNames.pivotCustomHeaders);
+                    }
+                }
                 this.forceLayout();
             },
             enumerable: true,
@@ -35022,7 +35126,7 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
                 _ElementUtilities.empty(this._surfaceElement);
             }
             attachItems(this);
-            this._rtl = _Global.getComputedStyle(this._element, null).direction === "rtl";
+            this._rtl = _ElementUtilities._getComputedStyle(this._element, null).direction === "rtl";
             this._headersState.refreshHeadersState(true);
             this._pendingRefresh = false;
             this._firstLoad = true;
@@ -35120,24 +35224,24 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
         };
         Pivot.prototype._loadItem = function (index) {
             var _this = this;
-            this._rtl = _Global.getComputedStyle(this._element, null).direction === "rtl";
+            this._rtl = _ElementUtilities._getComputedStyle(this._element, null).direction === "rtl";
             this._hidePivotItemAnimation.cancel();
             this._showPivotItemAnimation.cancel();
             this._slideHeadersAnimation.cancel();
             var goPrev = this._animateToPrevious;
             var newItem = this._items.getAt(index);
-            var selectionChangedDetail = {
-                index: index,
-                direction: goPrev ? "backwards" : "forward",
-                item: newItem
-            };
-            this._fireEvent(_EventNames.selectionChanged, true, false, selectionChangedDetail);
             var skipAnimation = this._firstLoad;
             var thisLoadPromise = this._loadPromise = this._loadPromise.then(function () {
                 var oldItem = _this._items.getAt(_this.selectedIndex);
                 oldItem && _this._hidePivotItem(oldItem.element, goPrev, skipAnimation);
                 var oldIndex = _this._selectedIndex;
                 _this._selectedIndex = index;
+                var selectionChangedDetail = {
+                    index: index,
+                    direction: goPrev ? "backwards" : "forward",
+                    item: newItem
+                };
+                _this._fireEvent(_EventNames.selectionChanged, true, false, selectionChangedDetail);
                 _this._headersState.handleNavigation(goPrev, index, oldIndex);
                 // Note: Adding Promise.timeout to force asynchrony so that thisLoadPromise
                 // is set before handler executes and compares thisLoadPromise.
@@ -35175,13 +35279,13 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
         };
         Pivot.prototype._getHeaderItemsWidth = function () {
             if (!this._headerItemsElWidth) {
-                this._headerItemsElWidth = parseFloat(_Global.getComputedStyle(this._headerItemsElement).width);
+                this._headerItemsElWidth = parseFloat(_ElementUtilities._getComputedStyle(this._headerItemsElement).width);
             }
             return this._headerItemsElWidth || _invalidMeasurement;
         };
         Pivot.prototype._getViewportWidth = function () {
             if (!this._viewportElWidth) {
-                this._viewportElWidth = parseFloat(_Global.getComputedStyle(this._viewportElement).width);
+                this._viewportElWidth = parseFloat(_ElementUtilities._getComputedStyle(this._viewportElement).width);
                 if (supportsSnap) {
                     this._viewportElement.style[_BaseUtils._browserStyleEquivalents["scroll-snap-points-x"].scriptName] = "snapInterval(0%, " + Math.ceil(this._viewportElWidth) + "px)";
                 }
@@ -35712,6 +35816,7 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
             this.setActiveHeader(headerElement);
             this.pivot._animateToPrevious = headerElement["_pivotItemIndex"] < this.pivot.selectedIndex;
             this.pivot.selectedIndex = headerElement["_pivotItemIndex"];
+            this.pivot._animateToPrevious = false;
         };
         HeaderStateStatic.prototype.handleNavigation = function (goPrevious, index, oldIndex) {
             if (this._firstRender) {
@@ -35844,7 +35949,7 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
                     lastHeader.style.opacity = start;
                     var lastHeaderFadeInDuration = 0.167;
                     lastHeader.style[_BaseUtils._browserStyleEquivalents["transition"].scriptName] = "opacity " + _TransitionAnimation._animationTimeAdjustment(lastHeaderFadeInDuration) + "s";
-                    _Global.getComputedStyle(lastHeader).opacity;
+                    _ElementUtilities._getComputedStyle(lastHeader).opacity;
                     lastHeader.style.opacity = end;
                 }
                 pivot._headersContainerElement.children[0].setAttribute("aria-hidden", "true");
@@ -35973,7 +36078,15 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
 
 // Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 /// <reference path="../../../../typings/require.d.ts" />
-define('WinJS/Controls/Pivot',["require", "exports", '../Core/_Base'], function (require, exports, _Base) {
+define('WinJS/Controls/Pivot',["require", "exports", '../Core/_Base', './Pivot/_Item'], function (require, exports, _Base, _Item) {
+    // We need PivotItem to be added to the public WinJS.UI namespace immediately.
+    // Force load the PivotItem module by accessing an undefined property on it.
+    // We do this to prevent:
+    //   1) the TypeScript compiler from optimizing it away since we don't use it 
+    //      anywhere else in this file. 
+    //   2) triggering a premature unwrap of the lazily loaded PivotItem module
+    //      which would happen if we accessed the _Item.PivotItem getter now.
+    _Item["touch"];
     var module = null;
     _Base.Namespace.define("WinJS.UI", {
         /// <field>
@@ -35992,8 +36105,8 @@ define('WinJS/Controls/Pivot',["require", "exports", '../Core/_Base'], function 
         /// <part name="pivot" class="win-pivot" locid="WinJS.UI.Pivot_part:pivot">The entire Pivot control.</part>
         /// <part name="title" class="win-pivot-title" locid="WinJS.UI.Pivot_part:title">The title for the Pivot control.</part>
         /// <part name="header" class="win-pivot-header" locid="WinJS.UI.Pivot_part:header">A header of a Pivot Item.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         Pivot: {
             get: function () {
                 if (!module) {
@@ -36040,8 +36153,8 @@ define('WinJS/Controls/Hub/_Section',[
         /// <part name="headercontent" class="win-hub-section-header-content" locid="WinJS.UI.HubSection_part:headercontent">The content region of the header region of the HubSection.</part>
         /// <part name="headerchevron" class="win-hub-section-header-chevron" locid="WinJS.UI.HubSection_part:headerchevron">The chevron region of the header region of the HubSection.</part>
         /// <part name="content" class="win-hub-section-content" locid="WinJS.UI.HubSection_part:content">The content region of the HubSection.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         HubSection: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -36296,8 +36409,8 @@ define('WinJS/Controls/Hub',[
         /// <part name="progress" class="win-hub-progress" locid="WinJS.UI.Hub_part:progress">The progress indicator for the Hub.</part>
         /// <part name="viewport" class="win-hub-viewport" locid="WinJS.UI.Hub_part:viewport">The viewport of the Hub.</part>
         /// <part name="surface" class="win-hub-surface" locid="WinJS.UI.Hub_part:surface">The scrollable region of the Hub.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         Hub: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -37034,6 +37147,13 @@ define('WinJS/Controls/Hub',[
                                                     this._viewportElement.style["-ms-overflow-style"] = "none";
                                                     onScreenItemsAnimatedPromise = Animations.enterContent(this._viewportElement).then(function () {
                                                         this._viewportElement.style["-ms-overflow-style"] = "";
+
+                                                        this._viewportElement.onmousewheel = function () {
+                                                            /*
+                                                                This fixes a mousewheel scrolling issue on Chrome. This empty event handler can be removed
+                                                                once https://code.google.com/p/chromium/issues/detail?id=515674 is resolved and fixed.
+                                                            */
+                                                        };
                                                     }.bind(this));
                                                 }
                                             }
@@ -37195,7 +37315,7 @@ define('WinJS/Controls/Hub',[
                         this._writeProfilerMark("measure,StartTM");
                         this._measured = true;
 
-                        this._rtl = _Global.getComputedStyle(this._element, null).direction === "rtl";
+                        this._rtl = _ElementUtilities._getComputedStyle(this._element, null).direction === "rtl";
 
                         if (this.orientation === _UI.Orientation.vertical) {
                             this._names = verticalNames;
@@ -37212,14 +37332,14 @@ define('WinJS/Controls/Hub',[
                         this._scrollPosition = _ElementUtilities.getScrollPosition(this._viewportElement)[this._names.scrollPos];
                         this._scrollLength = this._viewportElement[this._names.scrollSize];
 
-                        var surfaceElementComputedStyle = _Global.getComputedStyle(this._surfaceElement);
+                        var surfaceElementComputedStyle = _ElementUtilities._getComputedStyle(this._surfaceElement);
                         this._startSpacer = parseFloat(surfaceElementComputedStyle[this._names.marginStart]) + parseFloat(surfaceElementComputedStyle[this._names.borderStart]) + parseFloat(surfaceElementComputedStyle[this._names.paddingStart]);
                         this._endSpacer = parseFloat(surfaceElementComputedStyle[this._names.marginEnd]) + parseFloat(surfaceElementComputedStyle[this._names.borderEnd]) + parseFloat(surfaceElementComputedStyle[this._names.paddingEnd]);
 
                         this._sectionSizes = [];
                         for (var i = 0; i < this.sections.length; i++) {
                             var section = this.sections.getAt(i);
-                            var computedSectionStyle = _Global.getComputedStyle(section.element);
+                            var computedSectionStyle = _ElementUtilities._getComputedStyle(section.element);
                             this._sectionSizes[i] = {
                                 offset: section.element[this._names.offsetPos],
                                 // Reminder: offsetWidth doesn't include margins and also rounds.
@@ -38316,6 +38436,7 @@ define('WinJS/Controls/_LegacyAppBar/_Constants',[
         appBarCommandClass: "win-command",
         appBarCommandGlobalClass: "win-global",
         appBarCommandSelectionClass: "win-selection",
+        commandHiddenClass: "win-command-hidden",
         sectionSelection: "selection", /* deprecated, use sectionSecondary */
         sectionGlobal: "global", /* deprecated, use sectionPrimary */
         sectionPrimary: "primary",
@@ -38366,6 +38487,12 @@ define('WinJS/Utilities/_KeyboardInfo',["require", "exports", '../Core/_BaseCore
         visualViewportClass: "win-visualviewport-space",
         scrollTimeout: 150,
     };
+    // Definiton of *Visible Document*:
+    //   Some portions of this file refer to the *visible document* or *visibleDoc*. Generally speaking,
+    //   this is the portion of the app that is visible to the user (factoring in optical zoom and input pane occlusion).
+    //   Technically speaking, in most cases, this is equivalent to the *visual viewport*. The exception is
+    //   when the input pane has shown without resizing the *visual viewport*. In this case, the *visible document*
+    //   is the *visual viewport* height minus the input pane occlusion.
     // This private module provides accurate metrics for the Visual Viewport and WWA's IHM offsets in Win10 WWA 
     // where "-ms-device-fixed" CSS positioning is supported. WinJS controls will also use this module for
     // positoning themselves relative to the viewport in a web browser outside of WWA. Their preference is still 
@@ -38477,7 +38604,10 @@ define('WinJS/Utilities/_KeyboardInfo',["require", "exports", '../Core/_BaseCore
         get _scrollTimeout() {
             return _Constants.scrollTimeout;
         },
-        // _layoutViewportCoords is used with elements that use position:fixed instead of position:-ms-device-fixed
+        // _layoutViewportCoords gives the top and bottom offset of the visible document for elements using
+        // position:fixed. Comparison with position:-ms-device-fixed helper:
+        //   - Like -ms-device-fixed helper, takes into account input pane occlusion.
+        //   - Unlike -ms-device-fixed helper, doesn't account for optical zoom.
         get _layoutViewportCoords() {
             var topOffset = _Global.window.pageYOffset - _Global.document.documentElement.scrollTop;
             var bottomOffset = _Global.document.documentElement.clientHeight - (topOffset + this._visibleDocHeight);
@@ -39023,14 +39153,14 @@ define('WinJS/Controls/Flyout/_Overlay',[
                     this._element.style.opacity = 0;
                     this._element.style.visibility = "visible";
                     // touch opacity so that IE fades from the 0 we just set to 1
-                    _Global.getComputedStyle(this._element, null).opacity;
+                    _ElementUtilities._getComputedStyle(this._element, null).opacity;
                     return Animations.fadeIn(this._element);
                 },
 
                 _baseAnimateOut: function _Overlay_baseAnimateOut() {
                     this._element.style.opacity = 1;
                     // touch opacity so that IE fades from the 1 we just set to 0
-                    _Global.getComputedStyle(this._element, null).opacity;
+                    _ElementUtilities._getComputedStyle(this._element, null).opacity;
                     return Animations.fadeOut(this._element);
                 },
 
@@ -39259,7 +39389,7 @@ define('WinJS/Controls/Flyout/_Overlay',[
                     for (var count = 0, len = hideCommands.length; count < len; count++) {
                         // Need to fix our position
                         var rectangle = hideCommands[count].getBoundingClientRect(),
-                            style = _Global.getComputedStyle(hideCommands[count]);
+                            style = _ElementUtilities._getComputedStyle(hideCommands[count]);
 
                         // Use the bounding box, adjusting for margins
                         hideCommands[count].style.top = (rectangle.top - parseFloat(style.marginTop)) + "px";
@@ -39679,13 +39809,13 @@ define('WinJS/Controls/Flyout',[
         /// <event name="beforehide" locid="WinJS.UI.Flyout_e:beforehide">Raised just before hiding a flyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.Flyout_e:afterhide">Raised immediately after a flyout is fully hidden.</event>
         /// <part name="flyout" class="win-flyout" locid="WinJS.UI.Flyout_part:flyout">The Flyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         Flyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
             function getDimension(element, property) {
-                return _ElementUtilities.convertToPixels(element, _Global.getComputedStyle(element, null)[property]);
+                return _ElementUtilities.convertToPixels(element, _ElementUtilities._getComputedStyle(element, null)[property]);
             }
 
             function measureElement(element) {
@@ -40015,7 +40145,7 @@ define('WinJS/Controls/Flyout',[
                     }
                 },
                 _handleKeyDownInCascade: function _CascadeManager_handleKeyDownInCascade(event) {
-                    var rtl = _Global.getComputedStyle(event.target).direction === "rtl",
+                    var rtl = _ElementUtilities._getComputedStyle(event.target).direction === "rtl",
                         leftKey = rtl ? Key.rightArrow : Key.leftArrow,
                         target = event.target;
 
@@ -40745,7 +40875,7 @@ define('WinJS/Controls/Flyout',[
 
                     // Set up the new position, and prep the offset for showPopup.
                     var flyoutMeasurements = measureElement(this._element);
-                    var isRtl = _Global.getComputedStyle(this._element).direction === "rtl";
+                    var isRtl = _ElementUtilities._getComputedStyle(this._element).direction === "rtl";
                     this._currentPosition = this._positionRequest.getTopLeft(flyoutMeasurements, isRtl);
 
                     // Adjust position
@@ -41054,6 +41184,8 @@ define('WinJS/Controls/CommandingSurface/_Constants',["require", "exports"], fun
     exports.ClassNames = {
         controlCssClass: "win-commandingsurface",
         disposableCssClass: "win-disposable",
+        tabStopClass: "win-commandingsurface-tabstop",
+        contentClass: "win-commandingsurface-content",
         actionAreaCssClass: "win-commandingsurface-actionarea",
         actionAreaContainerCssClass: "win-commandingsurface-actionareacontainer",
         overflowButtonCssClass: "win-commandingsurface-overflowbutton",
@@ -41062,7 +41194,6 @@ define('WinJS/Controls/CommandingSurface/_Constants',["require", "exports"], fun
         overflowAreaCssClass: "win-commandingsurface-overflowarea",
         overflowAreaContainerCssClass: "win-commandingsurface-overflowareacontainer",
         contentFlyoutCssClass: "win-commandingsurface-contentflyout",
-        emptyCommandingSurfaceCssClass: "win-commandingsurface-empty",
         menuCssClass: "win-menu",
         menuContainsToggleCommandClass: "win-menu-containstogglecommand",
         insetOutlineClass: "win-commandingsurface-insetoutline",
@@ -41076,6 +41207,10 @@ define('WinJS/Controls/CommandingSurface/_Constants',["require", "exports"], fun
         fullClass: "win-commandingsurface-closeddisplayfull",
         overflowTopClass: "win-commandingsurface-overflowtop",
         overflowBottomClass: "win-commandingsurface-overflowbottom",
+        commandHiddenClass: "win-commandingsurface-command-hidden",
+        commandPrimaryOverflownPolicyClass: "win-commandingsurface-command-primary-overflown",
+        commandSecondaryOverflownPolicyClass: "win-commandingsurface-command-secondary-overflown",
+        commandSeparatorHiddenPolicyClass: "win-commandingsurface-command-separator-hidden"
     };
     exports.EventNames = {
         beforeOpen: "beforeopen",
@@ -41410,8 +41545,8 @@ define('WinJS/Controls/AppBar/_Command',[
         /// <part name="appBarCommandIcon" class="win-commandicon" locid="WinJS.UI.AppBarCommand_part:appBarCommandIcon">The AppBarCommand's icon box.</part>
         /// <part name="appBarCommandImage" class="win-commandimage" locid="WinJS.UI.AppBarCommand_part:appBarCommandImage">The AppBarCommand's icon's image formatting.</part>
         /// <part name="appBarCommandLabel" class="win-label" locid="WinJS.UI.AppBarCommand_part:appBarCommandLabel">The AppBarCommand's label</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         AppBarCommand: _Base.Namespace._lazy(function () {
 
             function _handleClick(event) {
@@ -41808,8 +41943,7 @@ define('WinJS/Controls/AppBar/_Command',[
                 /// </field>
                 hidden: {
                     get: function () {
-                        // Ensure it's a boolean because we're using the DOM element to keep in-sync
-                        return this._element.style.visibility === "hidden";
+                        return _ElementUtilities.hasClass(this._element, _Constants.commandHiddenClass);
                     },
                     set: function (value) {
                         if (value === this.hidden) {
@@ -41817,21 +41951,20 @@ define('WinJS/Controls/AppBar/_Command',[
                             return;
                         }
 
-                        var style = this._element.style;
-                        var originalVisibility = style.visibility;
-                        var originalDisplay = style.display;
+                        var wasHidden = this.hidden;
 
                         if (value) {
-                            style.visibility = "hidden";
-                            style.display = "none";
+                            _ElementUtilities.addClass(this._element, _Constants.commandHiddenClass);
                         } else {
-                            style.visibility = "";
-                            style.display = "inline-block";
+                            _ElementUtilities.removeClass(this._element, _Constants.commandHiddenClass);
                         }
 
                         if (!this._sendEvent(_Constants.commandVisibilityChanged)) {
-                            style.visibility = originalVisibility;
-                            style.display = originalDisplay;
+                            if (wasHidden) {
+                                _ElementUtilities.addClass(this._element, _Constants.commandHiddenClass);
+                            } else {
+                                _ElementUtilities.removeClass(this._element, _Constants.commandHiddenClass);
+                            }
                         }
                     }
                 },
@@ -42177,8 +42310,8 @@ define('WinJS/Controls/Menu/_Command',[
         /// <icon src="ui_winjs.ui.menucommand.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.MenuCommand" data-win-options="{type:'button',label:'Button'}"></button>]]></htmlSnippet>
         /// <part name="MenuCommand" class="win-command" locid="WinJS.UI.MenuCommand_name">The MenuCommand control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         MenuCommand: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -42613,7 +42746,7 @@ define('WinJS/Controls/Menu/_Command',[
 
                 _handleKeyDown: function MenuCommand_handleKeyDown(event) {
                     var Key = _ElementUtilities.Key,
-                        rtl = _Global.getComputedStyle(this.element).direction === "rtl",
+                        rtl = _ElementUtilities._getComputedStyle(this.element).direction === "rtl",
                         rightKey = rtl ? Key.leftArrow : Key.rightArrow;
 
                     if (event.keyCode === rightKey && this.type === _Constants.typeFlyout) {
@@ -43247,6 +43380,10 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             return rhs.indexOf(commandElement) < 0;
         });
     }
+    function intersectElements(arr1, arr2) {
+        // Returns a new array that is the intersection between arr1 and arr2.
+        return arr1.filter(function (x) { return arr2.indexOf(x) !== -1; });
+    }
     /// Represents an apaptive surface for displaying commands.
     var _CommandingSurface = (function () {
         function _CommandingSurface(element, options) {
@@ -43274,33 +43411,44 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                 };
                 var _renderDisplayMode = function () {
                     var rendered = _renderedState;
+                    var dom = _this._dom;
                     if (rendered.isOpenedMode !== _this._isOpenedMode) {
                         if (_this._isOpenedMode) {
                             // Render opened
-                            removeClass(_this._dom.root, _Constants.ClassNames.closedClass);
-                            addClass(_this._dom.root, _Constants.ClassNames.openedClass);
+                            removeClass(dom.root, _Constants.ClassNames.closedClass);
+                            addClass(dom.root, _Constants.ClassNames.openedClass);
+                            // Focus should carousel between first and last tab stops while opened.
+                            dom.firstTabStop.tabIndex = 0;
+                            dom.finalTabStop.tabIndex = 0;
+                            dom.firstTabStop.setAttribute("x-ms-aria-flowfrom", dom.finalTabStop.id);
+                            dom.finalTabStop.setAttribute("aria-flowto", dom.firstTabStop.id);
                         }
                         else {
                             // Render closed
-                            removeClass(_this._dom.root, _Constants.ClassNames.openedClass);
-                            addClass(_this._dom.root, _Constants.ClassNames.closedClass);
+                            removeClass(dom.root, _Constants.ClassNames.openedClass);
+                            addClass(dom.root, _Constants.ClassNames.closedClass);
+                            // Focus should not carousel between first and last tab stops while closed.
+                            dom.firstTabStop.tabIndex = -1;
+                            dom.finalTabStop.tabIndex = -1;
+                            dom.firstTabStop.removeAttribute("x-ms-aria-flowfrom");
+                            dom.finalTabStop.removeAttribute("aria-flowto");
                         }
                         rendered.isOpenedMode = _this._isOpenedMode;
                     }
                     if (rendered.closedDisplayMode !== _this.closedDisplayMode) {
-                        removeClass(_this._dom.root, closedDisplayModeClassMap[rendered.closedDisplayMode]);
-                        addClass(_this._dom.root, closedDisplayModeClassMap[_this.closedDisplayMode]);
+                        removeClass(dom.root, closedDisplayModeClassMap[rendered.closedDisplayMode]);
+                        addClass(dom.root, closedDisplayModeClassMap[_this.closedDisplayMode]);
                         rendered.closedDisplayMode = _this.closedDisplayMode;
                     }
                     if (rendered.overflowDirection !== _this.overflowDirection) {
-                        removeClass(_this._dom.root, overflowDirectionClassMap[rendered.overflowDirection]);
-                        addClass(_this._dom.root, overflowDirectionClassMap[_this.overflowDirection]);
+                        removeClass(dom.root, overflowDirectionClassMap[rendered.overflowDirection]);
+                        addClass(dom.root, overflowDirectionClassMap[_this.overflowDirection]);
                         rendered.overflowDirection = _this.overflowDirection;
                     }
                     if (_this._overflowAlignmentOffset !== rendered.overflowAlignmentOffset) {
                         var offsetProperty = (_this._rtl ? "left" : "right");
                         var offsetTextValue = _this._overflowAlignmentOffset + "px";
-                        _this._dom.overflowAreaContainer.style[offsetProperty] = offsetTextValue;
+                        dom.overflowAreaContainer.style[offsetProperty] = offsetTextValue;
                     }
                 };
                 var CommandLayoutPipeline = {
@@ -43342,6 +43490,11 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                         // Callback for unit tests.
                         _this._layoutCompleteCallback && _this._layoutCompleteCallback();
                     }
+                    else {
+                        // We didn't reach the end of the pipeline. Therefore
+                        // one of the stages failed and layout could not complete.
+                        _this._minimalLayout();
+                    }
                 };
                 return {
                     get renderedState() {
@@ -43380,9 +43533,17 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                 };
             })();
             this._writeProfilerMark("constructor,StartTM");
-            // Check to make sure we weren't duplicated
-            if (element && element["winControl"]) {
-                throw new _ErrorFromName("WinJS.UI._CommandingSurface.DuplicateConstruction", strings.duplicateConstruction);
+            if (element) {
+                // Check to make sure we weren't duplicated
+                if (element["winControl"]) {
+                    throw new _ErrorFromName("WinJS.UI._CommandingSurface.DuplicateConstruction", strings.duplicateConstruction);
+                }
+                if (!options.data) {
+                    // Shallow copy object so we can modify it.
+                    options = _BaseUtils._shallowCopy(options);
+                    // Get default data from any command defined in markup.
+                    options.data = options.data || this._getDataFromDOMElements(element);
+                }
             }
             this._initializeDom(element || _Global.document.createElement("div"));
             this._machine = options.openCloseMachine || new _OpenCloseMachine.OpenCloseMachine({
@@ -43423,19 +43584,19 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             this.overflowDirection = _Constants.defaultOverflowDirection;
             this.closedDisplayMode = _Constants.defaultClosedDisplayMode;
             this.opened = this._isOpenedMode;
-            if (!options.data) {
-                // Shallow copy object so we can modify it.
-                options = _BaseUtils._shallowCopy(options);
-                // Set default data
-                options.data = options.data || this._getDataFromDOMElements();
-            }
             _Control.setOptions(this, options);
             // Event handlers
             _ElementUtilities._resizeNotifier.subscribe(this._dom.root, this._resizeHandlerBound);
             this._dom.root.addEventListener('keydown', this._keyDownHandler.bind(this));
+            _ElementUtilities._addEventListener(this._dom.firstTabStop, "focusin", function () {
+                _this._focusLastFocusableElementOrThis(false);
+            });
+            _ElementUtilities._addEventListener(this._dom.finalTabStop, "focusin", function () {
+                _this._focusFirstFocusableElementOrThis(false);
+            });
             // Exit the Init state.
             _ElementUtilities._inDom(this._dom.root).then(function () {
-                _this._rtl = _Global.getComputedStyle(_this._dom.root).direction === 'rtl';
+                _this._rtl = _ElementUtilities._getComputedStyle(_this._dom.root).direction === 'rtl';
                 if (!options.openCloseMachine) {
                     // We should only call exitInit on the machine when we own the machine.
                     _this._machine.exitInit();
@@ -43483,6 +43644,9 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                 this._writeProfilerMark("set_closedDisplayMode,info");
                 var isChangingState = (value !== this._closedDisplayMode);
                 if (ClosedDisplayMode[value] && isChangingState) {
+                    // Changing closedDisplayMode can trigger the overflowButton to show/hide itself in the action area.
+                    // Commands may need to reflow based on any changes to the available width in the action area.
+                    this._updateDomImpl.layoutDirty();
                     this._closedDisplayMode = value;
                     this._machine.updateDom();
                 }
@@ -43575,6 +43739,15 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                 }
             }
         };
+        _CommandingSurface.prototype.takeFocus = function (useSetActive) {
+            this._focusFirstFocusableElementOrThis(useSetActive);
+        };
+        _CommandingSurface.prototype._focusFirstFocusableElementOrThis = function (useSetActive) {
+            _ElementUtilities._focusFirstFocusableElement(this._dom.content, useSetActive) || _ElementUtilities._tryFocusOnAnyElement(this.element, useSetActive);
+        };
+        _CommandingSurface.prototype._focusLastFocusableElementOrThis = function (useSetActive) {
+            _ElementUtilities._focusLastFocusableElement(this._dom.content, useSetActive) || _ElementUtilities._tryFocusOnAnyElement(this.element, useSetActive);
+        };
         _CommandingSurface.prototype.deferredDomUpate = function () {
             // Notify the machine that an update has been requested.
             this._machine.updateDom();
@@ -43659,19 +43832,26 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             }
             _ElementUtilities.addClass(root, _Constants.ClassNames.controlCssClass);
             _ElementUtilities.addClass(root, _Constants.ClassNames.disposableCssClass);
+            var content = _Global.document.createElement("div");
+            _ElementUtilities.addClass(content, _Constants.ClassNames.contentClass);
+            root.appendChild(content);
             var actionArea = _Global.document.createElement("div");
             _ElementUtilities.addClass(actionArea, _Constants.ClassNames.actionAreaCssClass);
-            _ElementUtilities._reparentChildren(root, actionArea);
-            var actionAreaInsetOutline = document.createElement("DIV");
+            var actionAreaInsetOutline = document.createElement("div");
             _ElementUtilities.addClass(actionAreaInsetOutline, _Constants.ClassNames.insetOutlineClass);
             var actionAreaContainer = _Global.document.createElement("div");
             _ElementUtilities.addClass(actionAreaContainer, _Constants.ClassNames.actionAreaContainerCssClass);
             actionAreaContainer.appendChild(actionArea);
             actionAreaContainer.appendChild(actionAreaInsetOutline);
-            root.appendChild(actionAreaContainer);
-            var spacer = _Global.document.createElement("div");
-            _ElementUtilities.addClass(spacer, _Constants.ClassNames.spacerCssClass);
-            actionArea.appendChild(spacer);
+            content.appendChild(actionAreaContainer);
+            // This element helps us work around cross browser flexbox bugs. When there are no primary
+            // commands in the action area but there IS a visible overflow button, some browsers will:
+            //  1. Collapse the action area.
+            //  2. Push overflowbutton outside of the action area's clipping rect.
+            var actionAreaSpacer = _Global.document.createElement("div");
+            _ElementUtilities.addClass(actionAreaSpacer, _Constants.ClassNames.spacerCssClass);
+            actionAreaSpacer.tabIndex = -1;
+            actionArea.appendChild(actionAreaSpacer);
             var overflowButton = _Global.document.createElement("button");
             overflowButton.tabIndex = 0;
             overflowButton.innerHTML = "<span class='" + _Constants.ClassNames.ellipsisCssClass + "'></span>";
@@ -43689,15 +43869,33 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             _ElementUtilities.addClass(overflowAreaContainer, _Constants.ClassNames.overflowAreaContainerCssClass);
             overflowAreaContainer.appendChild(overflowArea);
             overflowAreaContainer.appendChild(overflowInsetOutline);
-            root.appendChild(overflowAreaContainer);
+            content.appendChild(overflowAreaContainer);
+            // This element is always placed at the end of the overflow area and is used to provide a better
+            // "end of scrollable region" visual.
+            var overflowAreaSpacer = _Global.document.createElement("div");
+            _ElementUtilities.addClass(overflowAreaSpacer, _Constants.ClassNames.spacerCssClass);
+            overflowAreaSpacer.tabIndex = -1;
+            overflowArea.appendChild(overflowAreaSpacer);
+            var firstTabStop = _Global.document.createElement("div");
+            _ElementUtilities.addClass(firstTabStop, _Constants.ClassNames.tabStopClass);
+            _ElementUtilities._ensureId(firstTabStop);
+            root.insertBefore(firstTabStop, root.children[0]);
+            var finalTabStop = _Global.document.createElement("div");
+            _ElementUtilities.addClass(finalTabStop, _Constants.ClassNames.tabStopClass);
+            _ElementUtilities._ensureId(finalTabStop);
+            root.appendChild(finalTabStop);
             this._dom = {
                 root: root,
+                content: content,
                 actionArea: actionArea,
                 actionAreaContainer: actionAreaContainer,
-                spacer: spacer,
+                actionAreaSpacer: actionAreaSpacer,
                 overflowButton: overflowButton,
                 overflowArea: overflowArea,
-                overflowAreaContainer: overflowAreaContainer
+                overflowAreaContainer: overflowAreaContainer,
+                overflowAreaSpacer: overflowAreaSpacer,
+                firstTabStop: firstTabStop,
+                finalTabStop: finalTabStop,
             };
         };
         _CommandingSurface.prototype._getFocusableElementsInfo = function () {
@@ -43707,8 +43905,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                 focusedIndex: -1
             };
             var elementsInReach = Array.prototype.slice.call(this._dom.actionArea.children);
-            var elementsInReach = Array.prototype.slice.call(this._dom.actionArea.children);
-            if (this._dom.overflowArea.style.display !== "none") {
+            if (this._updateDomImpl.renderedState.isOpenedMode) {
                 elementsInReach = elementsInReach.concat(Array.prototype.slice.call(this._dom.overflowArea.children));
             }
             elementsInReach.forEach(function (element) {
@@ -43743,13 +43940,19 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             if (!this._refreshPending) {
                 this._refreshPending = true;
                 // Batch calls to _dataUpdated
-                Scheduler.schedule(function () {
+                this._batchDataUpdates(function () {
                     if (_this._refreshPending && !_this._disposed) {
                         _this._refreshPending = false;
                         _this._dataUpdated();
                     }
-                }, Scheduler.Priority.high, null, "WinJS.UI._CommandingSurface._refresh");
+                });
             }
+        };
+        // _batchDataUpdates is used by unit tests
+        _CommandingSurface.prototype._batchDataUpdates = function (updateFn) {
+            Scheduler.schedule(function () {
+                updateFn();
+            }, Scheduler.Priority.high, null, "WinJS.UI._CommandingSurface._refresh");
         };
         _CommandingSurface.prototype._addDataListeners = function () {
             var _this = this;
@@ -43768,14 +43971,26 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             if (element) {
                 var command = element["winControl"];
                 if (command) {
-                    focusable = command.element.style.display !== "none" && command.type !== _Constants.typeSeparator && !command.hidden && !command.disabled && (!command.firstElementFocus || command.firstElementFocus.tabIndex >= 0 || command.lastElementFocus.tabIndex >= 0);
+                    focusable = !this._hasAnyHiddenClasses(command) && command.type !== _Constants.typeSeparator && !command.hidden && !command.disabled && (!command.firstElementFocus || command.firstElementFocus.tabIndex >= 0 || command.lastElementFocus.tabIndex >= 0);
                 }
                 else {
                     // e.g. the overflow button
-                    focusable = element.style.display !== "none" && getComputedStyle(element).visibility !== "hidden" && element.tabIndex >= 0;
+                    focusable = element.style.display !== "none" && _ElementUtilities._getComputedStyle(element).visibility !== "hidden" && element.tabIndex >= 0;
                 }
             }
             return focusable;
+        };
+        _CommandingSurface.prototype._clearHiddenPolicyClasses = function (command) {
+            _ElementUtilities.removeClass(command.element, _Constants.ClassNames.commandPrimaryOverflownPolicyClass);
+            _ElementUtilities.removeClass(command.element, _Constants.ClassNames.commandSecondaryOverflownPolicyClass);
+            _ElementUtilities.removeClass(command.element, _Constants.ClassNames.commandSeparatorHiddenPolicyClass);
+        };
+        _CommandingSurface.prototype._hasHiddenPolicyClasses = function (command) {
+            return _ElementUtilities.hasClass(command.element, _Constants.ClassNames.commandPrimaryOverflownPolicyClass) || _ElementUtilities.hasClass(command.element, _Constants.ClassNames.commandSecondaryOverflownPolicyClass) || _ElementUtilities.hasClass(command.element, _Constants.ClassNames.commandSeparatorHiddenPolicyClass);
+        };
+        _CommandingSurface.prototype._hasAnyHiddenClasses = function (command) {
+            // Checks if we've processed and recognized a command as being hidden
+            return _ElementUtilities.hasClass(command.element, _Constants.ClassNames.commandHiddenClass) || this._hasHiddenPolicyClasses(command);
         };
         _CommandingSurface.prototype._isCommandInActionArea = function (element) {
             // Returns true if the element is a command in the actionarea, false otherwise
@@ -43835,18 +44050,18 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                 }
             }
         };
-        _CommandingSurface.prototype._getDataFromDOMElements = function () {
+        _CommandingSurface.prototype._getDataFromDOMElements = function (root) {
             this._writeProfilerMark("_getDataFromDOMElements,info");
-            ControlProcessor.processAll(this._dom.actionArea, true);
+            ControlProcessor.processAll(root, true);
             var commands = [];
-            var childrenLength = this._dom.actionArea.children.length;
+            var childrenLength = root.children.length;
             var child;
             for (var i = 0; i < childrenLength; i++) {
-                child = this._dom.actionArea.children[i];
+                child = root.children[i];
                 if (child["winControl"] && child["winControl"] instanceof _Command.AppBarCommand) {
                     commands.push(child["winControl"]);
                 }
-                else if (child !== this._dom.overflowButton && child !== this._dom.spacer) {
+                else {
                     throw new _ErrorFromName("WinJS.UI._CommandingSurface.MustContainCommands", strings.mustContainCommands);
                 }
             }
@@ -43906,42 +44121,55 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             this._updateDomImpl.update();
         };
         _CommandingSurface.prototype._getDataChangeInfo = function () {
+            var _this = this;
             var i = 0, len = 0;
             var added = [];
             var deleted = [];
-            var affected = [];
-            var currentShown = [];
-            var currentElements = [];
-            var newShown = [];
-            var newHidden = [];
-            var newElements = [];
+            var unchanged = [];
+            var prevVisible = [];
+            var prevElements = [];
+            var nextVisible = [];
+            var nextElements = [];
+            var nextOverflown = [];
+            var nextHiding = [];
+            var nextShowing = [];
             Array.prototype.forEach.call(this._dom.actionArea.querySelectorAll(_Constants.commandSelector), function (commandElement) {
-                if (commandElement.style.display !== "none") {
-                    currentShown.push(commandElement);
+                if (!_this._hasAnyHiddenClasses(commandElement["winControl"])) {
+                    prevVisible.push(commandElement);
                 }
-                currentElements.push(commandElement);
+                prevElements.push(commandElement);
             });
             this.data.forEach(function (command) {
-                if (command.element.style.display !== "none") {
-                    newShown.push(command.element);
+                var hidden = command.hidden;
+                var hiding = hidden && !_ElementUtilities.hasClass(command.element, _Constants.ClassNames.commandHiddenClass);
+                var showing = !hidden && _ElementUtilities.hasClass(command.element, _Constants.ClassNames.commandHiddenClass);
+                var overflown = _ElementUtilities.hasClass(command.element, _Constants.ClassNames.commandPrimaryOverflownPolicyClass);
+                if (!_this._hasAnyHiddenClasses(command.element["winControl"])) {
+                    nextVisible.push(command.element);
                 }
-                else {
-                    newHidden.push(command.element);
+                if (overflown) {
+                    nextOverflown.push(command.element);
                 }
-                newElements.push(command.element);
+                else if (hiding) {
+                    nextHiding.push(command.element);
+                }
+                else if (showing) {
+                    nextShowing.push(command.element);
+                }
+                nextElements.push(command.element);
             });
-            deleted = diffElements(currentShown, newShown);
-            affected = diffElements(currentShown, deleted);
-            // "added" must also include the elements from "newHidden" to ensure that we continue
-            // to animate any command elements that have underflowed back into the actionarea
-            // as a part of this data change.
-            added = diffElements(newShown, currentShown).concat(newHidden);
+            deleted = diffElements(prevElements, nextElements);
+            unchanged = intersectElements(prevVisible, nextVisible);
+            added = diffElements(nextElements, prevElements);
             return {
-                newElements: newElements,
-                currentElements: currentElements,
+                nextElements: nextElements,
+                prevElements: prevElements,
                 added: added,
                 deleted: deleted,
-                affected: affected,
+                unchanged: unchanged,
+                hiding: nextHiding,
+                showing: nextShowing,
+                overflown: nextOverflown
             };
         };
         _CommandingSurface.prototype._processNewData = function () {
@@ -43949,7 +44177,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             this._writeProfilerMark("_processNewData,info");
             var changeInfo = this._getDataChangeInfo();
             // Take a snapshot of the current state
-            var updateCommandAnimation = Animations._createUpdateListAnimation(changeInfo.added, changeInfo.deleted, changeInfo.affected);
+            var updateCommandAnimation = Animations._createUpdateListAnimation(changeInfo.added.concat(changeInfo.showing).concat(changeInfo.overflown), changeInfo.deleted.concat(changeInfo.hiding), changeInfo.unchanged);
             // Unbind property mutation event listener from deleted IObservableCommands
             changeInfo.deleted.forEach(function (deletedElement) {
                 var command = (deletedElement['winControl']);
@@ -43957,31 +44185,33 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                     command._propertyMutations.unbind(_this._refreshBound);
                 }
             });
-            // Bind property mutation event listener to added IObservable commands.
-            changeInfo.added.forEach(function (deletedElement) {
-                var command = (deletedElement['winControl']);
+            // Bind property mutation event listener to added IObservable commands
+            changeInfo.added.forEach(function (addedElement) {
+                var command = (addedElement['winControl']);
                 if (command && command['_propertyMutations']) {
                     command._propertyMutations.bind(_this._refreshBound);
                 }
             });
             // Remove current ICommand elements
-            changeInfo.currentElements.forEach(function (element) {
+            changeInfo.prevElements.forEach(function (element) {
                 if (element.parentElement) {
                     element.parentElement.removeChild(element);
                 }
             });
             // Add new ICommand elements in the right order.
-            changeInfo.newElements.forEach(function (element) {
+            changeInfo.nextElements.forEach(function (element) {
                 _this._dom.actionArea.appendChild(element);
+            });
+            // Actually hide commands now that the animation has been created
+            changeInfo.hiding.forEach(function (element) {
+                _ElementUtilities.addClass(element, _Constants.ClassNames.commandHiddenClass);
+            });
+            // Actually show commands now that the animation has been created
+            changeInfo.showing.forEach(function (element) {
+                _ElementUtilities.removeClass(element, _Constants.ClassNames.commandHiddenClass);
             });
             // Ensure that the overflow button is always the last element in the actionarea
             this._dom.actionArea.appendChild(this._dom.overflowButton);
-            if (this.data.length > 0) {
-                _ElementUtilities.removeClass(this._dom.root, _Constants.ClassNames.emptyCommandingSurfaceCssClass);
-            }
-            else {
-                _ElementUtilities.addClass(this._dom.root, _Constants.ClassNames.emptyCommandingSurfaceCssClass);
-            }
             // Execute the animation.
             updateCommandAnimation.execute();
             // Indicate processing was successful.
@@ -43991,12 +44221,19 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             var _this = this;
             this._writeProfilerMark("_measure,info");
             if (this._canMeasure()) {
-                var overflowButtonWidth = _ElementUtilities._getPreciseTotalWidth(this._dom.overflowButton), actionAreaContentBoxWidth = _ElementUtilities._getPreciseContentWidth(this._dom.actionArea), separatorWidth = 0, standardCommandWidth = 0, contentCommandWidths = {};
+                var originalDisplayStyle = this._dom.overflowButton.style.display;
+                this._dom.overflowButton.style.display = "";
+                var overflowButtonWidth = _ElementUtilities._getPreciseTotalWidth(this._dom.overflowButton);
+                this._dom.overflowButton.style.display = originalDisplayStyle;
+                var actionAreaContentBoxWidth = _ElementUtilities._getPreciseContentWidth(this._dom.actionArea);
+                var separatorWidth = 0;
+                var standardCommandWidth = 0;
+                var contentCommandWidths = {};
                 this._primaryCommands.forEach(function (command) {
                     // Ensure that the element we are measuring does not have display: none (e.g. it was just added, and it
                     // will be animated in)
                     var originalDisplayStyle = command.element.style.display;
-                    command.element.style.display = "";
+                    command.element.style.display = "inline-block";
                     if (command.type === _Constants.typeContent) {
                         // Measure each 'content' command type that we find
                         contentCommandWidths[_this._commandUniqueId(command)] = _ElementUtilities._getPreciseTotalWidth(command.element);
@@ -44034,32 +44271,48 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
         _CommandingSurface.prototype._layoutCommands = function () {
             var _this = this;
             this._writeProfilerMark("_layoutCommands,StartTM");
+            var visibleSecondaryCommands = [];
+            var visiblePrimaryCommands = [];
+            var visiblePrimaryCommandsForActionArea = [];
+            var visiblePrimaryCommandsForOverflowArea = [];
+            // Separate hidden commands from visible commands.
+            // Organize visible commands by section.
+            this.data.forEach(function (command) {
+                _this._clearHiddenPolicyClasses(command);
+                if (!command.hidden) {
+                    if (command.section === _Constants.secondaryCommandSection) {
+                        visibleSecondaryCommands.push(command);
+                    }
+                    else {
+                        visiblePrimaryCommands.push(command);
+                    }
+                }
+            });
+            var hasVisibleSecondaryCommand = visibleSecondaryCommands.length > 0;
+            var primaryCommandsLocation = this._getVisiblePrimaryCommandsLocation(visiblePrimaryCommands, hasVisibleSecondaryCommand);
+            visiblePrimaryCommandsForActionArea = primaryCommandsLocation.commandsForActionArea;
+            visiblePrimaryCommandsForOverflowArea = primaryCommandsLocation.commandsForOverflowArea;
             //
-            // Filter commands that will not be visible in the actionarea
+            // Layout commands in the action area
             //
-            this._primaryCommands.forEach(function (command) {
-                command.element.style.display = (command.hidden ? "none" : "");
+            // Apply the policy classes for overflown and secondary commands.
+            visiblePrimaryCommandsForOverflowArea.forEach(function (command) { return _ElementUtilities.addClass(command.element, _Constants.ClassNames.commandPrimaryOverflownPolicyClass); });
+            visibleSecondaryCommands.forEach(function (command) { return _ElementUtilities.addClass(command.element, _Constants.ClassNames.commandSecondaryOverflownPolicyClass); });
+            this._hideSeparatorsIfNeeded(visiblePrimaryCommandsForActionArea);
+            //
+            // Layout commands in the overflow area 
+            // Project overflowing and secondary commands into the overflowArea as MenuCommands.
+            //
+            // Clean up previous MenuCommand projections
+            _ElementUtilities.empty(this._dom.overflowArea);
+            this._menuCommandProjections.map(function (menuCommand) {
+                menuCommand.dispose();
             });
-            var primaryCommandsLocation = this._getVisiblePrimaryCommandsLocation();
-            this._hideSeparatorsIfNeeded(primaryCommandsLocation.actionArea);
-            // Primary commands that will be mirrored in the overflow area should be hidden so
-            // that they are not visible in the actionarea.
-            primaryCommandsLocation.overflowArea.forEach(function (command) {
-                command.element.style.display = "none";
-            });
-            // The secondary commands in the actionarea should be hidden since they are always
-            // mirrored as new elements in the overflow area.
-            this._secondaryCommands.forEach(function (command) {
-                command.element.style.display = "none";
-            });
-            var overflowCommands = primaryCommandsLocation.overflowArea;
-            var showOverflowButton = (overflowCommands.length > 0 || this._secondaryCommands.length > 0);
-            this._dom.overflowButton.style.display = showOverflowButton ? "" : "none";
             // Set up a custom content flyout if there will be "content" typed commands in the overflowarea.
             var isCustomContent = function (command) {
                 return command.type === _Constants.typeContent;
             };
-            var hasCustomContent = overflowCommands.some(isCustomContent) || this._secondaryCommands.some(isCustomContent);
+            var hasCustomContent = visiblePrimaryCommandsForOverflowArea.some(isCustomContent) || visibleSecondaryCommands.some(isCustomContent);
             if (hasCustomContent && !this._contentFlyout) {
                 this._contentFlyoutInterior = _Global.document.createElement("div");
                 _ElementUtilities.addClass(this._contentFlyoutInterior, _Constants.ClassNames.contentFlyoutCssClass);
@@ -44074,109 +44327,146 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                     _ElementUtilities._reparentChildren(_this._contentFlyoutInterior, _this._chosenCommand.element);
                 };
             }
-            //
-            // Project overflowing and secondary commands into the overflowArea as MenuCommands
-            //
-            // Clean up previous MenuCommand projections
-            _ElementUtilities.empty(this._dom.overflowArea);
-            this._menuCommandProjections.map(function (menuCommand) {
-                menuCommand.dispose();
-            });
             var hasToggleCommands = false, menuCommandProjections = [];
             // Add primary commands that have overflowed.
-            overflowCommands.forEach(function (command) {
+            visiblePrimaryCommandsForOverflowArea.forEach(function (command) {
                 if (command.type === _Constants.typeToggle) {
                     hasToggleCommands = true;
                 }
                 menuCommandProjections.push(_this._projectAsMenuCommand(command));
             });
-            // Add separator between primary and secondary command if applicable
-            var secondaryCommandsLength = this._secondaryCommands.length;
-            if (overflowCommands.length > 0 && secondaryCommandsLength > 0) {
+            // Add new separator between primary and secondary command, if applicable.
+            if (visiblePrimaryCommandsForOverflowArea.length > 0 && visibleSecondaryCommands.length > 0) {
                 var separator = new _CommandingSurfaceMenuCommand._MenuCommand(null, {
                     type: _Constants.typeSeparator
                 });
                 menuCommandProjections.push(separator);
             }
             // Add secondary commands
-            this._secondaryCommands.forEach(function (command) {
-                if (!command.hidden) {
-                    if (command.type === _Constants.typeToggle) {
-                        hasToggleCommands = true;
-                    }
-                    menuCommandProjections.push(_this._projectAsMenuCommand(command));
+            visibleSecondaryCommands.forEach(function (command) {
+                if (command.type === _Constants.typeToggle) {
+                    hasToggleCommands = true;
                 }
+                menuCommandProjections.push(_this._projectAsMenuCommand(command));
             });
             this._hideSeparatorsIfNeeded(menuCommandProjections);
+            // Add menuCommandProjections to the DOM.
             menuCommandProjections.forEach(function (command) {
                 _this._dom.overflowArea.appendChild(command.element);
             });
             this._menuCommandProjections = menuCommandProjections;
+            // Reserve additional horizontal space for toggle icons if any MenuCommand projection is type "toggle"
             _ElementUtilities[hasToggleCommands ? "addClass" : "removeClass"](this._dom.overflowArea, _Constants.ClassNames.menuContainsToggleCommandClass);
+            if (menuCommandProjections.length > 0) {
+                // Re-append spacer to the end of the oveflowarea if there are visible commands there.
+                // Otherwise the overflow area should be empty and not take up height.
+                this._dom.overflowArea.appendChild(this._dom.overflowAreaSpacer);
+            }
+            //
+            // Style the overflow button
+            //
+            var needsOverflowButton = this._needsOverflowButton(visiblePrimaryCommandsForActionArea.length > 0, menuCommandProjections.length > 0);
+            this._dom.overflowButton.style.display = needsOverflowButton ? "" : "none";
             this._writeProfilerMark("_layoutCommands,StopTM");
             // Indicate layout was successful.
             return true;
         };
-        _CommandingSurface.prototype._commandUniqueId = function (command) {
-            return _ElementUtilities._uniqueID(command.element);
-        };
-        _CommandingSurface.prototype._getVisiblePrimaryCommandsInfo = function () {
+        _CommandingSurface.prototype._getVisiblePrimaryCommandsInfo = function (visibleCommands) {
+            // PRECONDITION: Assumes that for every command in visibleCommands, command.hidden === false;
+            // Sorts and designates commands for the actionarea or the overflowarea, 
+            // depending on available space and the priority order of the commands
             var width = 0;
-            var commands = [];
+            var visibleCommandsInfo = [];
             var priority = 0;
             var currentAssignedPriority = 0;
-            for (var i = this._primaryCommands.length - 1; i >= 0; i--) {
-                var command = this._primaryCommands[i];
-                if (!command.hidden) {
-                    if (command.priority === undefined) {
-                        priority = currentAssignedPriority--;
-                    }
-                    else {
-                        priority = command.priority;
-                    }
-                    width = (command.element.style.display === "none" ? 0 : this._getCommandWidth(command));
-                    commands.unshift({
-                        command: command,
-                        width: width,
-                        priority: priority
-                    });
+            for (var i = visibleCommands.length - 1; i >= 0; i--) {
+                var command = visibleCommands[i];
+                if (command.priority === undefined) {
+                    priority = currentAssignedPriority--;
                 }
+                else {
+                    priority = command.priority;
+                }
+                width = this._getCommandWidth(command);
+                visibleCommandsInfo.unshift({
+                    command: command,
+                    width: width,
+                    priority: priority
+                });
             }
-            return commands;
+            return visibleCommandsInfo;
         };
-        _CommandingSurface.prototype._getVisiblePrimaryCommandsLocation = function () {
-            this._writeProfilerMark("_getVisiblePrimaryCommandsLocation,info");
-            var actionAreaCommands = [];
-            var overflowAreaCommands = [];
-            var overflowButtonSpace = 0;
-            var hasSecondaryCommands = this._secondaryCommands.length > 0;
-            var commandsInfo = this._getVisiblePrimaryCommandsInfo();
-            var sortedCommandsInfo = commandsInfo.slice(0).sort(function (commandInfo1, commandInfo2) {
+        _CommandingSurface.prototype._getVisiblePrimaryCommandsLocation = function (visiblePrimaryCommands, isThereAVisibleSecondaryCommand) {
+            // Returns two lists of primary commands, those which fit can in the actionarea and those which will overflow.
+            var commandsForActionArea = [];
+            var commandsForOverflowArea = [];
+            var visibleCommandsInfo = this._getVisiblePrimaryCommandsInfo(visiblePrimaryCommands);
+            // Sort by ascending priority 
+            var sortedCommandsInfo = visibleCommandsInfo.slice(0).sort(function (commandInfo1, commandInfo2) {
                 return commandInfo1.priority - commandInfo2.priority;
             });
             var maxPriority = Number.MAX_VALUE;
-            var availableWidth = this._cachedMeasurements.actionAreaContentBoxWidth;
+            var currentAvailableWidth = this._cachedMeasurements.actionAreaContentBoxWidth;
+            // Even though we don't yet know if we will have any primary commands overflowing into the 
+            // overflow area, see if our current state already justifies a visible overflow button.
+            var overflowButtonAlreadyNeeded = this._needsOverflowButton(visiblePrimaryCommands.length > 0, isThereAVisibleSecondaryCommand);
             for (var i = 0, len = sortedCommandsInfo.length; i < len; i++) {
-                availableWidth -= sortedCommandsInfo[i].width;
-                // The overflow button needs space if there are secondary commands, or we are not evaluating the last command.
-                overflowButtonSpace = (hasSecondaryCommands || (i < len - 1) ? this._cachedMeasurements.overflowButtonWidth : 0);
-                if (availableWidth - overflowButtonSpace < 0) {
+                currentAvailableWidth -= sortedCommandsInfo[i].width;
+                // Until we have reached the final sorted command, we presume we will need to fit 
+                // the overflow button into the action area as well. If we are on the last command, 
+                // and we don't already need an overflow button, free up the reserved space before 
+                // checking whether or not the last command fits
+                var additionalSpaceNeeded = (!overflowButtonAlreadyNeeded && (i === len - 1) ? 0 : this._cachedMeasurements.overflowButtonWidth);
+                if (currentAvailableWidth < additionalSpaceNeeded) {
+                    // All primary commands with a priority greater than this final value should overflow.
                     maxPriority = sortedCommandsInfo[i].priority - 1;
                     break;
                 }
             }
-            commandsInfo.forEach(function (commandInfo) {
+            // Designate each command to either the action area or the overflow area
+            visibleCommandsInfo.forEach(function (commandInfo) {
                 if (commandInfo.priority <= maxPriority) {
-                    actionAreaCommands.push(commandInfo.command);
+                    commandsForActionArea.push(commandInfo.command);
                 }
                 else {
-                    overflowAreaCommands.push(commandInfo.command);
+                    commandsForOverflowArea.push(commandInfo.command);
                 }
             });
             return {
-                actionArea: actionAreaCommands,
-                overflowArea: overflowAreaCommands
+                commandsForActionArea: commandsForActionArea,
+                commandsForOverflowArea: commandsForOverflowArea,
             };
+        };
+        _CommandingSurface.prototype._needsOverflowButton = function (hasVisibleCommandsInActionArea, hasVisibleCommandsInOverflowArea) {
+            // The following "Inclusive-Or" conditions inform us if an overflow button is needed.
+            // 1. There are going to be visible commands in the overflowarea. (primary or secondary)
+            // 2. The action area is expandable and contains at least one visible primary command.
+            if (hasVisibleCommandsInOverflowArea) {
+                return true;
+            }
+            else if (this._hasExpandableActionArea() && hasVisibleCommandsInActionArea) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        };
+        _CommandingSurface.prototype._minimalLayout = function () {
+            // Normally the overflowButton will be updated based on the most accurate measurements when layoutCommands() is run, 
+            // However if we are unable to measure, then layout will not run. Normally if we cannot measure it means the control
+            // is not rendered. However, when the control is closed with closedDisplayMode: 'minimal' we cannot measure and the 
+            // control is rendered. Perform a minimal layout to show/hide the overflow button whether or not there are any
+            // visible commands to show.
+            if (this.closedDisplayMode === ClosedDisplayMode.minimal) {
+                var isCommandVisible = function (command) {
+                    return !command.hidden;
+                };
+                var hasVisibleCommand = this.data.some(isCommandVisible);
+                this._dom.overflowButton.style.display = (hasVisibleCommand ? "" : "none");
+            }
+        };
+        _CommandingSurface.prototype._commandUniqueId = function (command) {
+            return _ElementUtilities._uniqueID(command.element);
         };
         _CommandingSurface.prototype._getCommandWidth = function (command) {
             if (command.type === _Constants.typeContent) {
@@ -44230,18 +44520,29 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             var commandsLength = commands.length;
             commands.forEach(function (command) {
                 if (command.type === _Constants.typeSeparator && prevType === _Constants.typeSeparator) {
-                    command.element.style.display = "none";
+                    _ElementUtilities.addClass(command.element, _Constants.ClassNames.commandSeparatorHiddenPolicyClass);
                 }
                 prevType = command.type;
             });
             for (var i = commandsLength - 1; i >= 0; i--) {
                 command = commands[i];
                 if (command.type === _Constants.typeSeparator) {
-                    command.element.style.display = "none";
+                    _ElementUtilities.addClass(command.element, _Constants.ClassNames.commandSeparatorHiddenPolicyClass);
                 }
                 else {
                     break;
                 }
+            }
+        };
+        _CommandingSurface.prototype._hasExpandableActionArea = function () {
+            switch (this.closedDisplayMode) {
+                case ClosedDisplayMode.none:
+                case ClosedDisplayMode.minimal:
+                case ClosedDisplayMode.compact:
+                    return true;
+                case ClosedDisplayMode.full:
+                default:
+                    return false;
             }
         };
         _CommandingSurface.prototype._clearAnimation = function () {
@@ -44338,8 +44639,8 @@ define('WinJS/Controls/ToolBar/_ToolBar',["require", "exports", "../../Core/_Bas
     /// <part name="toolbar" class="win-toolbar" locid="WinJS.UI.ToolBar_part:toolbar">The entire ToolBar control.</part>
     /// <part name="toolbar-overflowbutton" class="win-toolbar-overflowbutton" locid="WinJS.UI.ToolBar_part:ToolBar-overflowbutton">The toolbar overflow button.</part>
     /// <part name="toolbar-overflowarea" class="win-toolbar-overflowarea" locid="WinJS.UI.ToolBar_part:ToolBar-overflowarea">The container for toolbar commands that overflow.</part>
-    /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
     var ToolBar = (function () {
         function ToolBar(element, options) {
             /// <signature helpKeyword="WinJS.UI.ToolBar.ToolBar">
@@ -44412,6 +44713,9 @@ define('WinJS/Controls/ToolBar/_ToolBar',["require", "exports", "../../Core/_Bas
                 tabIndex: this._dom.root.hasAttribute("tabIndex") ? this._dom.root.tabIndex : -1,
                 onLightDismiss: function () {
                     _this.close();
+                },
+                onTakeFocus: function (useSetActive) {
+                    _this._dismissable.restoreFocus() || _this._commandingSurface.takeFocus(useSetActive);
                 }
             });
             // Initialize public properties.
@@ -44645,7 +44949,7 @@ define('WinJS/Controls/ToolBar/_ToolBar',["require", "exports", "../../Core/_Bas
             var closedBorderBox = this._dom.root.getBoundingClientRect();
             var closedContentWidth = _ElementUtilities._getPreciseContentWidth(this._dom.root);
             var closedContentHeight = _ElementUtilities._getPreciseContentHeight(this._dom.root);
-            var closedStyle = getComputedStyle(this._dom.root);
+            var closedStyle = _ElementUtilities._getComputedStyle(this._dom.root);
             var closedPaddingTop = _ElementUtilities._convertToPrecisePixels(closedStyle.paddingTop);
             var closedBorderTop = _ElementUtilities._convertToPrecisePixels(closedStyle.borderTopWidth);
             var closedMargins = _ElementUtilities._getPreciseMargins(this._dom.root);
@@ -44987,7 +45291,7 @@ define('WinJS/Controls/_LegacyAppBar/_Layouts',[
                     if (_ElementUtilities._matchesSelector(event.target, ".win-interactive, .win-interactive *")) {
                         return; // Ignore left, right, home & end keys if focused element has win-interactive class.
                     }
-                    var rtl = _Global.getComputedStyle(this.appBarEl).direction === "rtl";
+                    var rtl = _ElementUtilities._getComputedStyle(this.appBarEl).direction === "rtl";
                     var leftKey = rtl ? Key.rightArrow : Key.leftArrow;
                     var rightKey = rtl ? Key.leftArrow : Key.rightArrow;
 
@@ -45272,8 +45576,8 @@ define('WinJS/Controls/_LegacyAppBar/_Layouts',[
                 element.style[transformNames.scriptName] = translate + "(" + -diff + "px)";
 
                 // Resolve styles
-                _Global.getComputedStyle(elementClipper).opacity;
-                _Global.getComputedStyle(element).opacity;
+                _ElementUtilities._getComputedStyle(elementClipper).opacity;
+                _ElementUtilities._getComputedStyle(element).opacity;
 
                 // Animate
                 var transition = {
@@ -45298,8 +45602,8 @@ define('WinJS/Controls/_LegacyAppBar/_Layouts',[
                 element.style[transformNames.scriptName] = "";
 
                 // Resolve styles
-                _Global.getComputedStyle(elementClipper).opacity;
-                _Global.getComputedStyle(element).opacity;
+                _ElementUtilities._getComputedStyle(elementClipper).opacity;
+                _ElementUtilities._getComputedStyle(element).opacity;
 
                 // Animate
                 var transition = {
@@ -45694,8 +45998,8 @@ define('WinJS/Controls/_LegacyAppBar',[
         /// <event name="afterclose" locid="WinJS.UI._LegacyAppBar_e:afterclose">Raised immediately after the _LegacyAppBar is fully hidden.</event>
         /// <part name="appbar" class="win-commandlayout" locid="WinJS.UI._LegacyAppBar_part:appbar">The _LegacyAppBar control itself.</part>
         /// <part name="appBarCustom" class="win-navbar" locid="WinJS.UI._LegacyAppBar_part:appBarCustom">Style for a custom layout _LegacyAppBar.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         _LegacyAppBar: _Base.Namespace._lazy(function () {
             var EVENTS = {
                 beforeOpen: "beforeopen",
@@ -46858,8 +47162,8 @@ define('WinJS/Controls/Menu',[
         /// <event name="beforehide" locid="WinJS.UI.Menu_e:beforehide">Raised just before hiding a menu.</event>
         /// <event name="afterhide" locid="WinJS.UI.Menu_e:afterhide">Raised immediately after a menu is fully hidden.</event>
         /// <part name="menu" class="win-menu" locid="WinJS.UI.Menu_part:menu">The Menu control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         Menu: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -47591,8 +47895,8 @@ define('WinJS/Controls/AutoSuggestBox',[
         /// <part name="autosuggestbox-suggestion-result" class="win-autosuggestbox-suggestion-result" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Result">Styles the result type suggestion.</part>
         /// <part name="autosuggestbox-suggestion-selected" class="win-autosuggestbox-suggestion-selected" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Selected">Styles the currently selected suggestion.</part>
         /// <part name="autosuggestbox-suggestion-separator" class="win-autosuggestbox-suggestion-separator" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Separator">Styles the separator type suggestion.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         AutoSuggestBox: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -47944,7 +48248,7 @@ define('WinJS/Controls/AutoSuggestBox',[
 
                     // Align left vs right edge
                     var alignRight;
-                    if (_Global.getComputedStyle(this._flyoutElement).direction === "rtl") {
+                    if (_ElementUtilities._getComputedStyle(this._flyoutElement).direction === "rtl") {
                         // RTL: Align to the right edge if there is enough space to the left of the control's
                         // right edge, or if there is not enough space to fit the flyout aligned to either edge.
                         alignRight = ((inputRect.right - flyoutRect.width) >= 0) || ((inputRect.left + flyoutRect.width) > documentClientWidth);
@@ -48911,8 +49215,8 @@ define('WinJS/Controls/SearchBox',[
         /// <part name="searchbox-suggestion-selected" class="win-searchbox-suggestion-selected" locid="WinJS.UI.SearchBox_part:Suggestion_Selected">
         /// Styles the currently selected suggestion.
         /// </part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         SearchBox: _Base.Namespace._lazy(function () {
 
             // Enums
@@ -49243,8 +49547,8 @@ define('WinJS/Controls/SettingsFlyout',[
         /// <event name="beforehide" locid="WinJS.UI.SettingsFlyout_e:beforehide">Raised just before hiding a SettingsFlyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.SettingsFlyout_e:afterhide">Raised immediately after a SettingsFlyout is fully hidden.</event>
         /// <part name="settings" class="win-settingsflyout" locid="WinJS.UI.SettingsFlyout_part:settings">The SettingsFlyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         SettingsFlyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -49873,19 +50177,24 @@ define('WinJS/Controls/SettingsFlyout',[
 
 });
 
+
+define('require-style!less/styles-splitviewcommand',[],function(){});
+
+define('require-style!less/colors-splitviewcommand',[],function(){});
 // Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
-define('WinJS/Controls/NavBar/_Command',[
-    'exports',
+define('WinJS/Controls/SplitView/Command',['exports',
     '../../Core/_Global',
     '../../Core/_Base',
     '../../Core/_ErrorFromName',
-    '../../Core/_Resources',
+    '../../Core/_Events',
     '../../ControlProcessor',
-    '../../Navigation',
     '../../Utilities/_Control',
     '../../Utilities/_ElementUtilities',
-    '../AppBar/_Icon'
-    ], function NavBarCommandInit(exports, _Global, _Base, _ErrorFromName, _Resources, ControlProcessor, Navigation, _Control, _ElementUtilities, _Icon) {
+    '../../Utilities/_KeyboardBehavior',
+    '../AppBar/_Icon',
+    'require-style!less/styles-splitviewcommand',
+    'require-style!less/colors-splitviewcommand'
+], function SplitViewCommandInit(exports, _Global, _Base, _ErrorFromName, _Events, ControlProcessor, _Control, _ElementUtilities, _KeyboardBehavior, _Icon) {
     "use strict";
 
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
@@ -49974,69 +50283,91 @@ define('WinJS/Controls/NavBar/_Command',[
             return WinPressed;
         }),
         /// <field>
-        /// <summary locid="WinJS.UI.NavBarCommand">
-        /// Represents a navigation command in an NavBarContainer.
+        /// <summary locid="WinJS.UI.SplitViewCommand">
+        /// Represents a command in a SplitView.
         /// </summary>
-        /// <compatibleWith platform="Windows" minVersion="8.1"/>
         /// </field>
-        /// <icon src="ui_winjs.ui.navbarcommand.12x12.png" width="12" height="12" />
-        /// <icon src="ui_winjs.ui.navbarcommand.16x16.png" width="16" height="16" />
-        /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.NavBarCommand" data-win-options="{location:'/pages/home/home.html',label:'Home',icon:WinJS.UI.AppBarIcon.home}"></div>]]></htmlSnippet>
-        /// <part name="navbarcommand" class="win-navbarcommand" locid="WinJS.UI.NavBarCommand_part:navbarcommand">Styles the entire NavBarCommand control.</part>
-        /// <part name="button" class="win-navbarcommand-button" locid="WinJS.UI.NavBarCommand_part:button">Styles the main button in a NavBarCommand.</part>
-        /// <part name="splitbutton" class="win-navbarcommand-splitbutton" locid="WinJS.UI.NavBarCommand_part:splitbutton">Styles the split button in a NavBarCommand</part>
-        /// <part name="icon" class="win-navbarcommand-icon" locid="WinJS.UI.NavBarCommand_part:icon">Styles the icon in the main button of a NavBarCommand.</part>
-        /// <part name="label" class="win-navbarcommand-label" locid="WinJS.UI.NavBarCommand_part:label">Styles the label in the main button of a NavBarCommand.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
-        NavBarCommand: _Base.Namespace._lazy(function () {
+        /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.SplitViewCommand" data-win-options="{label:'Home',icon:WinJS.UI.AppBarIcon.home}"></div>]]></htmlSnippet>
+        /// <part name="splitviewcommand" class="win-splitviewcommand" locid="WinJS.UI.SplitViewCommand_part:splitviewcommand">Styles the entire SplitViewCommand control.</part>
+        /// <part name="button" class="win-splitviewcommand-button" locid="WinJS.UI.SplitViewCommand_part:button">Styles the button in a SplitViewCommand.</part>
+        /// <part name="icon" class="win-splitviewcommand-icon" locid="WinJS.UI.SplitViewCommand_part:icon">Styles the icon in the button of a SplitViewCommand.</part>
+        /// <part name="label" class="win-splitviewcommand-label" locid="WinJS.UI.SplitViewCommand_part:label">Styles the label in the button of a SplitViewCommand.</part>
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        SplitViewCommand: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
             };
 
-            var NavBarCommand = _Base.Class.define(function NavBarCommand_ctor(element, options) {
-                /// <signature helpKeyword="WinJS.UI.NavBarCommand.NavBarCommand">
-                /// <summary locid="WinJS.UI.NavBarCommand.constructor">
-                /// Creates a new NavBarCommand.
+            var ClassNames = {
+                command: "win-splitviewcommand",
+                commandButton: "win-splitviewcommand-button",
+                commandButtonContent: "win-splitviewcommand-button-content",
+                commandSplitButton: "win-splitviewcommand-splitbutton",
+                commandSplitButtonOpened: "win-splitviewcommand-splitbutton-opened",
+                commandIcon: "win-splitviewcommand-icon",
+                commandLabel: "win-splitviewcommand-label"
+            };
+
+            var EventNames = {
+                invoked: "invoked",
+                _splitToggle: "_splittoggle",
+
+            };
+
+            var createEvent = _Events._createEventProperty;
+
+            var SplitViewCommand = _Base.Class.define(function SplitViewCommand_ctor(element, options) {
+                /// <signature helpKeyword="WinJS.UI.SplitViewCommand.SplitViewCommand">
+                /// <summary locid="WinJS.UI.SplitViewCommand.constructor">
+                /// Creates a new SplitViewCommand.
                 /// </summary>
-                /// <param name="element" type="HTMLElement" domElement="true" isOptional="true" locid="WinJS.UI.NavBarCommand.constructor_p:element">
-                /// The DOM element that will host the new  NavBarCommand control.
+                /// <param name="element" type="HTMLElement" domElement="true" isOptional="true" locid="WinJS.UI.SplitViewCommand.constructor_p:element">
+                /// The DOM element that will host the new  SplitViewCommand control.
                 /// </param>
-                /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.NavBarCommand.constructor_p:options">
+                /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.SplitViewCommand.constructor_p:options">
                 /// An object that contains one or more property/value pairs to apply to the new control.
                 /// Each property of the options object corresponds to one of the control's properties or events.
                 /// Event names must begin with "on".
                 /// </param>
-                /// <returns type="WinJS.UI.NavBarCommand" locid="WinJS.UI.NavBarCommand.constructor_returnValue">
-                /// The new NavBarCommand.
+                /// <returns type="WinJS.UI.SplitViewCommand" locid="WinJS.UI.SplitViewCommand.constructor_returnValue">
+                /// The new SplitViewCommand.
                 /// </returns>
-                /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </signature>
                 element = element || _Global.document.createElement("DIV");
                 options = options || {};
 
                 if (element.winControl) {
-                    throw new _ErrorFromName("WinJS.UI.NavBarCommand.DuplicateConstruction", strings.duplicateConstruction);
+                    throw new _ErrorFromName("WinJS.UI.SplitViewCommand.DuplicateConstruction", strings.duplicateConstruction);
                 }
 
-                // Attaching JS control to DOM element
-                element.winControl = this;
-                this._element = element;
-                _ElementUtilities.addClass(this.element, NavBarCommand._ClassName.navbarcommand);
-                _ElementUtilities.addClass(this.element, "win-disposable");
+                // Sign up for keyboard focus rect
+                this._winKeyboard = new _KeyboardBehavior._WinKeyboard(element);
 
-                this._tooltip = null;
-                this._splitOpened = false;
-                this._buildDom();
-                element.addEventListener('keydown', this._keydownHandler.bind(this));
-
-                _Control.setOptions(this, options);
+                this._baseConstructor(element, options);
             }, {
-                /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.NavBarCommand.element" helpKeyword="WinJS.UI.NavBarCommand.element">
-                /// Gets the DOM element that hosts the NavBarCommand.
-                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+
+                _baseConstructor: function SplitViewCommand_baseConstructor(element, options, classNames) {
+                    this._classNames = classNames || ClassNames;
+
+                    // Attaching JS control to DOM element
+                    element.winControl = this;
+                    this._element = element;
+                    _ElementUtilities.addClass(this.element, this._classNames.command);
+                    _ElementUtilities.addClass(this.element, "win-disposable");
+
+                    this._tooltip = null;
+                    this._splitOpened = false;
+                    this._buildDom();
+                    element.addEventListener('keydown', this._keydownHandler.bind(this));
+
+                    _Control.setOptions(this, options);
+                },
+
+                /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.SplitViewCommand.element" helpKeyword="WinJS.UI.SplitViewCommand.element">
+                /// Gets the DOM element that hosts the SplitViewCommand.
                 /// </field>
                 element: {
                     get: function () {
@@ -50044,9 +50375,8 @@ define('WinJS/Controls/NavBar/_Command',[
                     }
                 },
 
-                /// <field type="String" locid="WinJS.UI.NavBarCommand.label" helpKeyword="WinJS.UI.NavBarCommand.label">
-                /// Gets or sets the label of the NavBarCommand.
-                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// <field type="String" locid="WinJS.UI.SplitViewCommand.label" helpKeyword="WinJS.UI.SplitViewCommand.label">
+                /// Gets or sets the label of the SplitViewCommand.
                 /// </field>
                 label: {
                     get: function () {
@@ -50058,9 +50388,8 @@ define('WinJS/Controls/NavBar/_Command',[
                     }
                 },
 
-                /// <field type="String" locid="WinJS.UI.NavBarCommand.tooltip" helpKeyword="WinJS.UI.NavBarCommand.tooltip">
-                /// Gets or sets the tooltip of the NavBarCommand.
-                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// <field type="String" locid="WinJS.UI.SplitViewCommand.tooltip" helpKeyword="WinJS.UI.SplitViewCommand.tooltip">
+                /// Gets or sets the tooltip of the SplitViewCommand.
                 /// </field>
                 tooltip: {
                     get: function () {
@@ -50076,9 +50405,8 @@ define('WinJS/Controls/NavBar/_Command',[
                     }
                 },
 
-                /// <field type="String" locid="WinJS.UI.NavBarCommand.icon" helpKeyword="WinJS.UI.NavBarCommand.icon">
-                /// Gets or sets the icon of the NavBarCommand. This value is either one of the values of the AppBarIcon enumeration or the path of a custom PNG file.
-                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// <field type="String" locid="WinJS.UI.SplitViewCommand.icon" helpKeyword="WinJS.UI.SplitViewCommand.icon">
+                /// Gets or sets the icon of the SplitViewCommand. This value is either one of the values of the AppBarIcon enumeration or the path of a custom PNG file.
                 /// </field>
                 icon: {
                     get: function () {
@@ -50109,6 +50437,285 @@ define('WinJS/Controls/NavBar/_Command',[
                     }
                 },
 
+                /// <field type="Function" locid="WinJS.UI.SplitViewCommand.oninvoked" helpKeyword="WinJS.UI.SplitViewCommand.oninvoked">
+                /// Raised when a SplitViewCommand has been invoked.
+                /// </field>
+                oninvoked: createEvent(EventNames.invoked),
+
+                _toggleSplit: function SplitViewCommand_toggleSplit() {
+                    this._splitOpened = !this._splitOpened;
+                    if (this._splitOpened) {
+                        _ElementUtilities.addClass(this._splitButtonEl, this._classNames.commandSplitButtonOpened);
+                        this._splitButtonEl.setAttribute("aria-expanded", "true");
+                    } else {
+                        _ElementUtilities.removeClass(this._splitButtonEl, this._classNames.commandSplitButtonOpened);
+                        this._splitButtonEl.setAttribute("aria-expanded", "false");
+                    }
+                    this._fireEvent(SplitViewCommand._EventName._splitToggle);
+                },
+
+                _rtl: {
+                    get: function () {
+                        return _ElementUtilities._getComputedStyle(this.element).direction === "rtl";
+                    }
+                },
+
+                _keydownHandler: function SplitViewCommand_keydownHandler(ev) {
+                    if (_ElementUtilities._matchesSelector(ev.target, ".win-interactive, .win-interactive *")) {
+                        return;
+                    }
+
+                    var leftStr = this._rtl ? Key.rightArrow : Key.leftArrow;
+                    var rightStr = this._rtl ? Key.leftArrow : Key.rightArrow;
+
+                    if (!ev.altKey && (ev.keyCode === leftStr || ev.keyCode === Key.home || ev.keyCode === Key.end) && ev.target === this._splitButtonEl) {
+                        _ElementUtilities._setActive(this._buttonEl);
+                        if (ev.keyCode === leftStr) {
+                            ev.stopPropagation();
+                        }
+                        ev.preventDefault();
+                    } else if (!ev.altKey && ev.keyCode === rightStr && this.splitButton && (ev.target === this._buttonEl || this._buttonEl.contains(ev.target))) {
+                        _ElementUtilities._setActive(this._splitButtonEl);
+                        if (ev.keyCode === rightStr) {
+                            ev.stopPropagation();
+                        }
+                        ev.preventDefault();
+                    } else if ((ev.keyCode === Key.space || ev.keyCode === Key.enter) && (ev.target === this._buttonEl || this._buttonEl.contains(ev.target))) {
+                        this._invoke();
+                    } else if ((ev.keyCode === Key.space || ev.keyCode === Key.enter) && ev.target === this._splitButtonEl) {
+                        this._toggleSplit();
+                    }
+                },
+
+                _getFocusInto: function SplitViewCommand_getFocusInto(keyCode) {
+                    var leftStr = this._rtl ? Key.rightArrow : Key.leftArrow;
+                    if ((keyCode === leftStr) && this.splitButton) {
+                        return this._splitButtonEl;
+                    } else {
+                        return this._buttonEl;
+                    }
+                },
+
+                _buildDom: function SplitViewCommand_buildDom() {
+                    var markup =
+                        '<div tabindex="0" role="button" class="' + this._classNames.commandButton + '">' +
+                            '<div class="' + this._classNames.commandButtonContent + '">' +
+                                '<div class="' + this._classNames.commandIcon + '"></div>' +
+                                '<div class="' + this._classNames.commandLabel + '"></div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div tabindex="-1" aria-expanded="false" class="' + this._classNames.commandSplitButton + '"></div>';
+                    this.element.insertAdjacentHTML("afterBegin", markup);
+
+                    this._buttonEl = this.element.firstElementChild;
+                    this._buttonPressedBehavior = new exports._WinPressed(this._buttonEl);
+                    this._contentEl = this._buttonEl.firstElementChild;
+                    this._imageSpan = this._contentEl.firstElementChild;
+                    this._imageSpan.style.display = "none";
+                    this._labelEl = this._imageSpan.nextElementSibling;
+                    this._splitButtonEl = this._buttonEl.nextElementSibling;
+                    this._splitButtonPressedBehavior = new exports._WinPressed(this._splitButtonEl);
+                    this._splitButtonEl.style.display = "none";
+
+                    _ElementUtilities._ensureId(this._buttonEl);
+                    this._splitButtonEl.setAttribute("aria-labelledby", this._buttonEl.id);
+
+                    this._buttonEl.addEventListener("click", this._handleButtonClick.bind(this));
+
+                    var mutationObserver = new _ElementUtilities._MutationObserver(this._splitButtonAriaExpandedPropertyChangeHandler.bind(this));
+                    mutationObserver.observe(this._splitButtonEl, { attributes: true, attributeFilter: ["aria-expanded"] });
+                    this._splitButtonEl.addEventListener("click", this._handleSplitButtonClick.bind(this));
+
+                    // reparent any other elements.
+                    var tempEl = this._splitButtonEl.nextSibling;
+                    while (tempEl) {
+                        this._buttonEl.insertBefore(tempEl, this._contentEl);
+                        if (tempEl.nodeName !== "#text") {
+                            ControlProcessor.processAll(tempEl);
+                        }
+                        tempEl = this._splitButtonEl.nextSibling;
+                    }
+                },
+
+                _handleButtonClick: function SplitViewCommand_handleButtonClick(ev) {
+                    var srcElement = ev.target;
+                    if (!_ElementUtilities._matchesSelector(srcElement, ".win-interactive, .win-interactive *")) {
+                        this._invoke();
+                    }
+                },
+
+                _splitButtonAriaExpandedPropertyChangeHandler: function SplitViewCommand_splitButtonAriaExpandedPropertyChangeHandler() {
+                    if ((this._splitButtonEl.getAttribute("aria-expanded") === "true") !== this._splitOpened) {
+                        this._toggleSplit();
+                    }
+                },
+
+                _handleSplitButtonClick: function SplitViewCommand_handleSplitButtonClick() {
+                    this._toggleSplit();
+                },
+
+                _invoke: function SplitViewCommand_invoke() {
+                    this._fireEvent(SplitViewCommand._EventName.invoked);
+                },
+
+                _fireEvent: function SplitViewCommand_fireEvent(type, detail) {
+                    var event = _Global.document.createEvent("CustomEvent");
+                    event.initCustomEvent(type, true, false, detail);
+                    this.element.dispatchEvent(event);
+                },
+
+                dispose: function SplitViewCommand_dispose() {
+                    /// <signature helpKeyword="WinJS.UI.SplitViewCommand.dispose">
+                    /// <summary locid="WinJS.UI.SplitViewCommand.dispose">
+                    /// Disposes this control.
+                    /// </summary>
+                    /// </signature>
+                    if (this._disposed) {
+                        return;
+                    }
+                    this._disposed = true;
+
+                    this._buttonPressedBehavior.dispose();
+                    this._splitButtonPressedBehavior.dispose();
+                }
+            }, {
+                _ClassName: ClassNames,
+                _EventName: EventNames,
+            });
+            _Base.Class.mix(SplitViewCommand, _Control.DOMEventMixin);
+            return SplitViewCommand;
+        })
+    });
+
+});
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+define('WinJS/Controls/NavBar/_Command',[
+    'exports',
+    '../../Core/_Global',
+    '../../Core/_Base',
+    '../../Core/_ErrorFromName',
+    '../../Navigation',
+    '../../Utilities/_ElementUtilities',
+    '../SplitView/Command',
+], function NavBarCommandInit(exports, _Global, _Base, _ErrorFromName, Navigation, _ElementUtilities, SplitViewCommand) {
+    "use strict";
+
+    _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
+        /// <field>
+        /// <summary locid="WinJS.UI.NavBarCommand">
+        /// Represents a navigation command in an NavBarContainer.
+        /// </summary>
+        /// <compatibleWith platform="Windows" minVersion="8.1"/>
+        /// </field>
+        /// <icon src="ui_winjs.ui.navbarcommand.12x12.png" width="12" height="12" />
+        /// <icon src="ui_winjs.ui.navbarcommand.16x16.png" width="16" height="16" />
+        /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.NavBarCommand" data-win-options="{location:'/pages/home/home.html',label:'Home',icon:WinJS.UI.AppBarIcon.home}"></div>]]></htmlSnippet>
+        /// <part name="navbarcommand" class="win-navbarcommand" locid="WinJS.UI.NavBarCommand_part:navbarcommand">Styles the entire NavBarCommand control.</part>
+        /// <part name="button" class="win-navbarcommand-button" locid="WinJS.UI.NavBarCommand_part:button">Styles the main button in a NavBarCommand.</part>
+        /// <part name="splitbutton" class="win-navbarcommand-splitbutton" locid="WinJS.UI.NavBarCommand_part:splitbutton">Styles the split button in a NavBarCommand</part>
+        /// <part name="icon" class="win-navbarcommand-icon" locid="WinJS.UI.NavBarCommand_part:icon">Styles the icon in the main button of a NavBarCommand.</part>
+        /// <part name="label" class="win-navbarcommand-label" locid="WinJS.UI.NavBarCommand_part:label">Styles the label in the main button of a NavBarCommand.</part>
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        NavBarCommand: _Base.Namespace._lazy(function () {
+
+            var strings = {
+                get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
+                get navBarCommandDeprecated() { return "NavBarCommand is deprecated and may not be available in future releases. If you were using a NavBarCommand inside of a SplitView, use SplitViewCommand instead."; }
+            };
+
+            var ClassNames = {
+                command: "win-navbarcommand",
+                commandButton: "win-navbarcommand-button",
+                commandButtonContent: "win-navbarcommand-button-content",
+                commandSplitButton: "win-navbarcommand-splitbutton",
+                commandSplitButtonOpened: "win-navbarcommand-splitbutton-opened",
+                commandIcon: "win-navbarcommand-icon",
+                commandLabel: "win-navbarcommand-label"
+            };
+
+            var superClass = SplitViewCommand.SplitViewCommand.prototype;
+
+            var NavBarCommand = _Base.Class.derive(SplitViewCommand.SplitViewCommand, function NavBarCommand_ctor(element, options) {
+                /// <signature helpKeyword="WinJS.UI.NavBarCommand.NavBarCommand">
+                /// <summary locid="WinJS.UI.NavBarCommand.constructor">
+                /// Creates a new NavBarCommand.
+                /// </summary>
+                /// <param name="element" type="HTMLElement" domElement="true" isOptional="true" locid="WinJS.UI.NavBarCommand.constructor_p:element">
+                /// The DOM element that will host the new  NavBarCommand control.
+                /// </param>
+                /// <param name="options" type="Object" isOptional="true" locid="WinJS.UI.NavBarCommand.constructor_p:options">
+                /// An object that contains one or more property/value pairs to apply to the new control.
+                /// Each property of the options object corresponds to one of the control's properties or events.
+                /// Event names must begin with "on".
+                /// </param>
+                /// <returns type="WinJS.UI.NavBarCommand" locid="WinJS.UI.NavBarCommand.constructor_returnValue">
+                /// The new NavBarCommand.
+                /// </returns>
+                /// <deprecated type="deprecate">
+                /// NavBarCommand is deprecated and may not be available in future releases. 
+                /// If you were using a NavBarCommand inside of a SplitView, use SplitViewCommand instead.
+                /// </deprecated>
+                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// </signature>
+                _ElementUtilities._deprecated(strings.navBarCommandDeprecated);
+
+                element = element || _Global.document.createElement("DIV");
+                options = options || {};
+
+                if (element.winControl) {
+                    throw new _ErrorFromName("WinJS.UI.NavBarCommand.DuplicateConstruction", strings.duplicateConstruction);
+                }
+
+                this._baseConstructor(element, options, ClassNames);
+
+            },
+            {
+                /// <field type="HTMLElement" domElement="true" hidden="true" locid="WinJS.UI.NavBarCommand.element" helpKeyword="WinJS.UI.NavBarCommand.element">
+                /// Gets the DOM element that hosts the NavBarCommand.
+                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// </field>
+                element: {
+                    get: function () {
+                        return Object.getOwnPropertyDescriptor(superClass, "element").get.call(this);
+                    }
+                },
+                /// <field type="String" locid="WinJS.UI.NavBarCommand.label" helpKeyword="WinJS.UI.NavBarCommand.label">
+                /// Gets or sets the label of the NavBarCommand.
+                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// </field>
+                label: {
+                    get: function () {
+                        return Object.getOwnPropertyDescriptor(superClass, "label").get.call(this);
+                    },
+                    set: function (value) {
+                        return Object.getOwnPropertyDescriptor(superClass, "label").set.call(this, value);
+                    }
+                },
+                /// <field type="String" locid="WinJS.UI.NavBarCommand.tooltip" helpKeyword="WinJS.UI.NavBarCommand.tooltip">
+                /// Gets or sets the tooltip of the NavBarCommand.
+                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// </field>
+                tooltip: {
+                    get: function () {
+                        return Object.getOwnPropertyDescriptor(superClass, "tooltip").get.call(this);
+                    },
+                    set: function (value) {
+                        return Object.getOwnPropertyDescriptor(superClass, "tooltip").set.call(this, value);
+                    }
+                },
+                /// <field type="String" locid="WinJS.UI.NavBarCommand.icon" helpKeyword="WinJS.UI.NavBarCommand.icon">
+                /// Gets or sets the icon of the NavBarCommand. This value is either one of the values of the AppBarIcon enumeration or the path of a custom PNG file.
+                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// </field>
+                icon: {
+                    get: function () {
+                        return Object.getOwnPropertyDescriptor(superClass, "icon").get.call(this);
+                    },
+                    set: function (value) {
+                        return Object.getOwnPropertyDescriptor(superClass, "icon").set.call(this, value);
+                    }
+                },
                 /// <field type="String" locid="WinJS.UI.NavBarCommand.location" helpKeyword="WinJS.UI.NavBarCommand.location">
                 /// Gets or sets the command's target location.
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
@@ -50120,6 +50727,17 @@ define('WinJS/Controls/NavBar/_Command',[
                     set: function (value) {
                         this._location = value;
                     }
+                },
+
+                /// <field type="Function" locid="WinJS.UI.NavBarCommand.oninvoked" helpKeyword="WinJS.UI.NavBarCommand.oninvoked">
+                /// This API supports the Windows Library for JavaScript infrastructure and is not intended to be used directly from your code. 
+                /// </field>
+                oninvoked: {
+                    // Override this this property from our parent class to "un-inherit it".
+                    // NavBarCommand uses a private "_invoked" event to communicate with NavBarContainer.
+                    // NavBarContainer fires a public "invoked" event when one of its commands has been invoked.
+                    get: function () { return undefined; },
+                    enumerable: false
                 },
 
                 /// <field type="String" locid="WinJS.UI.NavBarCommand.state" helpKeyword="WinJS.UI.NavBarCommand.state">
@@ -50168,130 +50786,6 @@ define('WinJS/Controls/NavBar/_Command',[
                     }
                 },
 
-                _toggleSplit: function NavBarCommand_toggleSplit() {
-                    this._splitOpened = !this._splitOpened;
-                    if (this._splitOpened) {
-                        _ElementUtilities.addClass(this._splitButtonEl, NavBarCommand._ClassName.navbarcommandsplitbuttonopened);
-                        this._splitButtonEl.setAttribute("aria-expanded", "true");
-                    } else {
-                        _ElementUtilities.removeClass(this._splitButtonEl, NavBarCommand._ClassName.navbarcommandsplitbuttonopened);
-                        this._splitButtonEl.setAttribute("aria-expanded", "false");
-                    }
-                    this._fireEvent(NavBarCommand._EventName._splitToggle);
-                },
-
-                _rtl: {
-                    get: function () {
-                        return _Global.getComputedStyle(this.element).direction === "rtl";
-                    }
-                },
-
-                _keydownHandler: function NavBarCommand_keydownHandler(ev) {
-                    if (_ElementUtilities._matchesSelector(ev.target, ".win-interactive, .win-interactive *")) {
-                        return;
-                    }
-
-                    var leftStr = this._rtl ? Key.rightArrow : Key.leftArrow;
-                    var rightStr = this._rtl ? Key.leftArrow : Key.rightArrow;
-
-                    if (!ev.altKey && (ev.keyCode === leftStr || ev.keyCode === Key.home || ev.keyCode === Key.end) && ev.target === this._splitButtonEl) {
-                        _ElementUtilities._setActive(this._buttonEl);
-                        if (ev.keyCode === leftStr) {
-                            ev.stopPropagation();
-                        }
-                        ev.preventDefault();
-                    } else if (!ev.altKey && ev.keyCode === rightStr && this.splitButton && (ev.target === this._buttonEl || this._buttonEl.contains(ev.target))) {
-                        _ElementUtilities._setActive(this._splitButtonEl);
-                        if (ev.keyCode === rightStr) {
-                            ev.stopPropagation();
-                        }
-                        ev.preventDefault();
-                    } else if ((ev.keyCode === Key.space || ev.keyCode === Key.enter) && (ev.target === this._buttonEl || this._buttonEl.contains(ev.target))) {
-                        if (this.location) {
-                            Navigation.navigate(this.location, this.state);
-                        }
-                        this._fireEvent(NavBarCommand._EventName._invoked);
-                    } else if ((ev.keyCode === Key.space || ev.keyCode === Key.enter) && ev.target === this._splitButtonEl) {
-                        this._toggleSplit();
-                    }
-                },
-
-                _getFocusInto: function NavBarCommand_getFocusInto(keyCode) {
-                    var leftStr = this._rtl ? Key.rightArrow : Key.leftArrow;
-                    if ((keyCode === leftStr) && this.splitButton) {
-                        return this._splitButtonEl;
-                    } else {
-                        return this._buttonEl;
-                    }
-                },
-
-                _buildDom: function NavBarCommand_buildDom() {
-                    var markup =
-                        '<div tabindex="0" role="button" class="' + NavBarCommand._ClassName.navbarcommandbutton + '">' +
-                            '<div class="' + NavBarCommand._ClassName.navbarcommandbuttoncontent + '">' +
-                                '<div class="' + NavBarCommand._ClassName.navbarcommandicon + '"></div>' +
-                                '<div class="' + NavBarCommand._ClassName.navbarcommandlabel + '"></div>' +
-                            '</div>' +
-                        '</div>' +
-                        '<div tabindex="-1" aria-expanded="false" class="' + NavBarCommand._ClassName.navbarcommandsplitbutton + '"></div>';
-                    this.element.insertAdjacentHTML("afterBegin", markup);
-
-                    this._buttonEl = this.element.firstElementChild;
-                    this._buttonPressedBehavior = new exports._WinPressed(this._buttonEl);
-                    this._contentEl = this._buttonEl.firstElementChild;
-                    this._imageSpan = this._contentEl.firstElementChild;
-                    this._imageSpan.style.display = "none";
-                    this._labelEl = this._imageSpan.nextElementSibling;
-                    this._splitButtonEl = this._buttonEl.nextElementSibling;
-                    this._splitButtonPressedBehavior = new exports._WinPressed(this._splitButtonEl);
-                    this._splitButtonEl.style.display = "none";
-
-                    _ElementUtilities._ensureId(this._buttonEl);
-                    this._splitButtonEl.setAttribute("aria-labelledby", this._buttonEl.id);
-
-                    this._buttonEl.addEventListener("click", this._handleButtonClick.bind(this));
-
-                    var mutationObserver = new _ElementUtilities._MutationObserver(this._splitButtonAriaExpandedPropertyChangeHandler.bind(this));
-                    mutationObserver.observe(this._splitButtonEl, { attributes: true, attributeFilter: ["aria-expanded"] });
-                    this._splitButtonEl.addEventListener("click", this._handleSplitButtonClick.bind(this));
-
-                    // reparent any other elements.
-                    var tempEl = this._splitButtonEl.nextSibling;
-                    while (tempEl) {
-                        this._buttonEl.insertBefore(tempEl, this._contentEl);
-                        if (tempEl.nodeName !== "#text") {
-                            ControlProcessor.processAll(tempEl);
-                        }
-                        tempEl = this._splitButtonEl.nextSibling;
-                    }
-                },
-
-                _handleButtonClick: function NavBarCommand_handleButtonClick(ev) {
-                    var srcElement = ev.target;
-                    if (!_ElementUtilities._matchesSelector(srcElement, ".win-interactive, .win-interactive *")) {
-                        if (this.location) {
-                            Navigation.navigate(this.location, this.state);
-                        }
-                        this._fireEvent(NavBarCommand._EventName._invoked);
-                    }
-                },
-
-                _splitButtonAriaExpandedPropertyChangeHandler: function NavBarCommand_splitButtonAriaExpandedPropertyChangeHandler() {
-                    if ((this._splitButtonEl.getAttribute("aria-expanded") === "true") !== this._splitOpened) {
-                        this._toggleSplit();
-                    }
-                },
-
-                _handleSplitButtonClick: function NavBarCommand_handleSplitButtonClick() {
-                    this._toggleSplit();
-                },
-
-                _fireEvent: function NavBarCommand_fireEvent(type, detail) {
-                    var event = _Global.document.createEvent("CustomEvent");
-                    event.initCustomEvent(type, true, false, detail);
-                    this.element.dispatchEvent(event);
-                },
-
                 dispose: function NavBarCommand_dispose() {
                     /// <signature helpKeyword="WinJS.UI.NavBarCommand.dispose">
                     /// <summary locid="WinJS.UI.NavBarCommand.dispose">
@@ -50299,30 +50793,23 @@ define('WinJS/Controls/NavBar/_Command',[
                     /// </summary>
                     /// <compatibleWith platform="Windows" minVersion="8.1"/>
                     /// </signature>
-                    if (this._disposed) {
-                        return;
-                    }
-                    this._disposed = true;
-
-                    this._buttonPressedBehavior.dispose();
-                    this._splitButtonPressedBehavior.dispose();
-                }
-            }, {
-                _ClassName: {
-                    navbarcommand: "win-navbarcommand",
-                    navbarcommandbutton: "win-navbarcommand-button",
-                    navbarcommandbuttoncontent: "win-navbarcommand-button-content",
-                    navbarcommandsplitbutton: "win-navbarcommand-splitbutton",
-                    navbarcommandsplitbuttonopened: "win-navbarcommand-splitbutton-opened",
-                    navbarcommandicon: "win-navbarcommand-icon",
-                    navbarcommandlabel: "win-navbarcommand-label"
+                    superClass.dispose.call(this);
                 },
+
+                _invoke: function NavBarCommand_invoke() {
+                    if (this.location) {
+                        Navigation.navigate(this.location, this.state);
+                    }
+                    this._fireEvent(NavBarCommand._EventName._invoked);
+                },
+            },
+            {
+                _ClassName: ClassNames,
                 _EventName: {
                     _invoked: "_invoked",
-                    _splitToggle: "_splittoggle"
-                }
+                    _splitToggle: "_splittoggle",
+                },
             });
-            _Base.Class.mix(NavBarCommand, _Control.DOMEventMixin);
             return NavBarCommand;
         })
     });
@@ -50353,7 +50840,7 @@ define('WinJS/Controls/NavBar/_Container',[
     '../_LegacyAppBar/_Constants',
     '../Repeater',
     './_Command'
-], function NavBarContainerInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Navigation, Promise, Scheduler, _Control, _ElementUtilities, _KeyboardBehavior, _UI, _Constants, Repeater, _Command) {
+], function NavBarContainerInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, ControlProcessor, Navigation, Promise, Scheduler, _Control, _ElementUtilities, _KeyboardBehavior, _UI, _Constants, Repeater, NavBarCommand) {
     "use strict";
 
     function nobodyHasFocus() {
@@ -50386,8 +50873,8 @@ define('WinJS/Controls/NavBar/_Container',[
         /// <part name="navigationArrow" class="win-navbarcontainer-navarrow" locid="WinJS.UI.NavBarContainer_part:navigationArrow">Styles left and right navigation arrows.</part>
         /// <part name="leftNavigationArrow" class="win-navbarcontainer-navleft" locid="WinJS.UI.NavBarContainer_part:leftNavigationArrow">Styles the left navigation arrow.</part>
         /// <part name="rightNavigationArrow" class="win-navbarcontainer-navright" locid="WinJS.UI.NavBarContainer_part:rightNavigationArrow">Styles the right navigation arrow.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         NavBarContainer: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -50403,7 +50890,8 @@ define('WinJS/Controls/NavBar/_Container',[
 
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
-                get navBarContainerViewportAriaLabel() { return _Resources._getWinJSString("ui/navBarContainerViewportAriaLabel").value; }
+                get navBarContainerViewportAriaLabel() { return _Resources._getWinJSString("ui/navBarContainerViewportAriaLabel").value; },
+                get navBarContainerIsDeprecated() { return "NavBarContainer is deprecated and may not be available in future releases. Instead, use a WinJS SplitView to display navigation targets within the app."; }
             };
 
             var NavBarContainer = _Base.Class.define(function NavBarContainer_ctor(element, options) {
@@ -50422,8 +50910,14 @@ define('WinJS/Controls/NavBar/_Container',[
                 /// <returns type="WinJS.UI.NavBarContainer" locid="WinJS.UI.NavBarContainer.constructor_returnValue">
                 /// The new NavBarContainer.
                 /// </returns>
+                /// <deprecated type="deprecate">
+                /// NavBarContainer is deprecated and may not be available in future releases. 
+                /// Instead, use a WinJS SplitView to display navigation targets within the app.
+                /// </deprecated>
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </signature>
+
+                _ElementUtilities._deprecated(strings.navBarContainerIsDeprecated);
 
                 element = element || _Global.document.createElement("DIV");
                 this._id = element.id || _ElementUtilities._uniqueID(element);
@@ -50551,7 +51045,7 @@ define('WinJS/Controls/NavBar/_Container',[
                     }
 
                     // Create the NavBarCommand after calling render so that the reparenting in navbarCommand works.
-                    var navbarCommand = new _Command.NavBarCommand(navbarCommandEl, item);
+                    var navbarCommand = new NavBarCommand.NavBarCommand(navbarCommandEl, item);
                     return navbarCommand._element;
                 },
 
@@ -50937,8 +51431,8 @@ define('WinJS/Controls/NavBar/_Container',[
                     _ElementUtilities.addClass(this._surfaceEl, NavBarContainer._ClassName.surface);
                     this._viewportEl.appendChild(this._surfaceEl);
 
-                    this._surfaceEl.addEventListener("_invoked", this._navbarCommandInvokedHandler.bind(this));
-                    this._surfaceEl.addEventListener("_splittoggle", this._navbarCommandSplitToggleHandler.bind(this));
+                    this._surfaceEl.addEventListener(NavBarCommand.NavBarCommand._EventName._invoked, this._navbarCommandInvokedHandler.bind(this));
+                    this._surfaceEl.addEventListener(NavBarCommand.NavBarCommand._EventName._splitToggle, this._navbarCommandSplitToggleHandler.bind(this));
                     _ElementUtilities._addEventListener(this._surfaceEl, "focusin", this._itemsFocusHandler.bind(this), false);
                     this._surfaceEl.addEventListener("keydown", this._keyDownHandler.bind(this));
 
@@ -51022,8 +51516,8 @@ define('WinJS/Controls/NavBar/_Container',[
                     if (this._disposed) { return; }
                     if (!this._measured) { return; }
                     var viewportResized = this.layout === _UI.Orientation.horizontal
-                            ? this._sizes.viewportOffsetWidth !== parseFloat(_Global.getComputedStyle(this._viewportEl).width)
-                            : this._sizes.viewportOffsetHeight !== parseFloat(_Global.getComputedStyle(this._viewportEl).height);
+                            ? this._sizes.viewportOffsetWidth !== parseFloat(_ElementUtilities._getComputedStyle(this._viewportEl).width)
+                            : this._sizes.viewportOffsetHeight !== parseFloat(_ElementUtilities._getComputedStyle(this._viewportEl).height);
                     if (!viewportResized) { return; }
 
                     this._measured = false;
@@ -51357,7 +51851,7 @@ define('WinJS/Controls/NavBar/_Container',[
 
                         var sizes = this._sizes;
 
-                        sizes.rtl = _Global.getComputedStyle(this._element).direction === "rtl";
+                        sizes.rtl = _ElementUtilities._getComputedStyle(this._element).direction === "rtl";
 
                         var itemCount = this._surfaceEl.children.length;
                         if (itemCount > 0) {
@@ -51368,15 +51862,15 @@ define('WinJS/Controls/NavBar/_Container',[
                                 // Clear inline margins set by NavBarContainer before measuring.
                                 elementToMeasure.style.margin = "";
                                 elementToMeasure.style.width = "";
-                                var elementComputedStyle = _Global.getComputedStyle(elementToMeasure);
-                                sizes.itemOffsetWidth = parseFloat(_Global.getComputedStyle(elementToMeasure).width);
+                                var elementComputedStyle = _ElementUtilities._getComputedStyle(elementToMeasure);
+                                sizes.itemOffsetWidth = parseFloat(_ElementUtilities._getComputedStyle(elementToMeasure).width);
                                 if (elementToMeasure.offsetWidth === 0) {
                                     sizes.itemOffsetWidth = 0;
                                 }
                                 sizes.itemMarginLeft = parseFloat(elementComputedStyle.marginLeft);
                                 sizes.itemMarginRight = parseFloat(elementComputedStyle.marginRight);
                                 sizes.itemWidth = sizes.itemOffsetWidth + sizes.itemMarginLeft + sizes.itemMarginRight;
-                                sizes.itemOffsetHeight = parseFloat(_Global.getComputedStyle(elementToMeasure).height);
+                                sizes.itemOffsetHeight = parseFloat(_ElementUtilities._getComputedStyle(elementToMeasure).height);
                                 if (elementToMeasure.offsetHeight === 0) {
                                     sizes.itemOffsetHeight = 0;
                                 }
@@ -51389,11 +51883,11 @@ define('WinJS/Controls/NavBar/_Container',[
                                 this._writeProfilerMark("measureItem,StopTM");
                             }
 
-                            sizes.viewportOffsetWidth = parseFloat(_Global.getComputedStyle(this._viewportEl).width);
+                            sizes.viewportOffsetWidth = parseFloat(_ElementUtilities._getComputedStyle(this._viewportEl).width);
                             if (this._viewportEl.offsetWidth === 0) {
                                 sizes.viewportOffsetWidth = 0;
                             }
-                            sizes.viewportOffsetHeight = parseFloat(_Global.getComputedStyle(this._viewportEl).height);
+                            sizes.viewportOffsetHeight = parseFloat(_ElementUtilities._getComputedStyle(this._viewportEl).height);
                             if (this._viewportEl.offsetHeight === 0) {
                                 sizes.viewportOffsetHeight = 0;
                             }
@@ -51407,7 +51901,7 @@ define('WinJS/Controls/NavBar/_Container',[
                             if (this.layout === _UI.Orientation.horizontal) {
                                 this._scrollPosition = _ElementUtilities.getScrollPosition(this._viewportEl).scrollLeft;
 
-                                sizes.leadingEdge = this._leftArrowEl.offsetWidth + parseInt(_Global.getComputedStyle(this._leftArrowEl).marginLeft) + parseInt(_Global.getComputedStyle(this._leftArrowEl).marginRight);
+                                sizes.leadingEdge = this._leftArrowEl.offsetWidth + parseInt(_ElementUtilities._getComputedStyle(this._leftArrowEl).marginLeft) + parseInt(_ElementUtilities._getComputedStyle(this._leftArrowEl).marginRight);
                                 var usableSpace = sizes.viewportOffsetWidth - sizes.leadingEdge * 2;
                                 sizes.maxColumns = sizes.itemWidth ? Math.max(1, Math.floor(usableSpace / sizes.itemWidth)) : 1;
                                 sizes.rowsPerPage = Math.min(this.maxRows, Math.ceil(itemCount / sizes.maxColumns));
@@ -51785,8 +52279,8 @@ define('WinJS/Controls/NavBar',[
         /// <event name="afterclose" locid="WinJS.UI.NavBar_e:afterclose">Raised immediately after the NavBar is fully closed.</event>
         /// <event name="childrenprocessed" locid="WinJS.UI.NavBar_e:childrenprocessed">Fired when children of NavBar control have been processed from a WinJS.UI.processAll call.</event>
         /// <part name="navbar" class="win-navbar" locid="WinJS.UI.NavBar_part:navbar">Styles the entire NavBar.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         NavBar: _Base.Namespace._lazy(function () {
             var childrenProcessedEventName = "childrenprocessed";
             var createEvent = _Events._createEventProperty;
@@ -51806,8 +52300,14 @@ define('WinJS/Controls/NavBar',[
                 /// <returns type="WinJS.UI.NavBar" locid="WinJS.UI.NavBar.constructor_returnValue">
                 /// The new NavBar control.
                 /// </returns>
+                /// <deprecated type="deprecate">
+                /// NavBar is deprecated and may not be available in future releases. 
+                /// Instead, use a WinJS SplitView to display navigation targets within the app.
+                /// </deprecated>
                 /// <compatibleWith platform="Windows" minVersion="8.1"/>
                 /// </signature>
+
+                _ElementUtilities._deprecated(strings.navBarIsDeprecated);
 
                 options = options || {};
 
@@ -51944,6 +52444,10 @@ define('WinJS/Controls/NavBar',[
                 })
             });
 
+            var strings = {
+                get navBarIsDeprecated() { return "NavBar is deprecated and may not be available in future releases. Instead, use a WinJS SplitView to display navigation targets within the app."; }
+            };
+
             return NavBar;
         })
     });
@@ -51981,8 +52485,8 @@ define('WinJS/Controls/ViewBox',[
         /// <icon src="ui_winjs.ui.viewbox.12x12.png" width="12" height="12" />
         /// <icon src="ui_winjs.ui.viewbox.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.ViewBox"><div>ViewBox</div></div>]]></htmlSnippet>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         ViewBox: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -52045,7 +52549,7 @@ define('WinJS/Controls/ViewBox',[
 
                 _rtl: {
                     get: function () {
-                        return _Global.getComputedStyle(this.element).direction === "rtl";
+                        return _ElementUtilities._getComputedStyle(this.element).direction === "rtl";
                     }
                 },
 
@@ -52151,11 +52655,12 @@ define('WinJS/Controls/ContentDialog',[
     '../Core/_Resources',
     '../Utilities/_Control',
     '../Utilities/_ElementUtilities',
+    '../Utilities/_KeyboardInfo',
     '../Utilities/_Hoverable',
     '../Animations',
     'require-style!less/styles-contentdialog',
     'require-style!less/colors-contentdialog'
-], function contentDialogInit(Application, _Dispose, _Accents, Promise, _Signal, _LightDismissService, _BaseUtils, _Global, _WinRT, _Base, _Events, _ErrorFromName, _Resources, _Control, _ElementUtilities, _Hoverable, _Animations) {
+], function contentDialogInit(Application, _Dispose, _Accents, Promise, _Signal, _LightDismissService, _BaseUtils, _Global, _WinRT, _Base, _Events, _ErrorFromName, _Resources, _Control, _ElementUtilities, _KeyboardInfo, _Hoverable, _Animations) {
     "use strict";
 
     _Accents.createAccentRule(".win-contentdialog-dialog", [{ name: "outline-color", value: _Accents.ColorTypes.accent }]);
@@ -52181,8 +52686,8 @@ define('WinJS/Controls/ContentDialog',[
         /// <part name="contentdialog-commands" class="win-contentdialog-commands" locid="WinJS.UI.ContentDialog_part:contentdialog-commands">The element which contains the dialog's primary and secondary commands.</part>
         /// <part name="contentdialog-primarycommand" class="win-contentdialog-primarycommand" locid="WinJS.UI.ContentDialog_part:contentdialog-primarycommand">The dialog's primary button.</part>
         /// <part name="contentdialog-secondarycommand" class="win-contentdialog-secondarycommand" locid="WinJS.UI.ContentDialog_part:contentdialog-secondarycommand">The dialog's secondary button.</part>
-        /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
         ContentDialog: _Base.Namespace._lazy(function () {
             var Strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -52219,7 +52724,8 @@ define('WinJS/Controls/ContentDialog',[
                 _column0or1: "win-contentdialog-column0or1",
                 _visible: "win-contentdialog-visible",
                 _tabStop: "win-contentdialog-tabstop",
-                _commandSpacer: "win-contentdialog-commandspacer"
+                _commandSpacer: "win-contentdialog-commandspacer",
+                _deviceFixedSupported: "win-contentdialog-devicefixedsupported"
             };
             var EventNames = {
                 beforeShow: "beforeshow",
@@ -52227,7 +52733,16 @@ define('WinJS/Controls/ContentDialog',[
                 beforeHide: "beforehide",
                 afterHide: "afterhide",
             };
-            var minContentHeightWithInputPane = 96;
+            
+            var _supportsMsDeviceFixedCached;
+            function supportsMsDevicedFixed(dialogRoot) {
+                if (typeof _supportsMsDeviceFixedCached === "undefined") {
+                    var element = _Global.document.createElement("div");
+                    element.style.position = "-ms-device-fixed";
+                    _supportsMsDeviceFixedCached = (_ElementUtilities._getComputedStyle(element).position === "-ms-device-fixed");
+                }
+                return _supportsMsDeviceFixedCached;
+            }
 
             // WinJS animation promises always complete successfully. This
             // helper allows an animation promise to complete in the canceled state
@@ -52342,7 +52857,6 @@ define('WinJS/Controls/ContentDialog',[
                             },
                             onTakeFocus: function (useSetActive) {
                                 dialog._dismissable.restoreFocus() ||
-                                    _ElementUtilities._focusFirstFocusableElement(dialog._dom.content) ||
                                     _ElementUtilities._tryFocusOnAnyElement(dialog._dom.dialog, useSetActive);
                             }
                         });
@@ -52423,11 +52937,8 @@ define('WinJS/Controls/ContentDialog',[
                                 that._pendingHide = null;
                                 _ElementUtilities.addClass(that.dialog._dom.root, ClassNames._visible);
                                 that.dialog._addExternalListeners();
-                                if (_WinRT.Windows.UI.ViewManagement.InputPane) {
-                                    var inputPaneHeight = _WinRT.Windows.UI.ViewManagement.InputPane.getForCurrentView().occludedRect.height;
-                                    if (inputPaneHeight > 0) {
-                                        that.dialog._renderForInputPane(inputPaneHeight);
-                                    }
+                                if (_KeyboardInfo._KeyboardInfo._visible) {
+                                    that.dialog._renderForInputPane();
                                 }
                                 _LightDismissService.shown(that.dialog._dismissable);
                                 return that.dialog._playEntranceAnimation();
@@ -52597,10 +53108,16 @@ define('WinJS/Controls/ContentDialog',[
                 
                 this._onInputPaneShownBound = this._onInputPaneShown.bind(this);
                 this._onInputPaneHiddenBound = this._onInputPaneHidden.bind(this);
+                this._onUpdateInputPaneRenderingBound = this._onUpdateInputPaneRendering.bind(this);
 
                 this._disposed = false;
-                this._resizedForInputPane = false;
                 this._currentFocus = null;
+                this._rendered = {
+                    registeredForResize: false,
+                    resizedForInputPane: false,
+                    top: "",
+                    bottom: ""
+                };
 
                 this._initializeDom(element || _Global.document.createElement("div"));
                 this._setState(States.Init);
@@ -52737,6 +53254,7 @@ define('WinJS/Controls/ContentDialog',[
                     }
                     this._setState(States.Disposed);
                     this._disposed = true;
+                    _ElementUtilities._resizeNotifier.unsubscribe(this._dom.root, this._onUpdateInputPaneRenderingBound);
                     _Dispose._disposeElement(this._dom.content);
                 },
 
@@ -52786,7 +53304,7 @@ define('WinJS/Controls/ContentDialog',[
                         '<div class="' + ClassNames.backgroundOverlay + '"></div>' +
                         '<div class="' + ClassNames._tabStop + '"></div>' +
                         '<div tabindex="-1" role="dialog" class="' + ClassNames.dialog + '">' +
-                            '<div class="' + ClassNames.title + '"></div>' +
+                            '<h2 class="' + ClassNames.title + '" role="heading"></h2>' +
                             '<div class="' + ClassNames._scroller + '"></div>' +
                             '<div class="' + ClassNames.commands + '">' +
                                 '<button type="button" class="' + ClassNames._commandSpacer + ' win-button"></button>' +
@@ -52832,6 +53350,10 @@ define('WinJS/Controls/ContentDialog',[
                     _ElementUtilities._addEventListener(dom.endBodyTab, "focusin", this._onEndBodyTabFocusIn.bind(this));
                     dom.commands[0].addEventListener("click", this._onCommandClicked.bind(this, DismissalResult.primary));
                     dom.commands[1].addEventListener("click", this._onCommandClicked.bind(this, DismissalResult.secondary));
+                    
+                    if (supportsMsDevicedFixed()) {
+                        _ElementUtilities.addClass(dom.root, ClassNames._deviceFixedSupported);
+                    }
                 },
 
                 _updateCommandsUI: function ContentDialog_updateCommandsUI() {
@@ -52916,6 +53438,13 @@ define('WinJS/Controls/ContentDialog',[
                 _onInputPaneHidden: function ContentDialog_onInputPaneHidden() {
                     this._state.onInputPaneHidden();
                 },
+                
+                _onUpdateInputPaneRendering: function ContentDialog_onUpdateInputPaneRendering() {
+                    // When the dialog and the input pane are shown and the window resizes, this may
+                    // change the visual document's dimensions so we may need to update the rendering
+                    // of the dialog.
+                    this._renderForInputPane();
+                },
 
                 //
                 // Methods called by states
@@ -52989,61 +53518,97 @@ define('WinJS/Controls/ContentDialog',[
 
                 _addExternalListeners: function ContentDialog_addExternalListeners() {
                     _ElementUtilities._inputPaneListener.addEventListener(this._dom.root, "showing", this._onInputPaneShownBound);
-                    _ElementUtilities._inputPaneListener.addEventListener(this._dom.root, "hiding", this._onInputPaneShownBound);
+                    _ElementUtilities._inputPaneListener.addEventListener(this._dom.root, "hiding", this._onInputPaneHiddenBound);
                 },
 
                 _removeExternalListeners: function ContentDialog_removeExternalListeners() {
                     _ElementUtilities._inputPaneListener.removeEventListener(this._dom.root, "showing", this._onInputPaneShownBound);
-                    _ElementUtilities._inputPaneListener.removeEventListener(this._dom.root, "hiding", this._onInputPaneShownBound);
+                    _ElementUtilities._inputPaneListener.removeEventListener(this._dom.root, "hiding", this._onInputPaneHiddenBound);
                 },
-
-                _renderForInputPane: function ContentDialog_renderForInputPane(inputPaneHeight) {
-                    this._clearInputPaneRendering();
-
-                    var dialog = this._dom.dialog;
-                    var style = dialog.style;
-                    var left = dialog.offsetLeft;
-                    var top = dialog.offsetTop;
-                    var height = dialog.offsetHeight;
-                    var bottom = top + height;
-                    var visibleBottom = this._dom.root.offsetHeight - inputPaneHeight;
-                    var titleHeight = _ElementUtilities.getTotalHeight(this._dom.title);
-                    var commandsHeight = _ElementUtilities.getTotalHeight(this._dom.commandContainer);
-
-                    if (bottom > visibleBottom) {
-                        var newHeight = height - (bottom - visibleBottom);
-                        if (newHeight - titleHeight - commandsHeight < minContentHeightWithInputPane) {
+                
+                _shouldResizeForInputPane: function ContentDialog_shouldResizeForInputPane() {
+                    if (this._rendered.resizedForInputPane) {
+                        // Dialog has already resized for the input pane so it should continue adjusting
+                        // its size as the input pane occluded rect changes.
+                        return true;
+                    } else {
+                        // Dialog is at its default size. It should maintain its size as long as the
+                        // input pane doesn't occlude it. This makes it so the dialog visual doesn't
+                        // jump unnecessarily when the input pane shows if it won't occlude the dialog.
+                        var dialogRect = this._dom.dialog.getBoundingClientRect();
+                        var willInputPaneOccludeDialog =
+                            _KeyboardInfo._KeyboardInfo._visibleDocTop > dialogRect.top ||
+                            _KeyboardInfo._KeyboardInfo._visibleDocBottom < dialogRect.bottom;
+                        
+                        return willInputPaneOccludeDialog;
+                    }
+                },
+                
+                // This function assumes it's in an environment that supports -ms-device-fixed.
+                _renderForInputPane: function ContentDialog_renderForInputPane() {
+                    var rendered = this._rendered;
+                    
+                    if (!rendered.registeredForResize) {
+                        _ElementUtilities._resizeNotifier.subscribe(this._dom.root, this._onUpdateInputPaneRenderingBound);
+                        rendered.registeredForResize = true;
+                    }
+                    
+                    if (this._shouldResizeForInputPane()) {
+                        // Lay the dialog out using its normal rules but restrict it to the *visible document*
+                        // rather than the *visual viewport*.
+                        // Essentially, the dialog should be in the center of the part of the app that the user
+                        // can see regardless of the state of the input pane.
+                        
+                        var top = _KeyboardInfo._KeyboardInfo._visibleDocTop + "px";
+                        var bottom = _KeyboardInfo._KeyboardInfo._visibleDocBottomOffset + "px";
+                        
+                        if (rendered.top !== top) {
+                            this._dom.root.style.top = top;
+                            rendered.top = top;
+                        }
+                        
+                        if (rendered.bottom !== bottom) {
+                            this._dom.root.style.bottom = bottom;
+                            rendered.bottom = bottom;
+                        }
+                        
+                        if (!rendered.resizedForInputPane) {
                             // Put title into scroller so there's more screen real estate for the content
                             this._dom.scroller.insertBefore(this._dom.title, this._dom.content);
+                            this._dom.root.style.height = "auto"; // Height will be determined by setting top & bottom
+                            // Ensure activeElement is scrolled into view
+                            var activeElement = _Global.document.activeElement;
+                            if (activeElement && this._dom.scroller.contains(activeElement)) {
+                                activeElement.scrollIntoView();
+                            }
+                            rendered.resizedForInputPane = true;
                         }
-
-                        this._dom.root.style.display = "block";
-                        style.height = newHeight + "px";
-                        style.position = "absolute";
-                        style.left = left + "px";
-                        style.top = top + "px";
-                        style.minHeight = 0;
-
-                        this._resizedForInputPane = true;
-                        _Global.document.activeElement.focus(); // Ensure activeElement is scrolled into view
                     }
                 },
 
                 _clearInputPaneRendering: function ContentDialog_clearInputPaneRendering() {
-                    if (this._resizedForInputPane) {
-                        if (this._dom.title.parentNode !== this._dom.dialog) {
-                            // Make sure the title isn't in the scroller
-                            this._dom.dialog.insertBefore(this._dom.title, this._dom.scroller);
-                        }
-
-                        var style = this._dom.dialog.style;
-                        this._dom.root.style.display = "";
-                        style.height = "";
-                        style.position = "";
-                        style.left = "";
-                        style.top = "";
-                        style.minHeight = "";
-                        this._resizedForInputPane = false;
+                    var rendered = this._rendered;
+                    
+                    if (rendered.registeredForResize) {
+                        _ElementUtilities._resizeNotifier.unsubscribe(this._dom.root, this._onUpdateInputPaneRenderingBound);
+                        rendered.registeredForResize = false;
+                    }
+                    
+                    if (rendered.top !== "") {
+                        this._dom.root.style.top = "";
+                        rendered.top = "";
+                    }
+                    
+                    if (rendered.bottom !== "") {
+                        this._dom.root.style.bottom = "";
+                        rendered.bottom = "";
+                    }
+                    
+                    if (rendered.resizedForInputPane) {
+                        // Make sure the title isn't in the scroller
+                        this._dom.dialog.insertBefore(this._dom.title, this._dom.scroller);
+                        this._dom.root.style.height = "";
+                        rendered.resizedForInputPane = false;
                     }
                 }
             }, {
@@ -53090,8 +53655,10 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
         paneClosed: "win-splitview-pane-closed",
         paneOpened: "win-splitview-pane-opened",
         _panePlaceholder: "win-splitview-paneplaceholder",
+        _paneOutline: "win-splitview-paneoutline",
         _paneWrapper: "win-splitview-panewrapper",
         _contentWrapper: "win-splitview-contentwrapper",
+        _animating: "win-splitview-animating",
         // placement
         _placementLeft: "win-splitview-placementleft",
         _placementRight: "win-splitview-placementright",
@@ -53194,8 +53761,8 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
     /// <part name="splitview" class="win-splitview" locid="WinJS.UI.SplitView_part:splitview">The entire SplitView control.</part>
     /// <part name="splitview-pane" class="win-splitview-pane" locid="WinJS.UI.SplitView_part:splitview-pane">The element which hosts the SplitView's pane.</part>
     /// <part name="splitview-content" class="win-splitview-content" locid="WinJS.UI.SplitView_part:splitview-content">The element which hosts the SplitView's content.</part>
-    /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
     var SplitView = (function () {
         function SplitView(element, options) {
             /// <signature helpKeyword="WinJS.UI.SplitView.SplitView">
@@ -53244,10 +53811,15 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
                     var hiddenPaneThickness = _this._getHiddenPaneThickness();
                     _this._isOpenedMode = true;
                     _this._updateDomImpl();
-                    return _this._playShowAnimation(hiddenPaneThickness);
+                    _ElementUtilities.addClass(_this._dom.root, ClassNames._animating);
+                    return _this._playShowAnimation(hiddenPaneThickness).then(function () {
+                        _ElementUtilities.removeClass(_this._dom.root, ClassNames._animating);
+                    });
                 },
                 onClose: function () {
+                    _ElementUtilities.addClass(_this._dom.root, ClassNames._animating);
                     return _this._playHideAnimation(_this._getHiddenPaneThickness()).then(function () {
+                        _ElementUtilities.removeClass(_this._dom.root, ClassNames._animating);
                         _this._isOpenedMode = false;
                         _this._updateDomImpl();
                     });
@@ -53281,7 +53853,7 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
             _Control.setOptions(this, options);
             // Exit the Init state.
             _ElementUtilities._inDom(this._dom.root).then(function () {
-                _this._rtl = _Global.getComputedStyle(_this._dom.root).direction === 'rtl';
+                _this._rtl = _ElementUtilities._getComputedStyle(_this._dom.root).direction === 'rtl';
                 _this._machine.exitInit();
             });
         }
@@ -53426,10 +53998,14 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
                 contentEl.appendChild(child);
                 child = sibling;
             }
+            // paneOutline's purpose is to render an outline around the pane in high contrast mode
+            var paneOutlineEl = _Global.document.createElement("div");
+            paneOutlineEl.className = ClassNames._paneOutline;
             // paneWrapper's purpose is to clip the pane during the pane resize animation
             var paneWrapperEl = _Global.document.createElement("div");
             paneWrapperEl.className = ClassNames._paneWrapper;
             paneWrapperEl.appendChild(paneEl);
+            paneWrapperEl.appendChild(paneOutlineEl);
             var panePlaceholderEl = _Global.document.createElement("div");
             panePlaceholderEl.className = ClassNames._panePlaceholder;
             // contentWrapper is an extra element we need to allow heights to be specified as percentages (e.g. height: 100%)
@@ -53447,6 +54023,7 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
             this._dom = {
                 root: root,
                 pane: paneEl,
+                paneOutline: paneOutlineEl,
                 paneWrapper: paneWrapperEl,
                 panePlaceholder: panePlaceholderEl,
                 content: contentEl,
@@ -53454,7 +54031,7 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
             };
         };
         SplitView.prototype._measureElement = function (element) {
-            var style = getComputedStyle(element);
+            var style = _ElementUtilities._getComputedStyle(element);
             var position = _ElementUtilities._getPositionRelativeTo(element, this._dom.root);
             var marginLeft = parseInt(style.marginLeft, 10);
             var marginTop = parseInt(style.marginTop, 10);
@@ -53809,8 +54386,8 @@ define('WinJS/Controls/SplitViewPaneToggle/_SplitViewPaneToggle',["require", "ex
     /// <icon src="ui_winjs.ui.splitviewpanetoggle.16x16.png" width="16" height="16" />
     /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.SplitViewPaneToggle"></button>]]></htmlSnippet>
     /// <part name="splitviewpanetoggle" class="win-splitviewpanetoggle" locid="WinJS.UI.SplitViewPaneToggle_part:splitviewpanetoggle">The SplitViewPaneToggle control itself.</part>
-    /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
     var SplitViewPaneToggle = (function () {
         function SplitViewPaneToggle(element, options) {
             /// <signature helpKeyword="WinJS.UI.SplitViewPaneToggle.SplitViewPaneToggle">
@@ -54140,8 +54717,8 @@ define('WinJS/Controls/AppBar/_AppBar',["require", "exports", "../../Core/_Base"
     /// <part name="appbar" class="win-appbar" locid="WinJS.UI.AppBar_part:appbar">The entire AppBar control.</part>
     /// <part name="appbar-overflowbutton" class="win-appbar-overflowbutton" locid="WinJS.UI.AppBar_part:AppBar-overflowbutton">The appbar overflow button.</part>
     /// <part name="appbar-overflowarea" class="win-appbar-overflowarea" locid="WinJS.UI.AppBar_part:AppBar-overflowarea">The container for appbar commands that overflow.</part>
-    /// <resource type="javascript" src="//WinJS.4.1/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.1/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
     var AppBar = (function () {
         function AppBar(element, options) {
             /// <signature helpKeyword="WinJS.UI.AppBar.AppBar">
@@ -54246,6 +54823,9 @@ define('WinJS/Controls/AppBar/_AppBar',["require", "exports", "../../Core/_Base"
                 tabIndex: this._dom.root.hasAttribute("tabIndex") ? this._dom.root.tabIndex : -1,
                 onLightDismiss: function () {
                     _this.close();
+                },
+                onTakeFocus: function (useSetActive) {
+                    _this._dismissable.restoreFocus() || _this._commandingSurface.takeFocus(useSetActive);
                 }
             });
             // Initialize public properties.
@@ -54582,6 +55162,7 @@ define('WinJS/Controls/AppBar',["require", "exports", '../Core/_Base'], function
 define('ui',[
     'WinJS/Core/_WinJS',
     'WinJS/VirtualizedDataSource',
+    'WinJS/Vui',
     'WinJS/Controls/IntrinsicControls',
     'WinJS/Controls/ListView',
     'WinJS/Controls/FlipView',
@@ -54606,6 +55187,7 @@ define('ui',[
     'WinJS/Controls/ContentDialog',
     'WinJS/Controls/SplitView',
     'WinJS/Controls/SplitViewPaneToggle',
+    'WinJS/Controls/SplitView/Command',
     'WinJS/Controls/ToolBar',
     'WinJS/Controls/AppBar',
     ], function (_WinJS) {

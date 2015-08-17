@@ -1,7 +1,7 @@
 ﻿/*!
   Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
-  Build: 4.1.0.winjs.2015.7.10
-  Version: WinJS.4.1
+  Build: 4.2.0.winjs.2015.8.17
+  Version: WinJS.4.2
 */
 
 (function () {

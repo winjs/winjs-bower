@@ -2847,6 +2847,10 @@ button.win-navigation-backbutton:enabled:hover:active {
   padding-top: 48px;
   margin-top: -48px;
 }
+.win-pivot.win-pivot-customheaders .win-pivot-viewport {
+  padding-top: inherit;
+  margin-top: inherit;
+}
 .win-pivot.win-pivot-mouse .win-pivot-viewport {
   padding-top: 0px;
   margin-top: 0px;
@@ -2953,33 +2957,66 @@ html.win-hoverable .win-pivot .win-pivot-navbutton:hover {
   display: inline-block;
 }
 .win-hub-vertical .win-hub-surface {
-  width: 100%;
+  width: calc(100% - 24px);
   padding: 0px 12px 8px 12px;
+  margin-top: -24px;
+  /* Keep in sync w/ hub-section padding-top */
 }
 .win-hub-horizontal .win-hub-surface {
   height: 100%;
-  padding: 0px 0px 0px 12px;
+  padding-left: 12px;
+}
+.win-hub-horizontal .win-hub-surface:lang(ar),
+.win-hub-horizontal .win-hub-surface:lang(dv),
+.win-hub-horizontal .win-hub-surface:lang(fa),
+.win-hub-horizontal .win-hub-surface:lang(he),
+.win-hub-horizontal .win-hub-surface:lang(ku-Arab),
+.win-hub-horizontal .win-hub-surface:lang(pa-Arab),
+.win-hub-horizontal .win-hub-surface:lang(prs),
+.win-hub-horizontal .win-hub-surface:lang(ps),
+.win-hub-horizontal .win-hub-surface:lang(sd-Arab),
+.win-hub-horizontal .win-hub-surface:lang(syr),
+.win-hub-horizontal .win-hub-surface:lang(ug),
+.win-hub-horizontal .win-hub-surface:lang(ur),
+.win-hub-horizontal .win-hub-surface:lang(qps-plocm) {
+  padding-left: 0;
+  padding-right: 12px;
 }
 .win-hub-section {
   display: inline-block;
-  padding: 0px 24px 0px 0px;
   vertical-align: top;
   white-space: normal;
 }
 .win-hub-horizontal .win-hub-section {
   height: 100%;
+  padding-right: 24px;
+}
+.win-hub-horizontal .win-hub-section:lang(ar),
+.win-hub-horizontal .win-hub-section:lang(dv),
+.win-hub-horizontal .win-hub-section:lang(fa),
+.win-hub-horizontal .win-hub-section:lang(he),
+.win-hub-horizontal .win-hub-section:lang(ku-Arab),
+.win-hub-horizontal .win-hub-section:lang(pa-Arab),
+.win-hub-horizontal .win-hub-section:lang(prs),
+.win-hub-horizontal .win-hub-section:lang(ps),
+.win-hub-horizontal .win-hub-section:lang(sd-Arab),
+.win-hub-horizontal .win-hub-section:lang(syr),
+.win-hub-horizontal .win-hub-section:lang(ug),
+.win-hub-horizontal .win-hub-section:lang(ur),
+.win-hub-horizontal .win-hub-section:lang(qps-plocm) {
+  padding-right: 0;
+  padding-left: 24px;
 }
 .win-hub-horizontal .win-hub-section-header {
-  margin-top: 44px;
+  margin-top: 62px;
 }
 .win-hub-vertical .win-hub-section {
-  width: calc(100% - 24px);
-}
-.win-hub-vertical .win-hub-section-header {
-  margin-top: 16px;
+  width: 100%;
+  padding-top: 24px;
+  /* Keep in sync w/ hub-surface margin-top */
 }
 .win-hub-section-header {
-  margin: 4px 0px 9px 0px;
+  margin-bottom: 9px;
   height: 28px;
 }
 button.win-hub-section-header-tabstop,
@@ -3016,17 +3053,15 @@ button.win-hub-section-header-tabstop:-ms-keyboard-active {
 .win-hub-section-header-content {
   font-size: 20px;
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.5;
   -ms-flex: 1 1 auto;
   -webkit-flex: 1 1 auto;
   flex: 1 1 auto;
   text-align: left;
   vertical-align: bottom;
-  padding-top: 1px;
   overflow: hidden;
   text-overflow: clip;
   white-space: nowrap;
-  line-height: 1.5;
 }
 .win-hub-section-header-content:lang(ar),
 .win-hub-section-header-content:lang(dv),
@@ -3075,7 +3110,7 @@ button.win-hub-section-header-tabstop:-ms-keyboard-active {
   margin-right: 24px;
 }
 .win-hub-horizontal .win-hub-section-content {
-  height: calc(100% - 81px);
+  height: calc(100% - 99px);
 }
 .win-hub-vertical .win-hub-section-content {
   width: 100%;
@@ -3308,6 +3343,9 @@ div.win-command:lang(qps-plocm) {
 }
 div.win-command:focus {
   outline: none;
+}
+.win-command.win-command-hidden {
+  display: none;
 }
 /*
 AppBar
@@ -4177,9 +4215,6 @@ Settings Pane
 .win-commandingsurface .win-commandingsurface-actionarea .win-commandingsurface-overflowbutton .win-commandingsurface-ellipsis::before {
   content: "\E10C";
 }
-.win-commandingsurface.win-commandingsurface-empty .win-commandingsurface-overflowbutton {
-  display: none;
-}
 .win-commandingsurface.win-commandingsurface-opened .win-commandingsurface-actionarea {
   height: auto;
 }
@@ -4208,9 +4243,6 @@ Settings Pane
 }
 .win-commandingsurface.win-commandingsurface-closed .win-commandingsurface-overflowarea,
 .win-commandingsurface.win-commandingsurface-closed .win-commandingsurface-overflowareacontainer {
-  display: none;
-}
-.win-commandingsurface.win-commandingsurface-empty .win-commandingsurface-overflowbutton {
   display: none;
 }
 .win-commandingsurface .win-commandingsurface-insetoutline {
@@ -4260,6 +4292,11 @@ Settings Pane
   max-width: 480px;
   /* override max-width styles from WinJS.UI.Menu */
 }
+.win-commandingsurface .win-commandingsurface-overflowarea .win-commandingsurface-spacer {
+  /* Reserves space at the bottom of the overflow area */
+  visibility: hidden;
+  height: 24px;
+}
 .win-commandingsurface .win-commandingsurface-overflowarea button.win-command {
   -ms-flex: 0 0 auto;
   -webkit-flex: 0 0 auto;
@@ -4288,6 +4325,17 @@ Settings Pane
 .win-commandingsurface.win-commandingsurface-closing.win-commandingsurface-closeddisplayminimal .win-command,
 .win-commandingsurface.win-commandingsurface-closing.win-commandingsurface-closeddisplaynone .win-command {
   opacity: 0;
+}
+.win-commandingsurface .win-command.win-command-hidden {
+  display: inline-block;
+}
+.win-commandingsurface .win-command.win-commandingsurface-command-hidden {
+  display: none;
+}
+.win-commandingsurface .win-command.win-commandingsurface-command-primary-overflown,
+.win-commandingsurface .win-command.win-commandingsurface-command-secondary-overflown,
+.win-commandingsurface .win-command.win-commandingsurface-command-separator-hidden {
+  display: none;
 }
 @media (max-width: 480px) {
   .win-commandingsurface .win-commandingsurface-overflowarea.win-menu {
@@ -4624,6 +4672,116 @@ Hide clear button in search box control.
     background-color: ButtonText;
     color: ButtonFace;
   }
+}
+/*
+    SplitViewCommand
+*/
+.win-splitviewcommand {
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -ms-flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+  touch-action: manipulation;
+}
+.win-splitviewcommand-button {
+  -ms-flex: 1 1 0%;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  position: relative;
+}
+.win-splitviewcommand-button-content {
+  position: relative;
+  height: 48px;
+  padding-left: 16px;
+  padding-right: 16px;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+.win-splitviewcommand-button:focus {
+  z-index: 1;
+  outline: none;
+}
+.win-splitviewcommand-icon {
+  font-family: "Segoe MDL2 Assets", "Symbols";
+  height: 16px;
+  width: 16px;
+  font-size: 16px;
+  margin-left: 0;
+  margin-right: 16px;
+  margin-top: 14px;
+  /* Center icon vertically */
+  line-height: 1;
+  /* Ensure icon is exactly font-size */
+  -ms-flex: 0 0 auto;
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+}
+.win-splitviewcommand-icon:lang(ar),
+.win-splitviewcommand-icon:lang(dv),
+.win-splitviewcommand-icon:lang(fa),
+.win-splitviewcommand-icon:lang(he),
+.win-splitviewcommand-icon:lang(ku-Arab),
+.win-splitviewcommand-icon:lang(pa-Arab),
+.win-splitviewcommand-icon:lang(prs),
+.win-splitviewcommand-icon:lang(ps),
+.win-splitviewcommand-icon:lang(sd-Arab),
+.win-splitviewcommand-icon:lang(syr),
+.win-splitviewcommand-icon:lang(ug),
+.win-splitviewcommand-icon:lang(ur),
+.win-splitviewcommand-icon:lang(qps-plocm) {
+  margin-right: 0;
+  margin-left: 16px;
+}
+.win-splitviewcommand-label {
+  -ms-flex: 1 1 0%;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.333;
+  margin-top: 13px;
+  margin-bottom: 15px;
+}
+@media (-ms-high-contrast) {
+  /*
+        SplitViewCommand colors.
+    */
+  .win-splitviewcommand-button {
+    background-color: ButtonFace;
+    color: ButtonText;
+  }
+  .win-splitviewcommand-button:after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 2px solid ButtonText;
+    content: "";
+    width: calc(100% - 3px);
+    height: calc(100% - 3px);
+    pointer-events: none;
+  }
+  html.win-hoverable .win-splitviewcommand-button:hover {
+    background-color: Highlight;
+    color: HighlightText;
+  }
+  .win-splitviewcommand-button.win-pressed,
+  html.win-hoverable .win-splitviewcommand-button.win-pressed:hover {
+    background-color: ButtonText;
+    color: ButtonFace;
+  }
+}
+.win-navbar {
+  /* NavBar should overlay content in the body when opened or closed.
+     * This z-index value is chosen to be smaller than light dismissables.
+     * z-index will be overwritten by the light dismiss service to an even
+     * higher value when the NavBar is in the opened state.
+     */
+  z-index: 999;
 }
 .win-navbar.win-navbar-showing,
 .win-navbar.win-navbar-shown,
@@ -4986,12 +5144,10 @@ Hide clear button in search box control.
      */
 }
 .win-contentdialog.win-contentdialog-verticalalignment {
-  z-index: 1005;
-  /* Above AppBar and SettingsFlyout. Below Flyout. */
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
+  right: 0;
   height: 100vh;
   overflow: hidden;
   display: none;
@@ -5010,6 +5166,11 @@ Hide clear button in search box control.
   align-content: center;
   /* maintain horizontal centering when the flexbox has 2 columns */
 }
+.win-contentdialog.win-contentdialog-verticalalignment.win-contentdialog-devicefixedsupported {
+  position: -ms-device-fixed;
+  height: auto;
+  bottom: 0;
+}
 .win-contentdialog.win-contentdialog-verticalalignment.win-contentdialog-visible {
   display: -ms-flexbox;
   display: -webkit-flex;
@@ -5019,8 +5180,8 @@ Hide clear button in search box control.
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
 }
 .win-contentdialog .win-contentdialog-dialog {
   display: -ms-flexbox;
@@ -5038,7 +5199,7 @@ Hide clear button in search box control.
   outline-width: 1px;
   box-sizing: border-box;
   padding: 18px 24px 24px 24px;
-  width: 100vw;
+  width: 100%;
   min-width: 320px;
   max-width: 456px;
   min-height: 184px;
@@ -5048,10 +5209,9 @@ Hide clear button in search box control.
   margin-right: auto;
 }
 .win-contentdialog .win-contentdialog-column0or1 {
-  height: 50vh;
-  -ms-flex: 10000 0 auto;
-  -webkit-flex: 10000 0 auto;
-  flex: 10000 0 auto;
+  -ms-flex: 10000 0 50%;
+  -webkit-flex: 10000 0 50%;
+  flex: 10000 0 50%;
   width: 0;
 }
 @media (min-height: 640px) {
@@ -5083,6 +5243,7 @@ Hide clear button in search box control.
   font-size: 20px;
   font-weight: 400;
   line-height: 1.2;
+  margin: 0;
 }
 .win-contentdialog .win-contentdialog-content {
   -ms-flex: 1 0 auto;
@@ -5151,6 +5312,17 @@ Hide clear button in search box control.
   display: -ms-flexbox;
   display: -webkit-flex;
   display: flex;
+}
+.win-splitview .win-splitview-paneoutline {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 1px solid transparent;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  z-index: 1;
 }
 .win-splitview .win-splitview-pane {
   outline: none;
@@ -5272,10 +5444,9 @@ button.win-splitviewpanetoggle {
   min-height: 0;
   min-width: 0;
   padding: 0;
-  border: 1px dotted transparent;
+  border: none;
   margin: 0;
   outline: none;
-  background-color: transparent;
 }
 button.win-splitviewpanetoggle:after {
   font-size: 24px;
@@ -5290,6 +5461,12 @@ button.win-splitviewpanetoggle:after {
   /* enough to fit the overflowbutton */
   position: fixed;
   position: -ms-device-fixed;
+  /* AppBar should overlay content in the body when opened or closed.
+     * This z-index value is chosen to be smaller than light dismissables.
+     * z-index will be overwritten by the light dismiss service to an even
+     * higher value when the AppBar is in the opened state.
+     */
+  z-index: 999;
 }
 .win-appbar.win-appbar-top {
   top: 0;
@@ -5395,19 +5572,22 @@ body {
   background-color: rgba(0, 0, 0, 0.2);
   border-color: transparent;
 }
-.win-button:hover {
+.win-button.win-button-primary {
+  color: #fff;
+}
+.win-button:hover,
+.win-button.win-button-primary:hover {
   border-color: rgba(0, 0, 0, 0.4);
 }
-.win-button:active {
+.win-button:active,
+.win-button.win-button-primary:active {
   background-color: rgba(0, 0, 0, 0.4);
 }
-.win-button:disabled {
+.win-button:disabled,
+.win-button.win-button-primary:disabled {
   color: rgba(0, 0, 0, 0.2);
   background-color: rgba(0, 0, 0, 0.2);
   border-color: transparent;
-}
-.win-button.win-button-primary {
-  color: #fff;
 }
 .win-dropdown {
   color: #000000;
@@ -5995,6 +6175,24 @@ button.win-command:disabled:active .win-label {
 .win-searchbox-button.win-searchbox-button:not(.win-searchbox-button-disabled):hover:active {
   color: #ffffff;
 }
+.win-splitviewcommand-button {
+  background-color: transparent;
+  color: #000000;
+}
+.win-splitviewcommand-button.win-pressed {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+.win-splitviewcommand-button.win-keyboard:focus::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  box-sizing: border-box;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  border: 1px dotted #000000;
+}
 .win-navbarcontainer-pageindicator {
   background-color: rgba(0, 0, 0, 0.2);
 }
@@ -6049,13 +6247,21 @@ button.win-command:disabled:active .win-label {
 }
 button.win-splitviewpanetoggle {
   color: #000000;
+  background-color: transparent;
 }
 button.win-splitviewpanetoggle:active,
 button.win-splitviewpanetoggle.win-splitviewpanetoggle:active:hover {
+  color: #000000;
   background-color: rgba(0, 0, 0, 0.2);
 }
 button.win-splitviewpanetoggle.win-keyboard:focus {
-  border-color: #000000;
+  border: 1px dotted #000000;
+}
+button.win-splitviewpanetoggle:disabled,
+button.win-splitviewpanetoggle:disabled:active,
+button.win-splitviewpanetoggle.win-splitviewpanetoggle:disabled:hover {
+  color: rgba(0, 0, 0, 0.2);
+  background-color: transparent;
 }
 html.win-hoverable {
   /* LegacyAppBar control colors */
@@ -6165,6 +6371,12 @@ html.win-hoverable .win-autosuggestbox-suggestion-query:hover {
 html.win-hoverable .win-searchbox-button:not(.win-searchbox-button-disabled):hover:active {
   color: #ffffff;
 }
+html.win-hoverable .win-splitviewcommand-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+html.win-hoverable .win-splitviewcommand-button:hover.win-pressed {
+  background-color: rgba(0, 0, 0, 0.2);
+}
 html.win-hoverable .win-navbarcontainer-navarrow:hover {
   background-color: rgba(0, 0, 0, 0.6);
 }
@@ -6177,6 +6389,7 @@ html.win-hoverable .win-navbarcommand-splitbutton:hover.win-pressed {
   background-color: rgba(0, 0, 0, 0.28);
 }
 html.win-hoverable button.win-splitviewpanetoggle:hover {
+  color: #000000;
   background-color: rgba(0, 0, 0, 0.1);
 }
 .win-ui-dark body {
@@ -6277,19 +6490,22 @@ html.win-hoverable button.win-splitviewpanetoggle:hover {
   background-color: rgba(255, 255, 255, 0.2);
   border-color: transparent;
 }
-.win-ui-dark .win-button:hover {
+.win-ui-dark .win-button.win-button-primary {
+  color: #fff;
+}
+.win-ui-dark .win-button:hover,
+.win-ui-dark .win-button.win-button-primary:hover {
   border-color: rgba(255, 255, 255, 0.4);
 }
-.win-ui-dark .win-button:active {
+.win-ui-dark .win-button:active,
+.win-ui-dark .win-button.win-button-primary:active {
   background-color: rgba(255, 255, 255, 0.4);
 }
-.win-ui-dark .win-button:disabled {
+.win-ui-dark .win-button:disabled,
+.win-ui-dark .win-button.win-button-primary:disabled {
   color: rgba(255, 255, 255, 0.2);
   background-color: rgba(255, 255, 255, 0.2);
   border-color: transparent;
-}
-.win-ui-dark .win-button.win-button-primary {
-  color: #fff;
 }
 .win-ui-dark .win-dropdown {
   color: #ffffff;
@@ -6877,6 +7093,24 @@ html.win-hoverable button.win-splitviewpanetoggle:hover {
 .win-ui-dark .win-searchbox-button.win-searchbox-button:not(.win-searchbox-button-disabled):hover:active {
   color: #ffffff;
 }
+.win-ui-dark .win-splitviewcommand-button {
+  background-color: transparent;
+  color: #ffffff;
+}
+.win-ui-dark .win-splitviewcommand-button.win-pressed {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.win-ui-dark .win-splitviewcommand-button.win-keyboard:focus::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  box-sizing: border-box;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  border: 1px dotted #ffffff;
+}
 .win-ui-dark .win-navbarcontainer-pageindicator {
   background-color: rgba(255, 255, 255, 0.2);
 }
@@ -6931,13 +7165,21 @@ html.win-hoverable button.win-splitviewpanetoggle:hover {
 }
 .win-ui-dark button.win-splitviewpanetoggle {
   color: #ffffff;
+  background-color: transparent;
 }
 .win-ui-dark button.win-splitviewpanetoggle:active,
 .win-ui-dark button.win-splitviewpanetoggle.win-splitviewpanetoggle:active:hover {
+  color: #ffffff;
   background-color: rgba(255, 255, 255, 0.2);
 }
 .win-ui-dark button.win-splitviewpanetoggle.win-keyboard:focus {
-  border-color: #ffffff;
+  border: 1px dotted #ffffff;
+}
+.win-ui-dark button.win-splitviewpanetoggle:disabled,
+.win-ui-dark button.win-splitviewpanetoggle:disabled:active,
+.win-ui-dark button.win-splitviewpanetoggle.win-splitviewpanetoggle:disabled:hover {
+  color: rgba(255, 255, 255, 0.2);
+  background-color: transparent;
 }
 html.win-hoverable .win-ui-dark {
   /* LegacyAppBar control colors */
@@ -7047,6 +7289,12 @@ html.win-hoverable .win-ui-dark .win-autosuggestbox-suggestion-query:hover {
 html.win-hoverable .win-ui-dark .win-searchbox-button:not(.win-searchbox-button-disabled):hover:active {
   color: #ffffff;
 }
+html.win-hoverable .win-ui-dark .win-splitviewcommand-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+html.win-hoverable .win-ui-dark .win-splitviewcommand-button:hover.win-pressed {
+  background-color: rgba(0, 0, 0, 0.2);
+}
 html.win-hoverable .win-ui-dark .win-navbarcontainer-navarrow:hover {
   background-color: rgba(255, 255, 255, 0.6);
 }
@@ -7059,7 +7307,8 @@ html.win-hoverable .win-ui-dark .win-navbarcommand-splitbutton:hover.win-pressed
   background-color: rgba(0, 0, 0, 0.28);
 }
 html.win-hoverable .win-ui-dark button.win-splitviewpanetoggle:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 @media (-ms-high-contrast) {
   .win-overlay {
@@ -7312,6 +7561,34 @@ html.win-hoverable .win-ui-dark button.win-splitviewpanetoggle:hover {
     background-color: Window;
     opacity: 0.6;
   }
+  .win-splitview-pane {
+    background-color: ButtonFace;
+  }
+  .win-splitview.win-splitview-pane-opened .win-splitview-paneoutline {
+    display: block;
+    border-color: ButtonText;
+  }
+  .win-splitview.win-splitview-animating .win-splitview-paneoutline {
+    display: none;
+  }
+  button.win-splitviewpanetoggle {
+    color: ButtonText;
+    background-color: transparent;
+  }
+  button.win-splitviewpanetoggle:active,
+  button.win-splitviewpanetoggle.win-splitviewpanetoggle:active:hover {
+    color: ButtonText;
+    background-color: Highlight;
+  }
+  button.win-splitviewpanetoggle.win-keyboard:focus {
+    border: 1px dotted ButtonText;
+  }
+  button.win-splitviewpanetoggle:disabled,
+  button.win-splitviewpanetoggle:disabled:active,
+  button.win-splitviewpanetoggle.win-splitviewpanetoggle:disabled:hover {
+    color: GrayText;
+    background-color: transparent;
+  }
   html.win-hoverable {
     /* LegacyAppBar control colors */
   }
@@ -7374,5 +7651,9 @@ html.win-hoverable .win-ui-dark button.win-splitviewpanetoggle:hover {
   html.win-hoverable.win-commandingsurface button.win-commandingsurface-overflowbutton:hover .win-commandingsurface-ellipsis,
   html.win-hoverable .win-commandingsurface button.win-commandingsurface-overflowbutton:hover .win-commandingsurface-ellipsis {
     color: HighlightText;
+  }
+  html.win-hoverable button.win-splitviewpanetoggle:hover {
+    color: ButtonText;
+    background-color: Highlight;
   }
 }
