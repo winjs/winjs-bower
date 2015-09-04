@@ -1,7 +1,7 @@
 ﻿/*!
   Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
-  Build: 4.2.0.winjs.2015.8.17
-  Version: WinJS.4.2
+  Build: 4.3.0.winjs.2015.9.4
+  Version: WinJS.4.3
 */
 
 (function () {
@@ -19,6 +19,8 @@
     }
     addStrings("ms-resource:///Microsoft.WinJS/",
 {
+    "tv/scrollViewerPageDown": "Page Down",
+    "tv/scrollViewerPageUp": "Page Up",
     "ui/appBarAriaLabel": "App Bar",
     "ui/appBarCommandAriaLabel": "App Bar Item",
     "ui/appBarOverflowButtonAriaLabel": "View more",

@@ -12,15 +12,15 @@
             // amd
             define(["./base"], factory);
         } else {
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.2 4.2.0.winjs.2015.8.17 ui.js,StartTM');
-            if (typeof module !== 'undefined') {
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.0.winjs.2015.9.4 ui.js,StartTM');
+            if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
                 // CommonJS
                 factory(require("./base"));
             } else {
                 // No module system
                 factory(globalObject.WinJS);
             }
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.2 4.2.0.winjs.2015.8.17 ui.js,StopTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.0.winjs.2015.9.4 ui.js,StopTM');
         }
     }(function (WinJS) {
 
@@ -7922,50 +7922,8 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
 
     var transformNames = _BaseUtils._browserStyleEquivalents["transform"];
 
-    // Returns a CSS transformation to rotate and shrink an element when it is
-    // pressed. The closer the click is to the center of the item, the more it
-    // shrinks and the less it rotates.
-    // *elementRect* should be of the form returned by getBoundingClientRect. All
-    // of the parameters must be relative to the same coordinate system.
-    // This function was translated from the Splash implementation.
-    function tiltTransform(clickX, clickY, elementRect) {
-        var minSize = 44,
-            maxSize = 750,
-            minRotationX = 2,
-            maxRotationX = 9,
-            minRotationY = 2.11,
-            maxRotationY = 13,
-            sizeRange = maxSize - minSize,
-            halfWidth = elementRect.width / 2,
-            halfHeight = elementRect.height / 2;
-
-        var clampedWidth = _ElementUtilities._clamp(elementRect.width, minSize, maxSize);
-        var clampedHeight = _ElementUtilities._clamp(elementRect.height, minSize, maxSize);
-
-        // The maximum rotation that any element is capable of is calculated by using its width and height and clamping it into the range calculated above.
-        // minRotationX|Y and maxRotationX|Y are the absolute minimums and maximums that any generic element can be rotated by, but in order to determine
-        // what the min/max rotations for our current element is (which will be inside of the absolute min/max described above), we need
-        // to calculate the max rotations for this element by clamping the sizes and doing a linear interpolation:
-        var maxElementRotationX = maxRotationX - (((clampedHeight - minSize) / sizeRange) * (maxRotationX - minRotationX));
-        var maxElementRotationY = maxRotationY - (((clampedWidth - minSize) / sizeRange) * (maxRotationY - minRotationY));
-
-        // Now we calculate the distance of our current point from the center of our element and normalize it to be in the range of 0 - 1
-        var normalizedOffsetX = ((clickX - elementRect.left) - halfWidth) / halfWidth;
-        var normalizedOffsetY = ((clickY - elementRect.top) - halfHeight) / halfHeight;
-
-        // Finally, we calculate the appropriate rotations and scale for the element by using the normalized click offsets and the
-        // maximum element rotation.
-        var rotationX = maxElementRotationX * normalizedOffsetY;
-        var rotationY = maxElementRotationY * normalizedOffsetX;
-        var scale = 0.97 + 0.03 * (Math.abs(normalizedOffsetX) + Math.abs(normalizedOffsetY)) / 2.0;
-        var transform = "perspective(800px) scale(" + scale + ") rotateX(" + -rotationX + "deg) rotateY(" + rotationY + "deg)";
-        return transform;
-    }
-
     _Base.Namespace._moduleDefine(exports, "WinJS.UI", {
         // Expose these to the unit tests
-        _tiltTransform: tiltTransform,
-
         _ItemEventsHandler: _Base.Namespace._lazy(function () {
             var PT_TOUCH = _ElementUtilities._MSPointerEvent.MSPOINTER_TYPE_TOUCH || "touch";
 
@@ -8044,7 +8002,7 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
                                 this._site.pressedContainer = site.containerAtIndex(this._site.pressedEntity.index);
                                 this._site.animatedElement = this._site.pressedContainer;
                                 this._site.pressedHeader = null;
-                                this._togglePressed(true, false, eventObject);
+                                this._togglePressed(true, eventObject);
                                 this._site.pressedContainer.addEventListener('dragstart', this._DragStartBound);
                                 if (!touchInput) {
                                     // This only works for non touch input because on touch input we set capture which immediately fires the MSPointerOut.
@@ -8056,7 +8014,7 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
                                 // Interactions with the headers on phone show an animation
                                 if (_BaseUtils.isPhone) {
                                     this._site.animatedElement = this._site.pressedHeader;
-                                    this._togglePressed(true, false, eventObject);
+                                    this._togglePressed(true, eventObject);
                                 } else {
                                     this._site.pressedItemBox = null;
                                     this._site.pressedContainer = null;
@@ -8104,13 +8062,13 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
 
                 onPointerEnter: function ItemEventsHandler_onPointerEnter(eventObject) {
                     if (this._site.pressedContainer && this._pointerId === eventObject.pointerId) {
-                        this._togglePressed(true, false, eventObject);
+                        this._togglePressed(true, eventObject);
                     }
                 },
 
                 onPointerLeave: function ItemEventsHandler_onPointerLeave(eventObject) {
                     if (this._site.pressedContainer && this._pointerId === eventObject.pointerId) {
-                        this._togglePressed(false, true /* synchronous */, eventObject);
+                        this._togglePressed(false, eventObject);
                     }
                 },
 
@@ -8358,11 +8316,8 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
                     return (this._selectionAllowed() && containerElement && !this._isInteractive(element));
                 },
 
-                _togglePressed: function ItemEventsHandler_togglePressed(add, synchronous, eventObject) {
-                    var that = this;
+                _togglePressed: function ItemEventsHandler_togglePressed(add, eventObject) {
                     var isHeader = this._site.pressedEntity.type === _UI.ObjectType.groupHeader;
-
-                    this._site.animatedDownPromise && this._site.animatedDownPromise.cancel();
 
                     if (!isHeader && _ElementUtilities.hasClass(this._site.pressedItemBox, _Constants._nonSelectableClass)) {
                         return;
@@ -8370,70 +8325,11 @@ define('WinJS/Controls/ItemContainer/_ItemEventsHandler',[
 
                     if (!this._staticMode(isHeader)) {
                         if (add) {
-                            if (!_ElementUtilities.hasClass(this._site.animatedElement, _Constants._pressedClass)) {
-                                _WriteProfilerMark("WinJS.UI._ItemEventsHandler:applyPressedUI,info");
-                                _ElementUtilities.addClass(this._site.animatedElement, _Constants._pressedClass);
-
-                                var boundingElement = isHeader ? that._site.pressedHeader : that._site.pressedContainer;
-                                var transform = tiltTransform(eventObject.clientX, eventObject.clientY, boundingElement.getBoundingClientRect());
-                                // Timeout prevents item from looking like it was pressed down during pans
-                                this._site.animatedDownPromise = Promise.timeout(50).then(function () {
-                                    applyDownVisual(transform);
-                                });
-                            }
+                            _ElementUtilities.addClass(this._site.animatedElement, _Constants._pressedClass);
                         } else {
-                            if (_ElementUtilities.hasClass(this._site.animatedElement, _Constants._pressedClass)) {
-                                var element = this._site.animatedElement;
-                                var expectingStyle = this._site.animatedElementScaleTransform;
-                                if (synchronous) {
-                                    applyUpVisual(element, expectingStyle);
-                                } else {
-                                    // Force removal of the _pressedClass to be asynchronous so that users will see at
-                                    // least one frame of the shrunken item when doing a quick tap.
-                                    //
-                                    // setImmediate is used rather than requestAnimationFrame to ensure that the item
-                                    // doesn't get stuck down for too long -- apps are told to put long running invoke
-                                    // code behind a setImmediate and togglePressed's async code needs to run first.
-                                    _BaseUtils._setImmediate(function () {
-                                        if (_ElementUtilities.hasClass(element, _Constants._pressedClass)) {
-                                            applyUpVisual(element, expectingStyle);
-                                        }
-                                    });
-                                }
-                            }
+                            _ElementUtilities.removeClass(this._site.animatedElement, _Constants._pressedClass);
                         }
                     }
-
-                    function applyDownVisual(transform) {
-                        if (that._site.disablePressAnimation()) {
-                            return;
-                        }
-
-                        if (that._site.animatedElement.style[transformNames.scriptName] === "") {
-                            that._site.animatedElement.style[transformNames.scriptName] = transform;
-                            that._site.animatedElementScaleTransform = that._site.animatedElement.style[transformNames.scriptName];
-                        } else {
-                            that._site.animatedElementScaleTransform = "";
-                        }
-                    }
-
-                    function applyUpVisual(element, expectingStyle) {
-                        _WriteProfilerMark("WinJS.UI._ItemEventsHandler:removePressedUI,info");
-                        _ElementUtilities.removeClass(element, _Constants._pressedClass);
-                        if (that._containsTransform(element, expectingStyle)) {
-                            _TransitionAnimation.executeTransition(element, {
-                                property: transformNames.cssName,
-                                delay: 150,
-                                duration: 350,
-                                timing: "cubic-bezier(0.17,0.17,0.2,1)",
-                                to: element.style[transformNames.scriptName].replace(expectingStyle, "")
-                            });
-                        }
-                    }
-                },
-
-                _containsTransform: function ItemEventsHandler_containsTransform(element, transform) {
-                    return transform && element.style[transformNames.scriptName].indexOf(transform) !== -1;
                 },
 
                 _resetPointerDownStateForPointerId: function ItemEventsHandler_resetPointerDownState(eventObject) {
@@ -9434,7 +9330,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
     '../ItemContainer/_Constants',
     '../ItemContainer/_ItemEventsHandler',
     './_SelectionManager'
-    ], function browseModeInit(exports, _Global, _Base, _BaseUtils, Animations, Promise, _ElementUtilities, _UI, _Constants, _ItemEventsHandler, _SelectionManager) {
+], function browseModeInit(exports, _Global, _Base, _BaseUtils, Animations, Promise, _ElementUtilities, _UI, _Constants, _ItemEventsHandler, _SelectionManager) {
     "use strict";
 
     var transformName = _BaseUtils._browserStyleEquivalents["transform"].scriptName;
@@ -9468,7 +9364,7 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                 this._pressedPosition = null;
 
                 this.initialize(modeSite);
-            },{
+            }, {
                 _dispose: function () {
                     if (this._itemEventsHandler) {
                         this._itemEventsHandler.dispose();
@@ -9531,9 +9427,6 @@ define('WinJS/Controls/ListView/_BrowseMode',[
                         },
                         selectRange: function (firstIndex, lastIndex, additive) {
                             return that._selectRange(firstIndex, lastIndex, additive);
-                        },
-                        disablePressAnimation: function () {
-                            return site._isInSelectionMode();
                         }
                     }, {
                         pressedEntity: {
@@ -19838,8 +19731,8 @@ define('WinJS/Controls/ListView',[
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ListView_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="groupHeader" class="win-groupheader" locid="WinJS.UI.ListView_part:groupHeader">The header of a group.</part>
         /// <part name="progressbar" class="win-progress" locid="WinJS.UI.ListView_part:progressbar">The progress indicator of the ListView.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         ListView: _Base.Namespace._lazy(function () {
             var AffectedRange = _Base.Class.define(function () {
                 this.clear();
@@ -26354,8 +26247,8 @@ define('WinJS/Controls/FlipView',[
         /// <part name="rightNavigationButton" class="win-navright" locid="WinJS.UI.FlipView_part:rightNavigationButton">The right navigation button.</part>
         /// <part name="topNavigationButton" class="win-navtop" locid="WinJS.UI.FlipView_part:topNavigationButton">The top navigation button.</part>
         /// <part name="bottomNavigationButton" class="win-navbottom" locid="WinJS.UI.FlipView_part:bottomNavigationButton">The bottom navigation button.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         FlipView: _Base.Namespace._lazy(function () {
 
             // Class names
@@ -27613,7 +27506,7 @@ define('WinJS/Controls/ItemContainer',[
     '../Utilities/_UI',
     './ItemContainer/_Constants',
     './ItemContainer/_ItemEventsHandler'
-    ], function itemContainerInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable, _KeyboardBehavior, _UI, _Constants, _ItemEventsHandler) {
+], function itemContainerInit(exports, _Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable, _KeyboardBehavior, _UI, _Constants, _ItemEventsHandler) {
     "use strict";
 
     var createEvent = _Events._createEventProperty;
@@ -27641,8 +27534,8 @@ define('WinJS/Controls/ItemContainer',[
         /// <part name="selectionbackground" class="win-selectionbackground" locid="WinJS.UI.ItemContainer_part:selectionbackground">The background of a selection checkmark.</part>
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ItemContainer_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="focusedoutline" class="win-focusedoutline" locid="WinJS.UI.ItemContainer_part:focusedoutline">Used to display an outline when the main container has keyboard focus.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         ItemContainer: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -27748,9 +27641,6 @@ define('WinJS/Controls/ItemContainer',[
                     changeFocus: function () { },
                     selectRange: function (firstIndex, lastIndex) {
                         return that._selection.set({ firstIndex: firstIndex, lastIndex: lastIndex });
-                    },
-                    disablePressAnimation: function () {
-                        return false;
                     }
                 }, {
                     pressedEntity: {
@@ -28379,8 +28269,8 @@ define('WinJS/Controls/Repeater',[
         /// <icon src="ui_winjs.ui.repeater.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.Repeater"></div>]]></htmlSnippet>
         /// <part name="repeater" class="win-repeater" locid="WinJS.UI.Repeater_part:repeater">The Repeater control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         Repeater: _Base.Namespace._lazy(function () {
 
             // Constants
@@ -28892,8 +28782,8 @@ define('WinJS/Controls/DatePicker',[
         /// <icon src="ui_winjs.ui.datepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.DatePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.DatePicker_e:change">Occurs when the current date changes.</event>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         DatePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_DAY_PATTERN = 'day',
@@ -29648,8 +29538,8 @@ define('WinJS/Controls/TimePicker',[
         /// <icon src="ui_winjs.ui.timepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.TimePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.TimePicker_e:change">Occurs when the time changes.</event>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         TimePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_MINUTE_PATTERN = "{minute.integer(2)}",
@@ -30312,8 +30202,8 @@ define('WinJS/Controls/BackButton',[
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.BackButton"></button>]]></htmlSnippet>
         /// <part name="BackButton" class="win-navigation-backbutton" locid="WinJS.UI.BackButton_part:BackButton">The BackButton control itself</part>
         /// <part name="BackArrowGlyph" class="win-back" locid="WinJS.UI.BackButton_part:BackArrowGlyph">The Back Arrow glyph</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         BackButton: _Base.Namespace._lazy(function () {
             // Statics
             var strings = {
@@ -30501,8 +30391,8 @@ define('WinJS/Controls/Tooltip',[
         /// <event name="beforeclose" bubbles="false" locid="WinJS.UI.Tooltip_e:beforeclose">Raised when the tooltip is about to become hidden.</event>
         /// <event name="closed" bubbles="false" locid="WinJS.UI.Tooltip_e:close">Raised when the tooltip is hidden.</event>
         /// <part name="tooltip" class="win-tooltip" locid="WinJS.UI.Tooltip_e:tooltip">The entire Tooltip control.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         Tooltip: _Base.Namespace._lazy(function () {
             var lastCloseTime = 0;
             var Key = _ElementUtilities.Key;
@@ -31466,8 +31356,8 @@ define('WinJS/Controls/Rating',[
         /// <part name="tentative-full" class="win-star win-tentative win-full" locid="WinJS.UI.Rating_part:tentative-full">The full star when the Rating control shows the tentative rating.</part>
         /// <part name="disabled-empty" class="win-star win-disabled win-empty" locid="WinJS.UI.Rating_part:disabled-empty">The empty star when the control is disabled.</part>
         /// <part name="disabled-full" class="win-star win-disabled win-full" locid="WinJS.UI.Rating_part:disabled-full">The full star when the control is disabled.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         Rating: _Base.Namespace._lazy(function () {
             var createEvent = _Events._createEventProperty;
 
@@ -31897,7 +31787,7 @@ define('WinJS/Controls/Rating',[
                 _decrementRating: function () {
                     this._closeTooltip();
                     var firePreviewChange = true;
-                    if ((this._tentativeRating === 0) || ((this._tentativeRating === -1) && (this._userRating === 0))) {
+                    if (this._tentativeRating <= 0) {
                         firePreviewChange = false;
                     } else {
                         if (this._tentativeRating > 0) {
@@ -32004,7 +31894,7 @@ define('WinJS/Controls/Rating',[
                 _incrementRating: function () {
                     this._closeTooltip();
                     var firePreviewChange = true;
-                    if ((this._tentativeRating === this._maxRating) || ((this._tentativeRating === -1) && (this._userRating === this._maxRating))) {
+                    if (this._tentativeRating < 0 || this._tentativeRating >= this._maxRating) {
                         firePreviewChange = false;
                     }
 
@@ -32206,32 +32096,32 @@ define('WinJS/Controls/Rating',[
 
                             break;
                         case Key.leftArrow: // Arrow Left
-                            if (rtlString === "rtl" && this.userRating < this.maxRating - 1) {
+                            if (rtlString === "rtl" && this._tentativeRating < this.maxRating) {
                                 this._incrementRating();
-                            } else if (rtlString !== "rtl" && this.userRating > 0) {
+                            } else if (rtlString !== "rtl" && this._tentativeRating > 0) {
                                 this._decrementRating();
                             } else {
                                 handled = false;
                             }
                             break;
                         case Key.upArrow: // Arrow Up
-                            if (this.userRating < this.maxRating - 1) {
+                            if (this._tentativeRating < this.maxRating) {
                                 this._incrementRating();
                             } else {
                                 handled = false;
                             }
                             break;
                         case Key.rightArrow: // Arrow Right
-                            if (rtlString === "rtl" && this.userRating > 0) {
+                            if (rtlString === "rtl" && this._tentativeRating > 0) {
                                 this._decrementRating();
-                            } else if (rtlString !== "rtl" && this.userRating < this.maxRating - 1) {
+                            } else if (rtlString !== "rtl" && this._tentativeRating < this.maxRating) {
                                 this._incrementRating();
                             } else {
                                 handled = false;
                             }
                             break;
                         case Key.downArrow: // Arrow Down
-                            if (this.userRating > 0) {
+                            if (this._tentativeRating > 0) {
                                 this._decrementRating();
                             } else {
                                 handled = false;
@@ -32627,8 +32517,8 @@ define('WinJS/Controls/ToggleSwitch',[
             /// <part name="title" class="win-toggleswitch-header" locid="WinJS.UI.ToggleSwitch_part:title">The main text for the ToggleSwitch control.</part>
             /// <part name="label-on" class="win-toggleswitch-value" locid="WinJS.UI.ToggleSwitch_part:label-on">The text for when the switch is on.</part>
             /// <part name="label-off" class="win-toggleswitch-value" locid="WinJS.UI.ToggleSwitch_part:label-off:">The text for when the switch is off.</part>
-            /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-            /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+            /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+            /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
             ToggleSwitch: _Base.Namespace._lazy(function () {
 
                 // Store some class names
@@ -33038,8 +32928,8 @@ define('WinJS/Controls/SemanticZoom',[
         /// <icon src="ui_winjs.ui.semanticzoom.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.SemanticZoom"><div class="zoomedInContainer" data-win-control="WinJS.UI.ListView"></div><div class="zoomedOutContainer" data-win-control="WinJS.UI.ListView"></div></div>]]></htmlSnippet>
         /// <part name="semanticZoom" class="win-semanticzoom" locid="WinJS.UI.SemanticZoom_part:semanticZoom">The entire SemanticZoom control.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         SemanticZoom: _Base.Namespace._lazy(function () {
             var browserStyleEquivalents = _BaseUtils._browserStyleEquivalents;
 
@@ -34607,8 +34497,8 @@ define('WinJS/Controls/Pivot/_Item',[
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.PivotItem" data-win-options="{header: 'PivotItem Header'}">PivotItem Content</div>]]></htmlSnippet>
         /// <part name="pivotitem" class="win-pivot-item" locid="WinJS.UI.PivotItem_part:pivotitem">The entire PivotItem control.</part>
         /// <part name="content" class="win-pivot-item-content" locid="WinJS.UI.PivotItem_part:content">The content region of the PivotItem.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         PivotItem: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
@@ -34774,7 +34664,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global", "../../Animations", "../../BindingList", "../../ControlProcessor", "../../Promise", "../../Scheduler", "../../Core/_Base", "../../Core/_BaseUtils", "../../Utilities/_Control", "../../Utilities/_Dispose", "../../Utilities/_ElementUtilities", "../../Core/_ErrorFromName", "../../Core/_Events", "../../Utilities/_Hoverable", "../../Utilities/_KeyboardBehavior", "../../Core/_Log", "../../Core/_Resources", "../../Utilities/_TabContainer", "../../Animations/_TransitionAnimation", "../../Core/_WriteProfilerMark", "./_Constants"], function (require, exports, _Global, Animations, BindingList, ControlProcessor, Promise, Scheduler, _Base, _BaseUtils, _Control, _Dispose, _ElementUtilities, _ErrorFromName, _Events, _Hoverable, _KeyboardBehavior, _Log, _Resources, _TabContainer, _TransitionAnimation, _WriteProfilerMark, _Constants) {
+define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global", "../../Animations", "../../BindingList", "../../ControlProcessor", "../../Promise", "../../Scheduler", "../../Core/_Base", "../../Core/_BaseUtils", "../../Utilities/_Control", "../../Utilities/_Dispose", "../../Utilities/_ElementUtilities", "../../Core/_ErrorFromName", "../../Core/_Events", "../../Utilities/_Hoverable", "../../Utilities/_KeyboardBehavior", "../../Core/_Log", "../../Core/_Resources", "../../Animations/_TransitionAnimation", "../../Core/_WriteProfilerMark", "./_Constants"], function (require, exports, _Global, Animations, BindingList, ControlProcessor, Promise, Scheduler, _Base, _BaseUtils, _Control, _Dispose, _ElementUtilities, _ErrorFromName, _Events, _Hoverable, _KeyboardBehavior, _Log, _Resources, _TransitionAnimation, _WriteProfilerMark, _Constants) {
     // Force-load Dependencies
     _Hoverable.isHoverable;
     require(["require-style!less/styles-pivot"]);
@@ -34888,7 +34778,6 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
             this._headerItemsElement.appendChild(this._headersContainerElement);
             this._element.addEventListener("click", this._elementClickedHandler.bind(this));
             this._winKeyboard = new _KeyboardBehavior._WinKeyboard(this._headersContainerElement);
-            this._tabContainer = new _TabContainer.TabContainer(this._headersContainerElement);
             // Custom Headers
             this._customLeftHeader = _Global.document.createElement("DIV");
             _ElementUtilities.addClass(this._customLeftHeader, _Constants._ClassNames.pivotHeaderLeftCustom);
@@ -35688,6 +35577,7 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
             var template = _ElementUtilities._syncRenderer(pivotDefaultHeaderTemplate);
             var item = this.pivot.items.getAt(index);
             var headerContainerEl = _Global.document.createElement("BUTTON");
+            headerContainerEl.tabIndex = -1;
             headerContainerEl.setAttribute("type", "button");
             headerContainerEl.style.marginLeft = headerContainerEl.style.marginRight = HeaderStateBase.headerHorizontalMargin + "px";
             _ElementUtilities.addClass(headerContainerEl, _Constants._ClassNames.pivotHeader);
@@ -35808,7 +35698,6 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
                         header.classList.add(_Constants._ClassNames.pivotHeaderSelected);
                     }
                 }
-                pivot._tabContainer.childFocus = pivot._headersContainerElement.children[pivot.selectedIndex];
             }
             this._firstRender = false;
         };
@@ -35823,7 +35712,6 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
                 this.render();
             }
             this.setActiveHeader(this.pivot._headersContainerElement.children[index]);
-            this.pivot._tabContainer.childFocus = this.pivot._headersContainerElement.children[index];
         };
         HeaderStateStatic.prototype.handleResize = function () {
             this.refreshHeadersState(false);
@@ -35991,7 +35879,6 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
                 pivot._nextButton.style.right = pivot._rtl ? leadingSpace + "px" : "0px";
             }
             var firstHeaderIndex = pivot._headersContainerElement.children.length > 1 ? 1 : 0;
-            pivot._tabContainer.childFocus = pivot._headersContainerElement.children[firstHeaderIndex];
             if (restoreFocus) {
                 pivot._headersContainerElement.focus();
             }
@@ -36105,8 +35992,8 @@ define('WinJS/Controls/Pivot',["require", "exports", '../Core/_Base', './Pivot/_
         /// <part name="pivot" class="win-pivot" locid="WinJS.UI.Pivot_part:pivot">The entire Pivot control.</part>
         /// <part name="title" class="win-pivot-title" locid="WinJS.UI.Pivot_part:title">The title for the Pivot control.</part>
         /// <part name="header" class="win-pivot-header" locid="WinJS.UI.Pivot_part:header">A header of a Pivot Item.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         Pivot: {
             get: function () {
                 if (!module) {
@@ -36153,8 +36040,8 @@ define('WinJS/Controls/Hub/_Section',[
         /// <part name="headercontent" class="win-hub-section-header-content" locid="WinJS.UI.HubSection_part:headercontent">The content region of the header region of the HubSection.</part>
         /// <part name="headerchevron" class="win-hub-section-header-chevron" locid="WinJS.UI.HubSection_part:headerchevron">The chevron region of the header region of the HubSection.</part>
         /// <part name="content" class="win-hub-section-content" locid="WinJS.UI.HubSection_part:content">The content region of the HubSection.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         HubSection: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -36409,8 +36296,8 @@ define('WinJS/Controls/Hub',[
         /// <part name="progress" class="win-hub-progress" locid="WinJS.UI.Hub_part:progress">The progress indicator for the Hub.</part>
         /// <part name="viewport" class="win-hub-viewport" locid="WinJS.UI.Hub_part:viewport">The viewport of the Hub.</part>
         /// <part name="surface" class="win-hub-surface" locid="WinJS.UI.Hub_part:surface">The scrollable region of the Hub.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         Hub: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -39809,8 +39696,8 @@ define('WinJS/Controls/Flyout',[
         /// <event name="beforehide" locid="WinJS.UI.Flyout_e:beforehide">Raised just before hiding a flyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.Flyout_e:afterhide">Raised immediately after a flyout is fully hidden.</event>
         /// <part name="flyout" class="win-flyout" locid="WinJS.UI.Flyout_part:flyout">The Flyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         Flyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -41545,8 +41432,8 @@ define('WinJS/Controls/AppBar/_Command',[
         /// <part name="appBarCommandIcon" class="win-commandicon" locid="WinJS.UI.AppBarCommand_part:appBarCommandIcon">The AppBarCommand's icon box.</part>
         /// <part name="appBarCommandImage" class="win-commandimage" locid="WinJS.UI.AppBarCommand_part:appBarCommandImage">The AppBarCommand's icon's image formatting.</part>
         /// <part name="appBarCommandLabel" class="win-label" locid="WinJS.UI.AppBarCommand_part:appBarCommandLabel">The AppBarCommand's label</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         AppBarCommand: _Base.Namespace._lazy(function () {
 
             function _handleClick(event) {
@@ -41673,7 +41560,7 @@ define('WinJS/Controls/AppBar/_Command',[
                     var role = this._element.getAttribute("role");
                     if (role === null || role === "" || role === undefined) {
                         if (this._type === _Constants.typeToggle) {
-                            role = "menuitemcheckbox";
+                            role = "checkbox";
                         } else if (this._type === _Constants.typeContent) {
                             role = "group";
                         } else {
@@ -42310,8 +42197,8 @@ define('WinJS/Controls/Menu/_Command',[
         /// <icon src="ui_winjs.ui.menucommand.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.MenuCommand" data-win-options="{type:'button',label:'Button'}"></button>]]></htmlSnippet>
         /// <part name="MenuCommand" class="win-command" locid="WinJS.UI.MenuCommand_name">The MenuCommand control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         MenuCommand: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -42392,7 +42279,7 @@ define('WinJS/Controls/Menu/_Command',[
                     if (role === null || role === "" || role === undefined) {
                         role = "menuitem";
                         if (this._type === _Constants.typeToggle) {
-                            role = "menuitemcheckbox";
+                            role = "checkbox";
                         }
                         this._element.setAttribute("role", role);
                         if (this._type === _Constants.typeFlyout) {
@@ -42766,16 +42653,20 @@ define('WinJS/Controls/Menu/_Command',[
                         var subFlyout = menuCommand.flyout;
                         // Flyout may not have processAll'd, so this may be a DOM object
                         if (subFlyout && subFlyout.hidden && subFlyout.show) {
-                            _ElementUtilities.addClass(menuCommand.element, _Constants.menuCommandFlyoutActivatedClass);
 
-                            // Remove activation class from the command if the flyout is ever hidden.
+                            // Add activation state to the command.
+                            _ElementUtilities.addClass(menuCommand.element, _Constants.menuCommandFlyoutActivatedClass);
+                            subFlyout.element.setAttribute("aria-expanded", "true");
                             subFlyout.addEventListener("beforehide", function beforeHide() {
+                                // Remove activation state from the command if the flyout is ever hidden.
                                 subFlyout.removeEventListener("beforehide", beforeHide, false);
                                 _ElementUtilities.removeClass(menuCommand.element, _Constants.menuCommandFlyoutActivatedClass);
+                                subFlyout.element.removeAttribute("aria-expanded");
                             }, false);
 
                             subFlyout.addEventListener("aftershow", function afterShow() {
                                 subFlyout.removeEventListener("aftershow", afterShow, false);
+
                                 // We are considered activated once we start showing the flyout.
                                 c();
                             }, false);
@@ -42790,13 +42681,13 @@ define('WinJS/Controls/Menu/_Command',[
 
                 _deactivateFlyoutCommand: function MenuCommand_deactivateFlyoutCommand(menuCommand) {
                     // Deactivates the associated Flyout command and returns a promise once complete.
-                    // A command is considered to be deactivated once the proper CSS class has been applied and its associated flyout has finished hiding.
+                    // A command is considered to be deactivated once the proper CSS class has been removed and its associated flyout has finished hiding.
                     return new Promise(function (c) {
                         menuCommand = menuCommand.winControl || menuCommand;
                         _ElementUtilities.removeClass(menuCommand.element, _Constants.menuCommandFlyoutActivatedClass);
 
                         var subFlyout = menuCommand.flyout;
-                        // Flyout may not have processAll'd, so this may be a DOM object
+                        // Flyout may not have processAll'd, so this may be a DOM object.
                         if (subFlyout && !subFlyout.hidden && subFlyout.hide) {
 
                             subFlyout.addEventListener("afterhide", function afterHide() {
@@ -42804,6 +42695,8 @@ define('WinJS/Controls/Menu/_Command',[
                                 c();
                             }, false);
 
+                            // Leverage pre-existing "beforehide" listener already set on the Flyout for clearing the command's activated state.
+                            // The "beforehide" listener is expected to have been added to the Flyout in the call to _activateFlyoutCommand.
                             subFlyout.hide();
                         } else {
                             // subFlyout does not need to be hidden.
@@ -43417,6 +43310,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                             // Render opened
                             removeClass(dom.root, _Constants.ClassNames.closedClass);
                             addClass(dom.root, _Constants.ClassNames.openedClass);
+                            dom.overflowButton.setAttribute("aria-expanded", "true");
                             // Focus should carousel between first and last tab stops while opened.
                             dom.firstTabStop.tabIndex = 0;
                             dom.finalTabStop.tabIndex = 0;
@@ -43427,6 +43321,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
                             // Render closed
                             removeClass(dom.root, _Constants.ClassNames.openedClass);
                             addClass(dom.root, _Constants.ClassNames.closedClass);
+                            dom.overflowButton.setAttribute("aria-expanded", "false");
                             // Focus should not carousel between first and last tab stops while closed.
                             dom.firstTabStop.tabIndex = -1;
                             dom.finalTabStop.tabIndex = -1;
@@ -43855,6 +43750,7 @@ define('WinJS/Controls/CommandingSurface/_CommandingSurface',["require", "export
             var overflowButton = _Global.document.createElement("button");
             overflowButton.tabIndex = 0;
             overflowButton.innerHTML = "<span class='" + _Constants.ClassNames.ellipsisCssClass + "'></span>";
+            overflowButton.setAttribute("aria-label", strings.overflowButtonAriaLabel);
             _ElementUtilities.addClass(overflowButton, _Constants.ClassNames.overflowButtonCssClass);
             actionArea.appendChild(overflowButton);
             overflowButton.addEventListener("click", function () {
@@ -44639,8 +44535,8 @@ define('WinJS/Controls/ToolBar/_ToolBar',["require", "exports", "../../Core/_Bas
     /// <part name="toolbar" class="win-toolbar" locid="WinJS.UI.ToolBar_part:toolbar">The entire ToolBar control.</part>
     /// <part name="toolbar-overflowbutton" class="win-toolbar-overflowbutton" locid="WinJS.UI.ToolBar_part:ToolBar-overflowbutton">The toolbar overflow button.</part>
     /// <part name="toolbar-overflowarea" class="win-toolbar-overflowarea" locid="WinJS.UI.ToolBar_part:ToolBar-overflowarea">The container for toolbar commands that overflow.</part>
-    /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
     var ToolBar = (function () {
         function ToolBar(element, options) {
             /// <signature helpKeyword="WinJS.UI.ToolBar.ToolBar">
@@ -45998,8 +45894,8 @@ define('WinJS/Controls/_LegacyAppBar',[
         /// <event name="afterclose" locid="WinJS.UI._LegacyAppBar_e:afterclose">Raised immediately after the _LegacyAppBar is fully hidden.</event>
         /// <part name="appbar" class="win-commandlayout" locid="WinJS.UI._LegacyAppBar_part:appbar">The _LegacyAppBar control itself.</part>
         /// <part name="appBarCustom" class="win-navbar" locid="WinJS.UI._LegacyAppBar_part:appBarCustom">Style for a custom layout _LegacyAppBar.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         _LegacyAppBar: _Base.Namespace._lazy(function () {
             var EVENTS = {
                 beforeOpen: "beforeopen",
@@ -47162,8 +47058,8 @@ define('WinJS/Controls/Menu',[
         /// <event name="beforehide" locid="WinJS.UI.Menu_e:beforehide">Raised just before hiding a menu.</event>
         /// <event name="afterhide" locid="WinJS.UI.Menu_e:afterhide">Raised immediately after a menu is fully hidden.</event>
         /// <part name="menu" class="win-menu" locid="WinJS.UI.Menu_part:menu">The Menu control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         Menu: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -47211,20 +47107,23 @@ define('WinJS/Controls/Menu',[
                     options.commands = this._verifyCommandsOnly(this._element, "WinJS.UI.MenuCommand");
                 }
 
-                // Remember aria role in case base constructor changes it
-                var role = this._element ? this._element.getAttribute("role") : null;
-                var label = this._element ? this._element.getAttribute("aria-label") : null;
+                
+                // Menu default ARIA role and label.
+                var role = "menu";
+                var label = null;
+                if (this._element) {
+                    // We want to use any user defined ARIA role or label that have been set.
+                    // Store them now because the baseFlyoutConstructor will overwrite them.
+                    role = this._element.getAttribute("role") || role;
+                    label = this._element.getAttribute("aria-label") || label;
+                }
 
-                // Call the base overlay constructor helper
+                // Call the base constructor helper.
                 this._baseFlyoutConstructor(this._element, options);
 
-                // Make sure we have an ARIA role
-                if (role === null || role === "" || role === undefined) {
-                    this._element.setAttribute("role", "menu");
-                }
-                if (label === null || label === "" || label === undefined) {
-                    this._element.setAttribute("aria-label", strings.ariaLabel);
-                }
+                // Set ARIA role and label.
+                this._element.setAttribute("role", role);
+                this._element.setAttribute("aria-label", label);
 
                 // Handle "esc" & "up/down" key presses
                 this._element.addEventListener("keydown", this._handleKeyDown.bind(this), true);
@@ -47895,8 +47794,8 @@ define('WinJS/Controls/AutoSuggestBox',[
         /// <part name="autosuggestbox-suggestion-result" class="win-autosuggestbox-suggestion-result" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Result">Styles the result type suggestion.</part>
         /// <part name="autosuggestbox-suggestion-selected" class="win-autosuggestbox-suggestion-selected" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Selected">Styles the currently selected suggestion.</part>
         /// <part name="autosuggestbox-suggestion-separator" class="win-autosuggestbox-suggestion-separator" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Separator">Styles the separator type suggestion.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         AutoSuggestBox: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -49215,8 +49114,8 @@ define('WinJS/Controls/SearchBox',[
         /// <part name="searchbox-suggestion-selected" class="win-searchbox-suggestion-selected" locid="WinJS.UI.SearchBox_part:Suggestion_Selected">
         /// Styles the currently selected suggestion.
         /// </part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         SearchBox: _Base.Namespace._lazy(function () {
 
             // Enums
@@ -49547,8 +49446,8 @@ define('WinJS/Controls/SettingsFlyout',[
         /// <event name="beforehide" locid="WinJS.UI.SettingsFlyout_e:beforehide">Raised just before hiding a SettingsFlyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.SettingsFlyout_e:afterhide">Raised immediately after a SettingsFlyout is fully hidden.</event>
         /// <part name="settings" class="win-settingsflyout" locid="WinJS.UI.SettingsFlyout_part:settings">The SettingsFlyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         SettingsFlyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -50292,8 +50191,8 @@ define('WinJS/Controls/SplitView/Command',['exports',
         /// <part name="button" class="win-splitviewcommand-button" locid="WinJS.UI.SplitViewCommand_part:button">Styles the button in a SplitViewCommand.</part>
         /// <part name="icon" class="win-splitviewcommand-icon" locid="WinJS.UI.SplitViewCommand_part:icon">Styles the icon in the button of a SplitViewCommand.</part>
         /// <part name="label" class="win-splitviewcommand-label" locid="WinJS.UI.SplitViewCommand_part:label">Styles the label in the button of a SplitViewCommand.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         SplitViewCommand: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -50615,8 +50514,8 @@ define('WinJS/Controls/NavBar/_Command',[
         /// <part name="splitbutton" class="win-navbarcommand-splitbutton" locid="WinJS.UI.NavBarCommand_part:splitbutton">Styles the split button in a NavBarCommand</part>
         /// <part name="icon" class="win-navbarcommand-icon" locid="WinJS.UI.NavBarCommand_part:icon">Styles the icon in the main button of a NavBarCommand.</part>
         /// <part name="label" class="win-navbarcommand-label" locid="WinJS.UI.NavBarCommand_part:label">Styles the label in the main button of a NavBarCommand.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         NavBarCommand: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -50873,8 +50772,8 @@ define('WinJS/Controls/NavBar/_Container',[
         /// <part name="navigationArrow" class="win-navbarcontainer-navarrow" locid="WinJS.UI.NavBarContainer_part:navigationArrow">Styles left and right navigation arrows.</part>
         /// <part name="leftNavigationArrow" class="win-navbarcontainer-navleft" locid="WinJS.UI.NavBarContainer_part:leftNavigationArrow">Styles the left navigation arrow.</part>
         /// <part name="rightNavigationArrow" class="win-navbarcontainer-navright" locid="WinJS.UI.NavBarContainer_part:rightNavigationArrow">Styles the right navigation arrow.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         NavBarContainer: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -52279,8 +52178,8 @@ define('WinJS/Controls/NavBar',[
         /// <event name="afterclose" locid="WinJS.UI.NavBar_e:afterclose">Raised immediately after the NavBar is fully closed.</event>
         /// <event name="childrenprocessed" locid="WinJS.UI.NavBar_e:childrenprocessed">Fired when children of NavBar control have been processed from a WinJS.UI.processAll call.</event>
         /// <part name="navbar" class="win-navbar" locid="WinJS.UI.NavBar_part:navbar">Styles the entire NavBar.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         NavBar: _Base.Namespace._lazy(function () {
             var childrenProcessedEventName = "childrenprocessed";
             var createEvent = _Events._createEventProperty;
@@ -52485,8 +52384,8 @@ define('WinJS/Controls/ViewBox',[
         /// <icon src="ui_winjs.ui.viewbox.12x12.png" width="12" height="12" />
         /// <icon src="ui_winjs.ui.viewbox.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.ViewBox"><div>ViewBox</div></div>]]></htmlSnippet>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         ViewBox: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -52686,8 +52585,8 @@ define('WinJS/Controls/ContentDialog',[
         /// <part name="contentdialog-commands" class="win-contentdialog-commands" locid="WinJS.UI.ContentDialog_part:contentdialog-commands">The element which contains the dialog's primary and secondary commands.</part>
         /// <part name="contentdialog-primarycommand" class="win-contentdialog-primarycommand" locid="WinJS.UI.ContentDialog_part:contentdialog-primarycommand">The dialog's primary button.</part>
         /// <part name="contentdialog-secondarycommand" class="win-contentdialog-secondarycommand" locid="WinJS.UI.ContentDialog_part:contentdialog-secondarycommand">The dialog's secondary button.</part>
-        /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
         ContentDialog: _Base.Namespace._lazy(function () {
             var Strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -53656,6 +53555,7 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
         paneOpened: "win-splitview-pane-opened",
         _panePlaceholder: "win-splitview-paneplaceholder",
         _paneOutline: "win-splitview-paneoutline",
+        _tabStop: "win-splitview-tabstop",
         _paneWrapper: "win-splitview-panewrapper",
         _contentWrapper: "win-splitview-contentwrapper",
         _animating: "win-splitview-animating",
@@ -53761,8 +53661,8 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
     /// <part name="splitview" class="win-splitview" locid="WinJS.UI.SplitView_part:splitview">The entire SplitView control.</part>
     /// <part name="splitview-pane" class="win-splitview-pane" locid="WinJS.UI.SplitView_part:splitview-pane">The element which hosts the SplitView's pane.</part>
     /// <part name="splitview-content" class="win-splitview-content" locid="WinJS.UI.SplitView_part:splitview-content">The element which hosts the SplitView's content.</part>
-    /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
     var SplitView = (function () {
         function SplitView(element, options) {
             /// <signature helpKeyword="WinJS.UI.SplitView.SplitView">
@@ -53797,7 +53697,9 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
                 panePlacement: undefined,
                 panePlaceholderWidth: undefined,
                 panePlaceholderHeight: undefined,
-                isOverlayShown: undefined
+                isOverlayShown: undefined,
+                startPaneTabIndex: undefined,
+                endPaneTabIndex: undefined
             };
             // Check to make sure we weren't duplicated
             if (element && element["winControl"]) {
@@ -53854,6 +53756,7 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
             // Exit the Init state.
             _ElementUtilities._inDom(this._dom.root).then(function () {
                 _this._rtl = _ElementUtilities._getComputedStyle(_this._dom.root).direction === 'rtl';
+                _this._updateTabIndices();
                 _this._machine.exitInit();
             });
         }
@@ -53998,14 +53901,22 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
                 contentEl.appendChild(child);
                 child = sibling;
             }
+            var startPaneTabEl = _Global.document.createElement("div");
+            startPaneTabEl.className = ClassNames._tabStop;
+            _ElementUtilities._ensureId(startPaneTabEl);
+            var endPaneTabEl = _Global.document.createElement("div");
+            endPaneTabEl.className = ClassNames._tabStop;
+            _ElementUtilities._ensureId(endPaneTabEl);
             // paneOutline's purpose is to render an outline around the pane in high contrast mode
             var paneOutlineEl = _Global.document.createElement("div");
             paneOutlineEl.className = ClassNames._paneOutline;
             // paneWrapper's purpose is to clip the pane during the pane resize animation
             var paneWrapperEl = _Global.document.createElement("div");
             paneWrapperEl.className = ClassNames._paneWrapper;
+            paneWrapperEl.appendChild(startPaneTabEl);
             paneWrapperEl.appendChild(paneEl);
             paneWrapperEl.appendChild(paneOutlineEl);
+            paneWrapperEl.appendChild(endPaneTabEl);
             var panePlaceholderEl = _Global.document.createElement("div");
             panePlaceholderEl.className = ClassNames._panePlaceholder;
             // contentWrapper is an extra element we need to allow heights to be specified as percentages (e.g. height: 100%)
@@ -54023,12 +53934,28 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
             this._dom = {
                 root: root,
                 pane: paneEl,
+                startPaneTab: startPaneTabEl,
+                endPaneTab: endPaneTabEl,
                 paneOutline: paneOutlineEl,
                 paneWrapper: paneWrapperEl,
                 panePlaceholder: panePlaceholderEl,
                 content: contentEl,
                 contentWrapper: contentWrapperEl
             };
+            _ElementUtilities._addEventListener(paneEl, "keydown", this._onKeyDown.bind(this));
+            _ElementUtilities._addEventListener(startPaneTabEl, "focusin", this._onStartPaneTabFocusIn.bind(this));
+            _ElementUtilities._addEventListener(endPaneTabEl, "focusin", this._onEndPaneTabFocusIn.bind(this));
+        };
+        SplitView.prototype._onKeyDown = function (eventObject) {
+            if (eventObject.keyCode === _ElementUtilities.Key.tab) {
+                this._updateTabIndices();
+            }
+        };
+        SplitView.prototype._onStartPaneTabFocusIn = function (eventObject) {
+            _ElementUtilities._focusLastFocusableElement(this._dom.pane);
+        };
+        SplitView.prototype._onEndPaneTabFocusIn = function (eventObject) {
+            _ElementUtilities._focusFirstFocusableElement(this._dom.pane);
         };
         SplitView.prototype._measureElement = function (element) {
             var style = _ElementUtilities._getComputedStyle(element);
@@ -54207,6 +54134,19 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
                 _this._clearAnimation();
             });
         };
+        // _updateTabIndices and _updateTabIndicesImpl are used in tests
+        SplitView.prototype._updateTabIndices = function () {
+            if (!this._updateTabIndicesThrottled) {
+                this._updateTabIndicesThrottled = _BaseUtils._throttledFunction(100, this._updateTabIndicesImpl.bind(this));
+            }
+            this._updateTabIndicesThrottled();
+        };
+        SplitView.prototype._updateTabIndicesImpl = function () {
+            var tabIndex = _ElementUtilities._getHighAndLowTabIndices(this._dom.pane);
+            this._highestPaneTabIndex = tabIndex.highest;
+            this._lowestPaneTabIndex = tabIndex.lowest;
+            this._machine.updateDom();
+        };
         SplitView.prototype._updateDomImpl = function () {
             var rendered = this._updateDomImpl_rendered;
             var paneShouldBeFirst = this.panePlacement === PanePlacement.left || this.panePlacement === PanePlacement.top;
@@ -54251,6 +54191,28 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
                 rendered.openedDisplayMode = this.openedDisplayMode;
             }
             var isOverlayShown = this._isOpenedMode && this.openedDisplayMode === OpenedDisplayMode.overlay;
+            var startPaneTabIndex = isOverlayShown ? this._lowestPaneTabIndex : -1;
+            var endPaneTabIndex = isOverlayShown ? this._highestPaneTabIndex : -1;
+            if (rendered.startPaneTabIndex !== startPaneTabIndex) {
+                this._dom.startPaneTab.tabIndex = startPaneTabIndex;
+                if (startPaneTabIndex === -1) {
+                    this._dom.startPaneTab.removeAttribute("x-ms-aria-flowfrom");
+                }
+                else {
+                    this._dom.startPaneTab.setAttribute("x-ms-aria-flowfrom", this._dom.endPaneTab.id);
+                }
+                rendered.startPaneTabIndex = startPaneTabIndex;
+            }
+            if (rendered.endPaneTabIndex !== endPaneTabIndex) {
+                this._dom.endPaneTab.tabIndex = endPaneTabIndex;
+                if (endPaneTabIndex === -1) {
+                    this._dom.endPaneTab.removeAttribute("aria-flowto");
+                }
+                else {
+                    this._dom.endPaneTab.setAttribute("aria-flowto", this._dom.startPaneTab.id);
+                }
+                rendered.endPaneTabIndex = endPaneTabIndex;
+            }
             // panePlaceholder's purpose is to take up the amount of space occupied by the
             // hidden pane while the pane is shown in overlay mode. Without this, the content
             // would shift as the pane shows and hides in overlay mode.
@@ -54386,8 +54348,8 @@ define('WinJS/Controls/SplitViewPaneToggle/_SplitViewPaneToggle',["require", "ex
     /// <icon src="ui_winjs.ui.splitviewpanetoggle.16x16.png" width="16" height="16" />
     /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.SplitViewPaneToggle"></button>]]></htmlSnippet>
     /// <part name="splitviewpanetoggle" class="win-splitviewpanetoggle" locid="WinJS.UI.SplitViewPaneToggle_part:splitviewpanetoggle">The SplitViewPaneToggle control itself.</part>
-    /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
     var SplitViewPaneToggle = (function () {
         function SplitViewPaneToggle(element, options) {
             /// <signature helpKeyword="WinJS.UI.SplitViewPaneToggle.SplitViewPaneToggle">
@@ -54717,8 +54679,8 @@ define('WinJS/Controls/AppBar/_AppBar',["require", "exports", "../../Core/_Base"
     /// <part name="appbar" class="win-appbar" locid="WinJS.UI.AppBar_part:appbar">The entire AppBar control.</part>
     /// <part name="appbar-overflowbutton" class="win-appbar-overflowbutton" locid="WinJS.UI.AppBar_part:AppBar-overflowbutton">The appbar overflow button.</part>
     /// <part name="appbar-overflowarea" class="win-appbar-overflowarea" locid="WinJS.UI.AppBar_part:AppBar-overflowarea">The container for appbar commands that overflow.</part>
-    /// <resource type="javascript" src="//WinJS.4.2/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.2/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
     var AppBar = (function () {
         function AppBar(element, options) {
             /// <signature helpKeyword="WinJS.UI.AppBar.AppBar">
