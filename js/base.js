@@ -12,7 +12,7 @@
             // amd
             define([], factory);
         } else {
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.0.winjs.2015.9.4 base.js,StartTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.1.winjs.2015.9.29 base.js,StartTM');
             if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
                 // CommonJS
                 factory();
@@ -20,7 +20,7 @@
                 // No module system
                 factory(globalObject.WinJS);
             }
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.0.winjs.2015.9.4 base.js,StopTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.1.winjs.2015.9.29 base.js,StopTM');
         }
     }(function (WinJS) {
 
@@ -5198,7 +5198,7 @@ define('WinJS/Core/_BaseUtils',[
         _traceAsyncCallbackStarting: _Trace._traceAsyncCallbackStarting,
         _traceAsyncCallbackCompleted: _Trace._traceAsyncCallbackCompleted,
 
-        _version: "4.3.0"
+        _version: "4.3.1"
     });
 
     _Base.Namespace._moduleDefine(exports, "WinJS", {
@@ -14548,6 +14548,9 @@ define('WinJS/Application',[
     var running = false;
     var registered = false;
 
+    var Symbol = _Global.Symbol;
+    var isModern = !!Symbol && typeof Symbol.iterator === "symbol"; // jshint ignore:line
+
     var ListenerType = _Base.Class.mix(_Base.Class.define(null, { /* empty */ }, { supportedForProcessing: false }), _Events.eventMixin);
     var listeners = new ListenerType();
     var createEvent = _Events._createEventProperty;
@@ -15172,6 +15175,13 @@ define('WinJS/Application',[
         dispatchEvent({ type: edgyCanceledET, kind: eventObject.kind });
     }
 
+    function getNavManager() {
+        // Use environment inference to avoid a critical error
+        // in `getForCurrentView` when running in Windows 8 compat mode.
+        var manager = _WinRT.Windows.UI.Core.SystemNavigationManager;
+        return (isModern && manager) ? manager.getForCurrentView() : null;
+    }
+
     function register() {
         if (!registered) {
             registered = true;
@@ -15193,10 +15203,10 @@ define('WinJS/Application',[
                 }
 
                 // This integrates WinJS.Application into the hardware or OS-provided back button.
-                if (_WinRT.Windows.UI.Core.SystemNavigationManager) {
-                    // On Win10 this accomodates hardware buttons (phone), 
+                var navManager = getNavManager();
+                if (navManager) {
+                    // On Win10 this accomodates hardware buttons (phone),
                     // the taskbar's tablet mode button, and the optional window frame back button.
-                    var navManager = _WinRT.Windows.UI.Core.SystemNavigationManager.getForCurrentView();
                     navManager.addEventListener("backrequested", hardwareButtonBackPressed);
                 } else if (_WinRT.Windows.Phone.UI.Input.HardwareButtons) {
                     // For WP 8.1
@@ -15234,8 +15244,8 @@ define('WinJS/Application',[
                     settingsPane.removeEventListener("commandsrequested", commandsRequested);
                 }
 
-                if (_WinRT.Windows.UI.Core.SystemNavigationManager) {
-                    var navManager = _WinRT.Windows.UI.Core.SystemNavigationManager.getForCurrentView();
+                var navManager = getNavManager();
+                if (navManager) {
                     navManager.removeEventListener("backrequested", hardwareButtonBackPressed);
                 } else if (_WinRT.Windows.Phone.UI.Input.HardwareButtons) {
                     _WinRT.Windows.Phone.UI.Input.HardwareButtons.removeEventListener("backpressed", hardwareButtonBackPressed);
