@@ -12,7 +12,7 @@
             // amd
             define(["./base"], factory);
         } else {
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.1.winjs.2015.9.29 ui.js,StartTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.4 4.4.0.winjs.2015.10.2 ui.js,StartTM');
             if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
                 // CommonJS
                 factory(require("./base"));
@@ -20,7 +20,7 @@
                 // No module system
                 factory(globalObject.WinJS);
             }
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.1.winjs.2015.9.29 ui.js,StopTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.4 4.4.0.winjs.2015.10.2 ui.js,StopTM');
         }
     }(function (WinJS) {
 
@@ -7798,6 +7798,235 @@ define('WinJS/Controls/IntrinsicControls',[
         [{ name: "background", value: _Accents.ColorTypes.accent }]);
 });
 // Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+/// <reference path="../../Core.d.ts" />
+define('WinJS/Controls/ElementResizeInstrument/_ElementResizeInstrument',["require", "exports", "../../Core/_BaseUtils", '../../Core/_Base', '../../Core/_Global', '../../Core/_Log', "../../Core/_ErrorFromName", "../../Core/_Events", '../../Promise', '../../Utilities/_ElementUtilities'], function (require, exports, _BaseUtils, _Base, _Global, _Log, _ErrorFromName, _Events, Promise, _ElementUtilities) {
+    "use strict";
+    // We will style the _ElementResizeInstrument element to have the same height and width as it's nearest positioned ancestor.
+    var styleText = 'display: block;' + 'position:absolute;' + 'top: 0;' + 'left: 0;' + 'height: 100%;' + 'width: 100%;' + 'overflow: hidden;' + 'pointer-events: none;' + 'z-index: -1;';
+    var className = "win-resizeinstrument";
+    var objData = "about:blank";
+    var eventNames = {
+        /**
+         * Fires when the _ElementResizeInstrument has detected a size change in the monitored ancestor element.
+        **/
+        resize: "resize",
+        /**
+         * Fires when the internal <object> element has finished loading and we have added our own "resize" listener to its contentWindow.
+         * Used by unit tests.
+        **/
+        _ready: "_ready",
+    };
+    // Name of the <object> contentWindow event we listen to.
+    var contentWindowResizeEvent = "resize";
+    // Determine if the browser environment is IE or Edge.
+    // "msHightContrastAdjust" is availble in IE10+
+    var isMS = ("msHighContrastAdjust" in document.documentElement.style);
+    /**
+     * Creates a hidden <object> instrumentation element that is used to automatically generate and handle "resize" events whenever the nearest
+     * positioned ancestor element has its size changed. Add the instrumented element to the DOM of the element you want to generate-and-handle
+     * "resize" events for. The computed style.position of the ancestor element must be positioned and therefore may not be "static".
+    **/
+    var _ElementResizeInstrument = (function () {
+        function _ElementResizeInstrument() {
+            var _this = this;
+            this._disposed = false;
+            this._elementLoaded = false;
+            this._running = false;
+            this._objectWindowResizeHandlerBound = this._objectWindowResizeHandler.bind(this);
+            var objEl = _Global.document.createElement("OBJECT");
+            objEl.setAttribute('style', styleText);
+            if (isMS) {
+                // <object> element shows an outline visual that can't be styled away in MS browsers.
+                // Using visibility hidden everywhere will stop some browsers from sending resize events, 
+                // but we can use is in MS browsers to achieve the visual we want without losing resize events.
+                objEl.style.visibility = "hidden";
+            }
+            else {
+                // Some browsers like iOS and Safari will never load the <object> element's content window
+                // if the <object> element is in the DOM before its data property was set. 
+                // IE and Edge on the other hand are the exact opposite and won't ever load unless you append the 
+                // element to the DOM before the data property was set.  We expect a later call to addedToDom() will 
+                // set the data property after the element is in the DOM for IE and Edge.
+                objEl.data = objData;
+            }
+            objEl.type = 'text/html';
+            objEl['winControl'] = this;
+            _ElementUtilities.addClass(objEl, className);
+            _ElementUtilities.addClass(objEl, "win-disposable");
+            this._element = objEl;
+            this._elementLoadPromise = new Promise(function (c) {
+                objEl.onload = function () {
+                    if (!_this._disposed) {
+                        _this._elementLoaded = true;
+                        _this._objWindow.addEventListener(contentWindowResizeEvent, _this._objectWindowResizeHandlerBound);
+                        c();
+                    }
+                };
+            });
+        }
+        Object.defineProperty(_ElementResizeInstrument.prototype, "element", {
+            get: function () {
+                return this._element;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(_ElementResizeInstrument.prototype, "_objWindow", {
+            // Getter for the <object>'s contentWindow.
+            get: function () {
+                // Property may be undefined if the element hasn't loaded yet.
+                // Property may be undefined in Safari if the element has been removed from the DOM.
+                // https://bugs.webkit.org/show_bug.cgi?id=149251
+                // Return the contentWindow if it exists, else null.
+                // If the <object> element hasn't loaded yet, some browsers will throw an exception if you try to read the contentDocument property.
+                return this._elementLoaded && this._element.contentDocument && this._element.contentDocument.defaultView || null;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        _ElementResizeInstrument.prototype.addedToDom = function () {
+            var _this = this;
+            // _ElementResizeInstrument should block on firing any events until the Object element has loaded and the _ElementResizeInstrument addedToDom() API has been called.
+            // The former is required in order to allow us to get a handle to hook the resize event of the <object> element's content window.
+            // The latter is for cross browser consistency. Some browsers will load the <object> element sync or async as soon as its added to the DOM. 
+            // Other browsers will not load the element until it is added to the DOM and the data property has been set on the <object>. If the element
+            // hasn't already loaded when addedToDom is called, we can set the data property to kickstart the loading process. The function is only expected to be called once.
+            if (!this._disposed) {
+                var objEl = this.element;
+                if (!_Global.document.body.contains(objEl)) {
+                    throw new _ErrorFromName("WinJS.UI._ElementResizeInstrument", "ElementResizeInstrument initialization failed");
+                }
+                else {
+                    if (_Log.log && _ElementUtilities._getComputedStyle(objEl.parentElement).position === "static") {
+                        // Notify if the parentElement is not positioned. It is expected that the _ElementResizeInstrument will 
+                        // be an immediate child of the element it wants to monitor for size changes.
+                        _Log.log("_ElementResizeInstrument can only detect size changes that are made to it's nearest positioned ancestor. " + "Its parent element is not currently positioned.");
+                    }
+                    if (!this._elementLoaded && isMS) {
+                        // If we're in the DOM and the element hasn't loaded yet, some browsers require setting the data property first, 
+                        // in order to trigger the <object> load event. We MUST only do this after the element has been added to the DOM, 
+                        // otherwise IE10, IE11 & Edge will NEVER fire the load event no matter what else is done to the <object> element 
+                        // or its properties.
+                        objEl.data = "about:blank";
+                    }
+                    this._elementLoadPromise.then(function () {
+                        // Once the element has loaded and addedToDom has been called, we can fire our private "_ready" event.
+                        _this._running = true;
+                        _this.dispatchEvent(eventNames._ready, null);
+                        // The _ElementResizeInstrument uses an <object> element and its contentWindow to detect resize events in whichever element the 
+                        // _ElementResizeInstrument is appended to. Some browsers will fire an async "resize" event for the <object> element automatically when 
+                        // it gets added to the DOM, others won't. In both cases it is up to the _ElementResizeHandler to make sure that exactly one async "resize" 
+                        // is always fired in all browsers. 
+                        // If we don't see a resize event from the <object> contentWindow within 50ms, assume this environment won't fire one and dispatch our own.
+                        var initialResizeTimeout = Promise.timeout(50);
+                        var handleInitialResize = function () {
+                            _this.removeEventListener(eventNames.resize, handleInitialResize);
+                            initialResizeTimeout.cancel();
+                        };
+                        _this.addEventListener(eventNames.resize, handleInitialResize);
+                        initialResizeTimeout.then(function () {
+                            _this._objectWindowResizeHandler();
+                        });
+                    });
+                }
+            }
+        };
+        _ElementResizeInstrument.prototype.dispose = function () {
+            if (!this._disposed) {
+                this._disposed = true;
+                // Cancel loading state
+                this._elementLoadPromise.cancel();
+                // Unhook loaded state
+                if (this._objWindow) {
+                    // If we had already loaded and can still get a reference to the contentWindow,
+                    // unhook our listener from the <object>'s contentWindow to reduce any future noise.
+                    this._objWindow.removeEventListener.call(this._objWindow, contentWindowResizeEvent, this._objectWindowResizeHandlerBound);
+                }
+                // Turn off running state
+                this._running = false;
+            }
+        };
+        /**
+         * Adds an event listener to the control.
+         * @param type The type (name) of the event.
+         * @param listener The listener to invoke when the event gets raised.
+         * @param useCapture If true, initiates capture, otherwise false.
+        **/
+        _ElementResizeInstrument.prototype.addEventListener = function (type, listener, useCapture) {
+            // Implementation will be provided by _Events.eventMixin
+        };
+        /**
+         * Raises an event of the specified type and with the specified additional properties.
+         * @param type The type (name) of the event.
+         * @param eventProperties The set of additional properties to be attached to the event object when the event is raised.
+         * @returns true if preventDefault was called on the event.
+        **/
+        _ElementResizeInstrument.prototype.dispatchEvent = function (type, eventProperties) {
+            // Implementation will be provided by _Events.eventMixin
+            return false;
+        };
+        /**
+         * Removes an event listener from the control.
+         * @param type The type (name) of the event.
+         * @param listener The listener to remove.
+         * @param useCapture true if capture is to be initiated, otherwise false.
+        **/
+        _ElementResizeInstrument.prototype.removeEventListener = function (type, listener, useCapture) {
+            // Implementation will be provided by _Events.eventMixin
+        };
+        _ElementResizeInstrument.prototype._objectWindowResizeHandler = function () {
+            var _this = this;
+            if (this._running) {
+                this._batchResizeEvents(function () {
+                    _this._fireResizeEvent();
+                });
+            }
+        };
+        _ElementResizeInstrument.prototype._batchResizeEvents = function (handleResizeFn) {
+            // Use requestAnimationFrame to batch consecutive resize events.
+            if (this._pendingResizeAnimationFrameId) {
+                _BaseUtils._cancelAnimationFrame(this._pendingResizeAnimationFrameId);
+            }
+            this._pendingResizeAnimationFrameId = _BaseUtils._requestAnimationFrame(function () {
+                handleResizeFn();
+            });
+        };
+        _ElementResizeInstrument.prototype._fireResizeEvent = function () {
+            if (!this._disposed) {
+                this.dispatchEvent(eventNames.resize, null);
+            }
+        };
+        _ElementResizeInstrument.EventNames = eventNames;
+        return _ElementResizeInstrument;
+    })();
+    exports._ElementResizeInstrument = _ElementResizeInstrument;
+    // addEventListener, removeEventListener, dispatchEvent
+    _Base.Class.mix(_ElementResizeInstrument, _Events.eventMixin);
+});
+
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+/// <reference path="../../../../typings/require.d.ts" />
+define('WinJS/Controls/ElementResizeInstrument',["require", "exports"], function (require, exports) {
+    var module = null;
+    function getModule() {
+        if (!module) {
+            require(["./ElementResizeInstrument/_ElementResizeInstrument"], function (m) {
+                module = m;
+            });
+        }
+        return module._ElementResizeInstrument;
+    }
+    var publicMembers = Object.create({}, {
+        _ElementResizeInstrument: {
+            get: function () {
+                return getModule();
+            }
+        }
+    });
+    return publicMembers;
+});
+
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 define('WinJS/Controls/ItemContainer/_Constants',[
     'exports',
     '../../Core/_Base'
@@ -7885,7 +8114,7 @@ define('WinJS/Controls/ItemContainer/_Constants',[
 
     var ScrollToPriority = {
         uninitialized: 0,
-        low: 1,             // used by layoutSite.invalidateLayout, forceLayout, _processReload, _update and _onMSElementResize - operations that preserve the scroll position
+        low: 1,             // used by layoutSite.invalidateLayout, forceLayout, _processReload, _update and _onElementResize - operations that preserve the scroll position
         medium: 2,          // used by dataSource change, layout change and etc - operations that reset the scroll position to 0
         high: 3             // used by indexOfFirstVisible, ensureVisible, scrollPosition - operations in which the developer explicitly sets the scroll position
     };
@@ -19605,6 +19834,7 @@ define('WinJS/Controls/ListView',[
     '../Utilities/_TabContainer',
     '../Utilities/_UI',
     '../Utilities/_VersionManager',
+    './ElementResizeInstrument',
     './ItemContainer/_Constants',
     './ItemContainer/_ItemEventsHandler',
     './ListView/_BrowseMode',
@@ -19618,7 +19848,7 @@ define('WinJS/Controls/ListView',[
     './ListView/_VirtualizeContentsView',
     'require-style!less/styles-listview',
     'require-style!less/colors-listview'
-], function listViewImplInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, _Accents, Animations, _TransitionAnimation, BindingList, Promise, Scheduler, _Signal, _Control, _Dispose, _ElementUtilities, _Hoverable, _ItemsManager, _SafeHtml, _TabContainer, _UI, _VersionManager, _Constants, _ItemEventsHandler, _BrowseMode, _ErrorMessages, _GroupFocusCache, _GroupsContainer, _Helpers, _ItemsContainer, _Layouts, _SelectionManager, _VirtualizeContentsView) {
+], function listViewImplInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, _Accents, Animations, _TransitionAnimation, BindingList, Promise, Scheduler, _Signal, _Control, _Dispose, _ElementUtilities, _Hoverable, _ItemsManager, _SafeHtml, _TabContainer, _UI, _VersionManager, _ElementResizeInstrument, _Constants, _ItemEventsHandler, _BrowseMode, _ErrorMessages, _GroupFocusCache, _GroupsContainer, _Helpers, _ItemsContainer, _Layouts, _SelectionManager, _VirtualizeContentsView) {
     "use strict";
 
     _Accents.createAccentRule(
@@ -19731,8 +19961,8 @@ define('WinJS/Controls/ListView',[
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ListView_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="groupHeader" class="win-groupheader" locid="WinJS.UI.ListView_part:groupHeader">The header of a group.</part>
         /// <part name="progressbar" class="win-progress" locid="WinJS.UI.ListView_part:progressbar">The progress indicator of the ListView.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         ListView: _Base.Namespace._lazy(function () {
             var AffectedRange = _Base.Class.define(function () {
                 this.clear();
@@ -21279,24 +21509,22 @@ define('WinJS/Controls/ListView',[
                         listViewHandler("FocusOut", false, false),
                         modeHandler("KeyDown"),
                         modeHandler("KeyUp"),
-                        listViewHandler("MSElementResize", false, false)
                     ];
                     elementEvents.forEach(function (eventHandler) {
                         _ElementUtilities._addEventListener(that._element, eventHandler.name, eventHandler.handler, !!eventHandler.capture);
                     });
-                    this._onMSElementResizeBound = this._onMSElementResize.bind(this);
-                    _ElementUtilities._resizeNotifier.subscribe(this._element, this._onMSElementResizeBound);
+                    this._onElementResizeBound = this._onElementResize.bind(this);
+                    _ElementUtilities._resizeNotifier.subscribe(this._element, this._onElementResizeBound);
+                    this._elementResizeInstrument = new _ElementResizeInstrument._ElementResizeInstrument();
+                    this._element.appendChild(this._elementResizeInstrument.element);
+                    this._elementResizeInstrument.addEventListener("resize", this._onElementResizeBound);
 
-                    var initiallyParented = _Global.document.body.contains(this._element);
-                    _ElementUtilities._addInsertedNotifier(this._element);
-                    this._element.addEventListener("WinJSNodeInserted", function (event) {
-                        // WinJSNodeInserted fires even if the element is already in the DOM
-                        if (initiallyParented) {
-                            initiallyParented = false;
-                            return;
-                        }
-                        that._onMSElementResizeBound(event);
-                    }, false);
+                    _ElementUtilities._inDom(this.element)
+                        .then(function () {
+                            if (!that._disposed) {
+                                that._elementResizeInstrument.addedToDom();
+                            }
+                        });
 
                     var viewportEvents = [
                         listViewHandler("MSManipulationStateChanged", true),
@@ -22306,9 +22534,9 @@ define('WinJS/Controls/ListView',[
                     this._viewportHeight = _Constants._UNINITIALIZED;
                 },
 
-                _onMSElementResize: function ListView_onResize() {
-                    this._writeProfilerMark("_onMSElementResize,info");
-                    Scheduler.schedule(function ListView_async_msElementResize() {
+                _onElementResize: function ListView_onResize() {
+                    this._writeProfilerMark("_onElementResize,info");
+                    Scheduler.schedule(function ListView_async_elementResize() {
                         if (this._isZombie()) { return; }
                         // If these values are uninitialized there is already a realization pass pending.
                         if (this._viewportWidth !== _Constants._UNINITIALIZED && this._viewportHeight !== _Constants._UNINITIALIZED) {
@@ -22333,7 +22561,7 @@ define('WinJS/Controls/ListView',[
                                 });
                             }
                         }
-                    }, Scheduler.Priority.max, this, "WinJS.UI.ListView._onMSElementResize");
+                    }, Scheduler.Priority.max, this, "WinJS.UI.ListView._onElementResize");
                 },
 
                 _onFocusIn: function ListView_onFocusIn(event) {
@@ -23271,7 +23499,8 @@ define('WinJS/Controls/ListView',[
                             e && (e.textContent = "");
                         };
 
-                        _ElementUtilities._resizeNotifier.unsubscribe(this._element, this._onMSElementResizeBound);
+                        _ElementUtilities._resizeNotifier.unsubscribe(this._element, this._onElementResizeBound);
+                        this._elementResizeInstrument.dispose();
 
                         this._batchingViewUpdates && this._batchingViewUpdates.cancel();
 
@@ -26221,11 +26450,12 @@ define('WinJS/Controls/FlipView',[
     '../Utilities/_Hoverable',
     '../Utilities/_ItemsManager',
     '../Utilities/_UI',
+    './ElementResizeInstrument',
     './FlipView/_Constants',
     './FlipView/_PageManager',
     'require-style!less/styles-flipview',
     'require-style!less/colors-flipview'
-], function flipperInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable, _ItemsManager, _UI, _Constants, _PageManager) {
+], function flipperInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, BindingList, Promise, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable, _ItemsManager, _UI, _ElementResizeInstrument, _Constants, _PageManager) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -26247,8 +26477,8 @@ define('WinJS/Controls/FlipView',[
         /// <part name="rightNavigationButton" class="win-navright" locid="WinJS.UI.FlipView_part:rightNavigationButton">The right navigation button.</part>
         /// <part name="topNavigationButton" class="win-navtop" locid="WinJS.UI.FlipView_part:topNavigationButton">The top navigation button.</part>
         /// <part name="bottomNavigationButton" class="win-navbottom" locid="WinJS.UI.FlipView_part:bottomNavigationButton">The bottom navigation button.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         FlipView: _Base.Namespace._lazy(function () {
 
             // Class names
@@ -26287,14 +26517,6 @@ define('WinJS/Controls/FlipView',[
                         that._rtl = _ElementUtilities._getComputedStyle(that._flipviewDiv, null).direction === "rtl";
                         that._setupOrientation();
                     }
-                }
-            }
-
-            function flipviewResized(e) {
-                var that = e.target && e.target.winControl;
-                if (that && that instanceof FlipView) {
-                    _WriteProfilerMark("WinJS.UI.FlipView:resize,StartTM");
-                    that._resize();
                 }
             }
 
@@ -26409,7 +26631,8 @@ define('WinJS/Controls/FlipView',[
 
                     _ElementUtilities._globalListener.removeEventListener(this._flipviewDiv, 'wheel', this._windowWheelHandlerBound);
                     _ElementUtilities._globalListener.removeEventListener(this._flipviewDiv, 'mousewheel', this._windowWheelHandlerBound);
-                    _ElementUtilities._resizeNotifier.unsubscribe(this._flipviewDiv, flipviewResized);
+                    _ElementUtilities._resizeNotifier.unsubscribe(this._flipviewDiv, this._resizeHandlerBound);
+                    this._elementResizeInstrument.dispose();
 
 
                     this._disposed = true;
@@ -26855,9 +27078,6 @@ define('WinJS/Controls/FlipView',[
                     new _ElementUtilities._MutationObserver(flipViewPropertyChanged).observe(this._flipviewDiv, { attributes: true, attributeFilter: ["dir", "style"] });
                     this._cachedStyleDir = this._flipviewDiv.style.direction;
 
-                    this._flipviewDiv.addEventListener("mselementresize", flipviewResized);
-                    _ElementUtilities._resizeNotifier.subscribe(this._flipviewDiv, flipviewResized);
-
                     this._contentDiv.addEventListener("mouseleave", function () {
                         that._mouseInViewport = false;
                     }, false);
@@ -26917,19 +27137,36 @@ define('WinJS/Controls/FlipView',[
                         }
                     }, true);
 
+                    this._resizeHandlerBound = this._resizeHandler.bind(this);
+                    this._elementResizeInstrument = new _ElementResizeInstrument._ElementResizeInstrument();
+                    this._flipviewDiv.appendChild(this._elementResizeInstrument.element);
+                    this._elementResizeInstrument.addEventListener("resize", this._resizeHandlerBound);
+                    _ElementUtilities._resizeNotifier.subscribe(this._flipviewDiv, this._resizeHandlerBound);
+
+                    var initiallyParented = _Global.document.body.contains(this._flipviewDiv);
+                    if (initiallyParented) {
+                        this._elementResizeInstrument.addedToDom();
+                    }
+
                     // Scroll position isn't maintained when an element is added/removed from
                     // the DOM so every time we are placed back in, let the PageManager
                     // fix the scroll position.
-                    var initiallyParented = _Global.document.body.contains(this._flipviewDiv);
                     _ElementUtilities._addInsertedNotifier(this._flipviewDiv);
+                    var initialTrigger = true;
                     this._flipviewDiv.addEventListener("WinJSNodeInserted", function (event) {
-                        // WinJSNodeInserted fires even if the element is already in the DOM
-                        if (initiallyParented) {
-                            initiallyParented = false;
-                            return;
+                        // WinJSNodeInserted fires even if the element was already in the DOM
+                        if (initialTrigger) {
+                            initialTrigger = false;
+                            if (!initiallyParented) {
+                                that._elementResizeInstrument.addedToDom();
+                                that._pageManager.resized();
+                            }
+                        } else { 
+                            that._pageManager.resized();
                         }
-                        that._pageManager.resized();
                     }, false);
+
+
 
                     this._flipviewDiv.addEventListener("keydown", function (event) {
                         if (that._disposed) {
@@ -27082,6 +27319,11 @@ define('WinJS/Controls/FlipView',[
                         }
                     }
                     return false;
+                },
+
+                _resizeHandler: function FlipView_resizeHandler() {
+                    _WriteProfilerMark("WinJS.UI.FlipView:resize,StartTM");
+                    this._pageManager.resized();
                 },
 
                 _refreshHandler: function FlipView_refreshHandler() {
@@ -27285,10 +27527,6 @@ define('WinJS/Controls/FlipView',[
                         this._animationsFinished();
                     }
                     this._completeJumpPending = false;
-                },
-
-                _resize: function FlipView_resize() {
-                    this._pageManager.resized();
                 },
 
                 _setCurrentIndex: function FlipView_setCurrentIndex(index) {
@@ -27534,8 +27772,8 @@ define('WinJS/Controls/ItemContainer',[
         /// <part name="selectionbackground" class="win-selectionbackground" locid="WinJS.UI.ItemContainer_part:selectionbackground">The background of a selection checkmark.</part>
         /// <part name="selectioncheckmark" class="win-selectioncheckmark" locid="WinJS.UI.ItemContainer_part:selectioncheckmark">A selection checkmark.</part>
         /// <part name="focusedoutline" class="win-focusedoutline" locid="WinJS.UI.ItemContainer_part:focusedoutline">Used to display an outline when the main container has keyboard focus.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         ItemContainer: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -28269,8 +28507,8 @@ define('WinJS/Controls/Repeater',[
         /// <icon src="ui_winjs.ui.repeater.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.Repeater"></div>]]></htmlSnippet>
         /// <part name="repeater" class="win-repeater" locid="WinJS.UI.Repeater_part:repeater">The Repeater control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         Repeater: _Base.Namespace._lazy(function () {
 
             // Constants
@@ -28782,8 +29020,8 @@ define('WinJS/Controls/DatePicker',[
         /// <icon src="ui_winjs.ui.datepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.DatePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.DatePicker_e:change">Occurs when the current date changes.</event>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         DatePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_DAY_PATTERN = 'day',
@@ -29538,8 +29776,8 @@ define('WinJS/Controls/TimePicker',[
         /// <icon src="ui_winjs.ui.timepicker.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.TimePicker"></div>]]></htmlSnippet>
         /// <event name="change" locid="WinJS.UI.TimePicker_e:change">Occurs when the time changes.</event>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         TimePicker: _Base.Namespace._lazy(function () {
             // Constants definition
             var DEFAULT_MINUTE_PATTERN = "{minute.integer(2)}",
@@ -30202,8 +30440,8 @@ define('WinJS/Controls/BackButton',[
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.BackButton"></button>]]></htmlSnippet>
         /// <part name="BackButton" class="win-navigation-backbutton" locid="WinJS.UI.BackButton_part:BackButton">The BackButton control itself</part>
         /// <part name="BackArrowGlyph" class="win-back" locid="WinJS.UI.BackButton_part:BackArrowGlyph">The Back Arrow glyph</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         BackButton: _Base.Namespace._lazy(function () {
             // Statics
             var strings = {
@@ -30391,8 +30629,8 @@ define('WinJS/Controls/Tooltip',[
         /// <event name="beforeclose" bubbles="false" locid="WinJS.UI.Tooltip_e:beforeclose">Raised when the tooltip is about to become hidden.</event>
         /// <event name="closed" bubbles="false" locid="WinJS.UI.Tooltip_e:close">Raised when the tooltip is hidden.</event>
         /// <part name="tooltip" class="win-tooltip" locid="WinJS.UI.Tooltip_e:tooltip">The entire Tooltip control.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         Tooltip: _Base.Namespace._lazy(function () {
             var lastCloseTime = 0;
             var Key = _ElementUtilities.Key;
@@ -31356,8 +31594,8 @@ define('WinJS/Controls/Rating',[
         /// <part name="tentative-full" class="win-star win-tentative win-full" locid="WinJS.UI.Rating_part:tentative-full">The full star when the Rating control shows the tentative rating.</part>
         /// <part name="disabled-empty" class="win-star win-disabled win-empty" locid="WinJS.UI.Rating_part:disabled-empty">The empty star when the control is disabled.</part>
         /// <part name="disabled-full" class="win-star win-disabled win-full" locid="WinJS.UI.Rating_part:disabled-full">The full star when the control is disabled.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         Rating: _Base.Namespace._lazy(function () {
             var createEvent = _Events._createEventProperty;
 
@@ -32517,8 +32755,8 @@ define('WinJS/Controls/ToggleSwitch',[
             /// <part name="title" class="win-toggleswitch-header" locid="WinJS.UI.ToggleSwitch_part:title">The main text for the ToggleSwitch control.</part>
             /// <part name="label-on" class="win-toggleswitch-value" locid="WinJS.UI.ToggleSwitch_part:label-on">The text for when the switch is on.</part>
             /// <part name="label-off" class="win-toggleswitch-value" locid="WinJS.UI.ToggleSwitch_part:label-off:">The text for when the switch is off.</part>
-            /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-            /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+            /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+            /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
             ToggleSwitch: _Base.Namespace._lazy(function () {
 
                 // Store some class names
@@ -32912,9 +33150,10 @@ define('WinJS/Controls/SemanticZoom',[
     '../Utilities/_ElementUtilities',
     '../Utilities/_ElementListUtilities',
     '../Utilities/_Hoverable',
+    './ElementResizeInstrument',
     'require-style!less/styles-semanticzoom',
     'require-style!less/colors-semanticzoom'
-    ], function semanticZoomInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, ControlProcessor, Promise, _Control, _Dispose, _ElementUtilities, _ElementListUtilities, _Hoverable) {
+    ], function semanticZoomInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Resources, _WriteProfilerMark, Animations, _TransitionAnimation, ControlProcessor, Promise, _Control, _Dispose, _ElementUtilities, _ElementListUtilities, _Hoverable, _ElementResizeInstrument) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -32928,8 +33167,8 @@ define('WinJS/Controls/SemanticZoom',[
         /// <icon src="ui_winjs.ui.semanticzoom.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.SemanticZoom"><div class="zoomedInContainer" data-win-control="WinJS.UI.ListView"></div><div class="zoomedOutContainer" data-win-control="WinJS.UI.ListView"></div></div>]]></htmlSnippet>
         /// <part name="semanticZoom" class="win-semanticzoom" locid="WinJS.UI.SemanticZoom_part:semanticZoom">The entire SemanticZoom control.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         SemanticZoom: _Base.Namespace._lazy(function () {
             var browserStyleEquivalents = _BaseUtils._browserStyleEquivalents;
 
@@ -33031,13 +33270,6 @@ define('WinJS/Controls/SemanticZoom',[
 
             var origin = { x: 0, y: 0 };
 
-            function onSemanticZoomResize(ev) {
-                var control = ev.target && ev.target.winControl;
-                if (control && !control._resizing) {
-                    control._onResize();
-                }
-            }
-
             function onSemanticZoomPropertyChanged(list) {
                 // This will only be called for "aria-checked" changes
                 var control = list[0].target && list[0].target.winControl;
@@ -33115,19 +33347,32 @@ define('WinJS/Controls/SemanticZoom',[
                 this._configure();
 
                 // Register event handlers
+                this._onResizeBound = this._onResize.bind(this);
+                this._elementResizeInstrument = new _ElementResizeInstrument._ElementResizeInstrument();
+                this._element.appendChild(this._elementResizeInstrument.element);
+                this._elementResizeInstrument.addEventListener("resize", this._onResizeBound);
+                _ElementUtilities._resizeNotifier.subscribe(this._element, this._onResizeBound);
 
                 var initiallyParented = _Global.document.body.contains(this._element);
+                if (initiallyParented) {
+                    this._elementResizeInstrument.addedToDom();
+                }
+
                 _ElementUtilities._addInsertedNotifier(this._element);
+                var initialTrigger = true;
                 this._element.addEventListener("WinJSNodeInserted", function (event) {
-                    // WinJSNodeInserted fires even if the element is already in the DOM
-                    if (initiallyParented) {
-                        initiallyParented = false;
-                        return;
+                    // WinJSNodeInserted fires even if the element was already in the DOM
+                    if (initialTrigger) {
+                        initialTrigger = false;
+                        if (!initiallyParented) {
+                            that._elementResizeInstrument.addedToDom();
+                            that._onResizeBound();
+                        }
+                    } else {
+                        that._onResizeBound();
                     }
-                    onSemanticZoomResize(event);
                 }, false);
-                this._element.addEventListener("mselementresize", onSemanticZoomResize);
-                _ElementUtilities._resizeNotifier.subscribe(this._element, onSemanticZoomResize);
+
                 new _ElementUtilities._MutationObserver(onSemanticZoomPropertyChanged).observe(this._element, { attributes: true, attributeFilter: ["aria-checked"] });
 
                 if (!isPhone) {
@@ -33213,7 +33458,7 @@ define('WinJS/Controls/SemanticZoom',[
                         var newValue = _ElementUtilities._clamp(value, minZoomFactor, maxZoomFactor, defaultZoomFactor);
                         if (oldValue !== newValue) {
                             this._zoomFactor = newValue;
-                            this._onResize();
+                            this.forceLayout();
                         }
                     }
                 },
@@ -33266,7 +33511,8 @@ define('WinJS/Controls/SemanticZoom',[
                     }
 
                     this._disposed = true;
-                    _ElementUtilities._resizeNotifier.unsubscribe(this._element, onSemanticZoomResize);
+                    this._elementResizeInstrument.dispose();
+                    _ElementUtilities._resizeNotifier.unsubscribe(this._element, this._onResizeBound);
                     _Dispose._disposeElement(this._elementIn);
                     _Dispose._disposeElement(this._elementOut);
 
@@ -33526,7 +33772,9 @@ define('WinJS/Controls/SemanticZoom',[
                 },
 
                 _onResize: function () {
-                    this._onResizeImpl();
+                    if (!this._resizing) {
+                        this._onResizeImpl();
+                    }
                 },
 
                 _onMouseMove: function (ev) {
@@ -34497,8 +34745,8 @@ define('WinJS/Controls/Pivot/_Item',[
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.PivotItem" data-win-options="{header: 'PivotItem Header'}">PivotItem Content</div>]]></htmlSnippet>
         /// <part name="pivotitem" class="win-pivot-item" locid="WinJS.UI.PivotItem_part:pivotitem">The entire PivotItem control.</part>
         /// <part name="content" class="win-pivot-item-content" locid="WinJS.UI.PivotItem_part:content">The content region of the PivotItem.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         PivotItem: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; }
@@ -34664,7 +34912,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global", "../../Animations", "../../BindingList", "../../ControlProcessor", "../../Promise", "../../Scheduler", "../../Core/_Base", "../../Core/_BaseUtils", "../../Utilities/_Control", "../../Utilities/_Dispose", "../../Utilities/_ElementUtilities", "../../Core/_ErrorFromName", "../../Core/_Events", "../../Utilities/_Hoverable", "../../Utilities/_KeyboardBehavior", "../../Core/_Log", "../../Core/_Resources", "../../Animations/_TransitionAnimation", "../../Core/_WriteProfilerMark", "./_Constants"], function (require, exports, _Global, Animations, BindingList, ControlProcessor, Promise, Scheduler, _Base, _BaseUtils, _Control, _Dispose, _ElementUtilities, _ErrorFromName, _Events, _Hoverable, _KeyboardBehavior, _Log, _Resources, _TransitionAnimation, _WriteProfilerMark, _Constants) {
+define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global", "../../Animations", "../../BindingList", "../../ControlProcessor", "../../Promise", "../../Scheduler", "../../Core/_Base", "../../Core/_BaseUtils", "../../Utilities/_Control", "../../Utilities/_Dispose", "../ElementResizeInstrument", "../../Utilities/_ElementUtilities", "../../Core/_ErrorFromName", "../../Core/_Events", "../../Utilities/_Hoverable", "../../Utilities/_KeyboardBehavior", "../../Core/_Log", "../../Core/_Resources", "../../Animations/_TransitionAnimation", "../../Core/_WriteProfilerMark", "./_Constants"], function (require, exports, _Global, Animations, BindingList, ControlProcessor, Promise, Scheduler, _Base, _BaseUtils, _Control, _Dispose, _ElementResizeInstrument, _ElementUtilities, _ErrorFromName, _Events, _Hoverable, _KeyboardBehavior, _Log, _Resources, _TransitionAnimation, _WriteProfilerMark, _Constants) {
     // Force-load Dependencies
     _Hoverable.isHoverable;
     require(["require-style!less/styles-pivot"]);
@@ -34704,6 +34952,7 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
     }
     var Pivot = (function () {
         function Pivot(element, options) {
+            var _this = this;
             if (options === void 0) { options = {}; }
             this._disposed = false;
             this._firstLoad = true;
@@ -34791,7 +35040,14 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
             this._element.appendChild(this._viewportElement);
             this._viewportElement.setAttribute("role", "group");
             this._viewportElement.setAttribute("aria-label", strings.pivotViewportAriaLabel);
-            this.element.addEventListener("mselementresize", this._resizeHandler);
+            this._elementResizeInstrument = new _ElementResizeInstrument._ElementResizeInstrument();
+            this._element.appendChild(this._elementResizeInstrument.element);
+            this._elementResizeInstrument.addEventListener("resize", this._resizeHandler);
+            _ElementUtilities._inDom(this._element).then(function () {
+                if (!_this._disposed) {
+                    _this._elementResizeInstrument.addedToDom();
+                }
+            });
             _ElementUtilities._resizeNotifier.subscribe(this.element, this._resizeHandler);
             this._viewportElWidth = null;
             // Surface
@@ -34981,6 +35237,7 @@ define('WinJS/Controls/Pivot/_Pivot',["require", "exports", "../../Core/_Global"
             this._disposed = true;
             this._updateEvents(this._items, null);
             _ElementUtilities._resizeNotifier.unsubscribe(this.element, this._resizeHandler);
+            this._elementResizeInstrument.dispose();
             this._headersState.exit();
             _Dispose._disposeElement(this._headersContainerElement);
             for (var i = 0, len = this.items.length; i < len; i++) {
@@ -35992,8 +36249,8 @@ define('WinJS/Controls/Pivot',["require", "exports", '../Core/_Base', './Pivot/_
         /// <part name="pivot" class="win-pivot" locid="WinJS.UI.Pivot_part:pivot">The entire Pivot control.</part>
         /// <part name="title" class="win-pivot-title" locid="WinJS.UI.Pivot_part:title">The title for the Pivot control.</part>
         /// <part name="header" class="win-pivot-header" locid="WinJS.UI.Pivot_part:header">A header of a Pivot Item.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         Pivot: {
             get: function () {
                 if (!module) {
@@ -36040,8 +36297,8 @@ define('WinJS/Controls/Hub/_Section',[
         /// <part name="headercontent" class="win-hub-section-header-content" locid="WinJS.UI.HubSection_part:headercontent">The content region of the header region of the HubSection.</part>
         /// <part name="headerchevron" class="win-hub-section-header-chevron" locid="WinJS.UI.HubSection_part:headerchevron">The chevron region of the header region of the HubSection.</part>
         /// <part name="content" class="win-hub-section-content" locid="WinJS.UI.HubSection_part:content">The content region of the HubSection.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         HubSection: _Base.Namespace._lazy(function () {
             var strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -36266,10 +36523,11 @@ define('WinJS/Controls/Hub',[
     '../Utilities/_ElementUtilities',
     '../Utilities/_Hoverable',
     '../Utilities/_UI',
+    './ElementResizeInstrument',
     './Hub/_Section',
     'require-style!less/styles-hub',
     'require-style!less/colors-hub'
-], function hubInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, _Accents, Animations, _TransitionAnimation, BindingList, ControlProcessor, Promise, _Signal, Scheduler, _Control, _ElementUtilities, _Hoverable, _UI, _Section) {
+], function hubInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Events, _Log, _Resources, _WriteProfilerMark, _Accents, Animations, _TransitionAnimation, BindingList, ControlProcessor, Promise, _Signal, Scheduler, _Control, _ElementUtilities, _Hoverable, _UI, _ElementResizeInstrument, _Section) {
     "use strict";
 
     _Accents.createAccentRule(
@@ -36296,8 +36554,8 @@ define('WinJS/Controls/Hub',[
         /// <part name="progress" class="win-hub-progress" locid="WinJS.UI.Hub_part:progress">The progress indicator for the Hub.</part>
         /// <part name="viewport" class="win-hub-viewport" locid="WinJS.UI.Hub_part:viewport">The viewport of the Hub.</part>
         /// <part name="surface" class="win-hub-surface" locid="WinJS.UI.Hub_part:surface">The scrollable region of the Hub.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         Hub: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -36394,6 +36652,10 @@ define('WinJS/Controls/Hub',[
                 _ElementUtilities.addClass(this.element, Hub._ClassName.hub);
                 _ElementUtilities.addClass(this.element, "win-disposable");
 
+                // This internally assigns this.sections which causes section to be used (even from options) before
+                // scrollPosition or sectionOnScreen.
+                this._parse();
+
                 this._viewportElement = _Global.document.createElement("DIV");
                 this._viewportElement.className = Hub._ClassName.hubViewport;
                 this._element.appendChild(this._viewportElement);
@@ -36419,20 +36681,24 @@ define('WinJS/Controls/Hub',[
                 this.runningAnimations = new Promise.wrap();
                 this._currentIndexForSezo = 0;
 
-                // This internally assigns this.sections which causes section to be used (even from options) before
-                // scrollPosition or sectionOnScreen.
-                this._parse();
-
                 _Control.setOptions(this, options);
 
                 _ElementUtilities._addEventListener(this.element, "focusin", this._focusin.bind(this), false);
                 this.element.addEventListener("keydown", this._keyDownHandler.bind(this));
                 this.element.addEventListener("click", this._clickHandler.bind(this));
-                this._resizeHandlerBound = this._resizeHandler.bind(this);
-                this.element.addEventListener("mselementresize", this._resizeHandlerBound);
-                _ElementUtilities._resizeNotifier.subscribe(this.element, this._resizeHandlerBound);
                 this._viewportElement.addEventListener("scroll", this._scrollHandler.bind(this));
-                this._surfaceElement.addEventListener("mselementresize", this._contentResizeHandler.bind(this));
+
+                this._resizeHandlerBound = this._resizeHandler.bind(this);
+                this._elementResizeInstrument = new _ElementResizeInstrument._ElementResizeInstrument();
+                this._element.appendChild(this._elementResizeInstrument.element);
+                this._elementResizeInstrument.addEventListener("resize", this._resizeHandlerBound);
+                var that = this;
+                _ElementUtilities._inDom(this.element).then(function () {
+                    if (!that._disposed) {
+                        that._elementResizeInstrument.addedToDom();
+                    }
+                });
+                _ElementUtilities._resizeNotifier.subscribe(this.element, this._resizeHandlerBound);
 
                 this._handleSectionChangedBind = this._handleSectionChanged.bind(this);
                 this._handleSectionInsertedBind = this._handleSectionInserted.bind(this);
@@ -36695,14 +36961,16 @@ define('WinJS/Controls/Hub',[
                     if (this._pendingSections) {
                         needsToLoadSections = true;
                         this._updateEvents(this._sections, this._pendingSections);
+
+                        if (this._sections) {
+                            this._sections.forEach(function (section) {
+                                var el = section.element;
+                                el.parentElement.removeChild(el);
+                            });
+                        }
+
                         this._sections = this._pendingSections;
                         this._pendingSections = null;
-                        // Remove any declaratively specified hub sections before attachSections.
-                        while (this.element.firstElementChild !== this._viewportElement) {
-                            var toRemove = this.element.firstElementChild;
-                            toRemove.parentNode.removeChild(toRemove);
-                        }
-                        _ElementUtilities.empty(this._surfaceElement);
                     }
 
                     if (this._pendingHeaderTemplate) {
@@ -37097,10 +37365,11 @@ define('WinJS/Controls/Hub',[
                     }
                 },
                 _parse: function hub_parse() {
+                    // Parse and initialize any declaratively specified hub sections.
                     var hubSections = [];
                     var hubSectionEl = this.element.firstElementChild;
 
-                    while (hubSectionEl !== this._viewportElement) {
+                    while (hubSectionEl) {
                         ControlProcessor.processAll(hubSectionEl);
 
                         var hubSectionContent = hubSectionEl.winControl;
@@ -37111,6 +37380,7 @@ define('WinJS/Controls/Hub',[
                         }
 
                         var nextSectionEl = hubSectionEl.nextElementSibling;
+                        hubSectionEl.parentElement.removeChild(hubSectionEl);
                         hubSectionEl = nextSectionEl;
                     }
 
@@ -37159,15 +37429,11 @@ define('WinJS/Controls/Hub',[
                     }
                 },
                 _resizeHandler: function hub_resizeHandler() {
-                    // Viewport needs to be measured
+                    // Viewport, Sections and scroll length need to be measured
                     this._measured = false;
                     Scheduler.schedule(this._updateSnapList.bind(this), Scheduler.Priority.idle);
                 },
-                _contentResizeHandler: function hub_contentResizeHandler() {
-                    // Sections and scroll length need to be measured
-                    this._measured = false;
-                    Scheduler.schedule(this._updateSnapList.bind(this), Scheduler.Priority.idle);
-                },
+
                 _scrollHandler: function hub_scrollHandler() {
                     // Scroll location needs to be retrieved
                     this._measured = false;
@@ -37570,13 +37836,13 @@ define('WinJS/Controls/Hub',[
                     _WriteProfilerMark(message);
                     _Log.log && _Log.log(message, null, "hubprofiler");
                 },
+                /// <signature helpKeyword="WinJS.UI.Hub.dispose">
+                /// <summary locid="WinJS.UI.Hub.dispose">
+                /// Disposes this control.
+                /// </summary>
+                /// <compatibleWith platform="Windows" minVersion="8.1"/>
+                /// </signature>
                 dispose: function hub_dispose() {
-                    /// <signature helpKeyword="WinJS.UI.Hub.dispose">
-                    /// <summary locid="WinJS.UI.Hub.dispose">
-                    /// Disposes this control.
-                    /// </summary>
-                    /// <compatibleWith platform="Windows" minVersion="8.1"/>
-                    /// </signature>
                     if (this._disposed) {
                         return;
                     }
@@ -37584,12 +37850,23 @@ define('WinJS/Controls/Hub',[
 
                     _Global.removeEventListener('keydown', this._windowKeyDownHandlerBound);
                     _ElementUtilities._resizeNotifier.unsubscribe(this.element, this._resizeHandlerBound);
+                    this._elementResizeInstrument.dispose();
 
                     this._updateEvents(this._sections);
 
                     for (var i = 0; i < this.sections.length; i++) {
                         this.sections.getAt(i).dispose();
                     }
+                },
+                /// <signature helpKeyword="WinJS.UI.Hub.forceLayout">
+                /// <summary locid="WinJS.UI.Hub.forceLayout">
+                /// Forces the Hub to update its layout.
+                /// Use this function when making the Hub visible again after you've set its style.display property to "none” or after style changes have been made that affect the size of the HubSections.
+                /// </summary>
+                /// </signature>
+                forceLayout: function hub_forceLayout() {
+                    // Currently just the same behavior as resize.
+                    this._resizeHandler();
                 }
             }, {
                 /// <field locid="WinJS.UI.Hub.AnimationType" helpKeyword="WinJS.UI.Hub.AnimationType">
@@ -37703,6 +37980,107 @@ var __extends = this.__extends || function (d, b) {
 define('WinJS/_LightDismissService',["require", "exports", './Application', './Core/_Base', './Core/_BaseUtils', './Utilities/_ElementUtilities', './Core/_Global', './Utilities/_KeyboardBehavior', './Core/_Log', './Core/_Resources'], function (require, exports, Application, _Base, _BaseUtils, _ElementUtilities, _Global, _KeyboardBehavior, _Log, _Resources) {
     require(["require-style!less/styles-lightdismissservice"]);
     "use strict";
+    //
+    // Implementation Overview
+    //
+    // The _LightDismissService was designed to coordinate light dismissables. A light
+    // dismissable is an element which, when shown, can be dismissed due to a variety of
+    // cues (listed in LightDismissalReasons):
+    //   - Clicking/tapping outside of the light dismissable
+    //   - Focus leaving the light dismissable
+    //   - User pressing the escape key
+    //   - User pressing the hardware back button
+    //   - User resizing the window
+    //   - User focusing on a different app
+    //
+    // The _LightDismissService's responsibilites have grown so that it can manage more than
+    // just light dismissables (e.g. modals which ignore most of the light dismiss cues). Its
+    // responsibilities include:
+    //   - Rendering the dismissables in the correct z-order. The most recently opened dismissable
+    //     is the topmost one. In order for this requirement to be fulfilled, apps must make
+    //     dismissables direct children of the body. For details, see:
+    //     https://github.com/winjs/winjs/wiki/Dismissables-and-Stacking-Contexts
+    //   - When a different dismissable becomes the topmost, giving that dismissable focus.
+    //   - Informing dismissables when a dismiss cue occurs so they can dismiss if they want to
+    //   - Propagating keyboard events which occur within a dismissable to dismissables underneath
+    //     it in the stack. When a modal dialog is in the stack, this enables the modal to prevent
+    //     any keyboard events from escaping the light dismiss stack. Consequently, global
+    //     hotkeys such as the WinJS BackButton's global back hotkey will be disabled while a
+    //     modal dialog is in the stack.
+    //   - Disabling SearchBox's type to search feature while any dismissable is in the stack.
+    //     Consequently, type to search can only be used in the body -- it cannot be used inside
+    //     of dismissables. If the _LightDismissService didn't do this, typing within any light
+    //     dismissable would cause focus to move into the SearchBox in the body and for all light
+    //     dismissables to lose focus and thus close. Type to search is provided by the event
+    //     requestingFocusOnKeyboardInput.
+    //
+    // Controls which want to utilize the _LightDismissService must implement ILightDismissable.
+    // The _LightDismissService provides a couple of classes which controls can utilize that
+    // implement most of the methods of ILightDismissable:
+    //   - LightDismissableElement. Used by controls which are light dismissable. These include:
+    //     - AppBar/ToolBar
+    //     - Flyout
+    //     - Menu
+    //     - SplitView
+    //   - ModalElement. Used by controls which are modal. These include:
+    //     - ContentDialog
+    //
+    // Debugging tip.
+    //   Call WinJS.UI._LightDismissService._setDebug(true)
+    //   This disables the "window blur" light dismiss cue. It enables you to move focus
+    //   to the debugger or DOM explorer without causing the light dismissables to close.
+    // 
+    // Example usage of _LightDismissService
+    //   To implement a new light dismissable, you just need to:
+    //     - Tell the service when you are shown
+    //     - Tell the service when you are hidden
+    //     - Create an object which implements ILightDismissable. In most cases, you will
+    //       utilize the LightDismissableElement or ModalElement helper which only requires
+    //       you to provide a DOM element, a tab index for that element, and an
+    //       implementation of onLightDismiss.
+    //
+    //   Here's what a basic light dismissable looks like in code:
+    //
+    //     var SimpleOverlay = _Base.Class.define(function (element) {
+    //         var that = this; 
+    //         this.element = element || document.createElement("div"); 
+    //         this.element.winControl = this; 
+    //         _ElementUtilities.addClass(this.element, "simpleoverlay");
+    //
+    //         this._dismissable = new _LightDismissService.LightDismissableElement({ 
+    //             element: this.element,
+    //             tabIndex: this.element.hasAttribute("tabIndex") ? this.element.tabIndex : -1,
+    //             onLightDismiss: function () { 
+    //                 that.hide(); 
+    //             } 
+    //         }); 
+    //     }, {
+    //         show: function () {
+    //             _ElementUtilities.addClass(this.element, "simpleoverlay-shown"); 
+    //             _LightDismissService.shown(this._dismissable);
+    //         },
+    //         hide: function () {
+    //             _ElementUtilities.removeClass(this.element, "simpleoverlay-shown"); 
+    //             _LightDismissService.hidden(this._dismissable);
+    //         }
+    //     });
+    //
+    //   When using LightDismissableElement/ModalElement, you may optionally override:
+    //     - onShouldLightDismiss: This enables you to specify which light dismiss cues
+    //       should trigger a light dismiss for your control. The defaults are:
+    //       - LightDismissableElement: Essentially all cues trigger a dismiss.
+    //       - ModalElement: Only the escape key and hardware back button trigger a
+    //         dismiss.
+    //     - onTakeFocus: This enables you to specify which element within your control
+    //       should receive focus when it becomes the topmost dismissable. When overriding
+    //       this method, it's common to start by calling this.restoreFocus, a helper
+    //       provided by LightDismissableElement/ModalElement, to restore focus to the
+    //       element within the dismissable which most recently had it. By default,
+    //       onTakeFocus tries to give focus to elements in the following order:
+    //       - Tries to restore focus to the element that previously had focus
+    //       - Tries to give focus to the first focusable element in the dismissable.
+    //       - Tries to give focus to the root element of the dismissable.
+    //
     var baseZIndex = 1000;
     var Strings = {
         get closeOverlay() {
@@ -37798,6 +38176,11 @@ define('WinJS/_LightDismissService',["require", "exports", './Application', './C
             this._ldeOnKeyUpBound = this._ldeOnKeyUp.bind(this);
             this._ldeOnKeyPressBound = this._ldeOnKeyPress.bind(this);
         }
+        // Helper which can be called when implementing onTakeFocus. Restores focus to
+        // whatever element within the dismissable previously had focus. Returns true
+        // if focus was successfully restored and false otherwise. In the false case,
+        // onTakeFocus implementers typically try to give focus to either the first
+        // focusable element in the dismissable or to the root element of the dismissable.
         AbstractDismissableElement.prototype.restoreFocus = function () {
             var activeElement = _Global.document.activeElement;
             if (activeElement && this.containsElement(activeElement)) {
@@ -37979,6 +38362,10 @@ define('WinJS/_LightDismissService',["require", "exports", './Application', './C
         LightDismissService.prototype.updated = function (client) {
             this._updateDom();
         };
+        // Dismissables should call keyDown, keyUp, and keyPress when such an event occurs within the dismissable. The
+        // _LightDismissService takes these events and propagates them to other ILightDismissables in the stack by calling
+        // onKeyInStack on them. LightDismissableElement and ModalElement call keyDown, keyUp, and keyPress for you so
+        // if you use them while implementing an ILightDismissable, you don't have to worry about this responsibility.
         LightDismissService.prototype.keyDown = function (client, eventObject) {
             if (eventObject.keyCode === _ElementUtilities.Key.escape) {
                 this._escapePressed(eventObject);
@@ -39696,8 +40083,8 @@ define('WinJS/Controls/Flyout',[
         /// <event name="beforehide" locid="WinJS.UI.Flyout_e:beforehide">Raised just before hiding a flyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.Flyout_e:afterhide">Raised immediately after a flyout is fully hidden.</event>
         /// <part name="flyout" class="win-flyout" locid="WinJS.UI.Flyout_part:flyout">The Flyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         Flyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -41432,8 +41819,8 @@ define('WinJS/Controls/AppBar/_Command',[
         /// <part name="appBarCommandIcon" class="win-commandicon" locid="WinJS.UI.AppBarCommand_part:appBarCommandIcon">The AppBarCommand's icon box.</part>
         /// <part name="appBarCommandImage" class="win-commandimage" locid="WinJS.UI.AppBarCommand_part:appBarCommandImage">The AppBarCommand's icon's image formatting.</part>
         /// <part name="appBarCommandLabel" class="win-label" locid="WinJS.UI.AppBarCommand_part:appBarCommandLabel">The AppBarCommand's label</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         AppBarCommand: _Base.Namespace._lazy(function () {
 
             function _handleClick(event) {
@@ -42197,8 +42584,8 @@ define('WinJS/Controls/Menu/_Command',[
         /// <icon src="ui_winjs.ui.menucommand.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.MenuCommand" data-win-options="{type:'button',label:'Button'}"></button>]]></htmlSnippet>
         /// <part name="MenuCommand" class="win-command" locid="WinJS.UI.MenuCommand_name">The MenuCommand control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         MenuCommand: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -44535,8 +44922,8 @@ define('WinJS/Controls/ToolBar/_ToolBar',["require", "exports", "../../Core/_Bas
     /// <part name="toolbar" class="win-toolbar" locid="WinJS.UI.ToolBar_part:toolbar">The entire ToolBar control.</part>
     /// <part name="toolbar-overflowbutton" class="win-toolbar-overflowbutton" locid="WinJS.UI.ToolBar_part:ToolBar-overflowbutton">The toolbar overflow button.</part>
     /// <part name="toolbar-overflowarea" class="win-toolbar-overflowarea" locid="WinJS.UI.ToolBar_part:ToolBar-overflowarea">The container for toolbar commands that overflow.</part>
-    /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
     var ToolBar = (function () {
         function ToolBar(element, options) {
             /// <signature helpKeyword="WinJS.UI.ToolBar.ToolBar">
@@ -45894,8 +46281,8 @@ define('WinJS/Controls/_LegacyAppBar',[
         /// <event name="afterclose" locid="WinJS.UI._LegacyAppBar_e:afterclose">Raised immediately after the _LegacyAppBar is fully hidden.</event>
         /// <part name="appbar" class="win-commandlayout" locid="WinJS.UI._LegacyAppBar_part:appbar">The _LegacyAppBar control itself.</part>
         /// <part name="appBarCustom" class="win-navbar" locid="WinJS.UI._LegacyAppBar_part:appBarCustom">Style for a custom layout _LegacyAppBar.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         _LegacyAppBar: _Base.Namespace._lazy(function () {
             var EVENTS = {
                 beforeOpen: "beforeopen",
@@ -47058,8 +47445,8 @@ define('WinJS/Controls/Menu',[
         /// <event name="beforehide" locid="WinJS.UI.Menu_e:beforehide">Raised just before hiding a menu.</event>
         /// <event name="afterhide" locid="WinJS.UI.Menu_e:afterhide">Raised immediately after a menu is fully hidden.</event>
         /// <part name="menu" class="win-menu" locid="WinJS.UI.Menu_part:menu">The Menu control itself</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         Menu: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -47794,8 +48181,8 @@ define('WinJS/Controls/AutoSuggestBox',[
         /// <part name="autosuggestbox-suggestion-result" class="win-autosuggestbox-suggestion-result" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Result">Styles the result type suggestion.</part>
         /// <part name="autosuggestbox-suggestion-selected" class="win-autosuggestbox-suggestion-selected" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Selected">Styles the currently selected suggestion.</part>
         /// <part name="autosuggestbox-suggestion-separator" class="win-autosuggestbox-suggestion-separator" locid="WinJS.UI.AutoSuggestBox_part:Suggestion_Separator">Styles the separator type suggestion.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         AutoSuggestBox: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -49114,8 +49501,8 @@ define('WinJS/Controls/SearchBox',[
         /// <part name="searchbox-suggestion-selected" class="win-searchbox-suggestion-selected" locid="WinJS.UI.SearchBox_part:Suggestion_Selected">
         /// Styles the currently selected suggestion.
         /// </part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         SearchBox: _Base.Namespace._lazy(function () {
 
             // Enums
@@ -49446,8 +49833,8 @@ define('WinJS/Controls/SettingsFlyout',[
         /// <event name="beforehide" locid="WinJS.UI.SettingsFlyout_e:beforehide">Raised just before hiding a SettingsFlyout.</event>
         /// <event name="afterhide" locid="WinJS.UI.SettingsFlyout_e:afterhide">Raised immediately after a SettingsFlyout is fully hidden.</event>
         /// <part name="settings" class="win-settingsflyout" locid="WinJS.UI.SettingsFlyout_part:settings">The SettingsFlyout control itself.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         SettingsFlyout: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -50191,8 +50578,8 @@ define('WinJS/Controls/SplitView/Command',['exports',
         /// <part name="button" class="win-splitviewcommand-button" locid="WinJS.UI.SplitViewCommand_part:button">Styles the button in a SplitViewCommand.</part>
         /// <part name="icon" class="win-splitviewcommand-icon" locid="WinJS.UI.SplitViewCommand_part:icon">Styles the icon in the button of a SplitViewCommand.</part>
         /// <part name="label" class="win-splitviewcommand-label" locid="WinJS.UI.SplitViewCommand_part:label">Styles the label in the button of a SplitViewCommand.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         SplitViewCommand: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -50514,8 +50901,8 @@ define('WinJS/Controls/NavBar/_Command',[
         /// <part name="splitbutton" class="win-navbarcommand-splitbutton" locid="WinJS.UI.NavBarCommand_part:splitbutton">Styles the split button in a NavBarCommand</part>
         /// <part name="icon" class="win-navbarcommand-icon" locid="WinJS.UI.NavBarCommand_part:icon">Styles the icon in the main button of a NavBarCommand.</part>
         /// <part name="label" class="win-navbarcommand-label" locid="WinJS.UI.NavBarCommand_part:label">Styles the label in the main button of a NavBarCommand.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         NavBarCommand: _Base.Namespace._lazy(function () {
 
             var strings = {
@@ -50772,8 +51159,8 @@ define('WinJS/Controls/NavBar/_Container',[
         /// <part name="navigationArrow" class="win-navbarcontainer-navarrow" locid="WinJS.UI.NavBarContainer_part:navigationArrow">Styles left and right navigation arrows.</part>
         /// <part name="leftNavigationArrow" class="win-navbarcontainer-navleft" locid="WinJS.UI.NavBarContainer_part:leftNavigationArrow">Styles the left navigation arrow.</part>
         /// <part name="rightNavigationArrow" class="win-navbarcontainer-navright" locid="WinJS.UI.NavBarContainer_part:rightNavigationArrow">Styles the right navigation arrow.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         NavBarContainer: _Base.Namespace._lazy(function () {
             var Key = _ElementUtilities.Key;
 
@@ -52178,8 +52565,8 @@ define('WinJS/Controls/NavBar',[
         /// <event name="afterclose" locid="WinJS.UI.NavBar_e:afterclose">Raised immediately after the NavBar is fully closed.</event>
         /// <event name="childrenprocessed" locid="WinJS.UI.NavBar_e:childrenprocessed">Fired when children of NavBar control have been processed from a WinJS.UI.processAll call.</event>
         /// <part name="navbar" class="win-navbar" locid="WinJS.UI.NavBar_part:navbar">Styles the entire NavBar.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         NavBar: _Base.Namespace._lazy(function () {
             var childrenProcessedEventName = "childrenprocessed";
             var createEvent = _Events._createEventProperty;
@@ -52367,8 +52754,9 @@ define('WinJS/Controls/ViewBox',[
     '../Utilities/_Dispose',
     '../Utilities/_ElementUtilities',
     '../Utilities/_Hoverable',
+    './ElementResizeInstrument',
     'require-style!less/styles-viewbox'
-    ], function viewboxInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Resources, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable) {
+], function viewboxInit(_Global, _Base, _BaseUtils, _ErrorFromName, _Resources, Scheduler, _Control, _Dispose, _ElementUtilities, _Hoverable, _ElementResizeInstrument) {
     "use strict";
 
     _Base.Namespace.define("WinJS.UI", {
@@ -52384,37 +52772,13 @@ define('WinJS/Controls/ViewBox',[
         /// <icon src="ui_winjs.ui.viewbox.12x12.png" width="12" height="12" />
         /// <icon src="ui_winjs.ui.viewbox.16x16.png" width="16" height="16" />
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.UI.ViewBox"><div>ViewBox</div></div>]]></htmlSnippet>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         ViewBox: _Base.Namespace._lazy(function () {
 
             var strings = {
-                get invalidViewBoxChildren() { return "ViewBox expects to only have one child element"; },
+                get invalidViewBoxChildren() { return "ViewBox expects to be provided with only one child element"; },
             };
-
-            function onresize(control) {
-                if (control && !control._resizing) {
-                    control._resizing = control._resizing || 0;
-                    control._resizing++;
-                    try {
-                        control._updateLayout();
-                    } finally {
-                        control._resizing--;
-                    }
-                }
-            }
-
-            function onresizeBox(ev) {
-                if (ev.target) {
-                    onresize(ev.target.winControl);
-                }
-            }
-
-            function onresizeSizer(ev) {
-                if (ev.target) {
-                    onresize(ev.target.parentElement.winControl);
-                }
-            }
 
             var ViewBox = _Base.Class.define(function ViewBox_ctor(element) {
                 /// <signature helpKeyword="WinJS.UI.ViewBox.ViewBox">
@@ -52434,6 +52798,20 @@ define('WinJS/Controls/ViewBox',[
                 box.winControl = this;
                 _ElementUtilities.addClass(box, "win-disposable");
                 _ElementUtilities.addClass(box, "win-viewbox");
+
+                // Sign up for resize events.
+                this._handleResizeBound = this._handleResize.bind(this);
+                _ElementUtilities._resizeNotifier.subscribe(box, this._handleResizeBound);
+                this._elementResizeInstrument = new _ElementResizeInstrument._ElementResizeInstrument();
+                box.appendChild(this._elementResizeInstrument.element);
+                this._elementResizeInstrument.addEventListener("resize", this._handleResizeBound);
+                var that = this;
+                _ElementUtilities._inDom(box).then(function () {
+                    if (!that._disposed) {
+                        that._elementResizeInstrument.addedToDom();
+                    }
+                });
+
                 this.forceLayout();
             }, {
                 _sizer: null,
@@ -52454,23 +52832,31 @@ define('WinJS/Controls/ViewBox',[
 
                 _initialize: function () {
                     var box = this.element;
-                    if (box.firstElementChild !== this._sizer) {
+                    var children = Array.prototype.slice.call(box.children);
+
+                    // Make sure we contain our elementResizeInstrument. 
+                    if (children.indexOf(this._elementResizeInstrument.element) === -1) {
+                        box.appendChild(this._elementResizeInstrument.element);
+                    }
+
+                    // Make sure we contain a single sizer
+                    var that = this;
+                    if (children.indexOf(this._sizer) === -1) {
+                        var sizers = children.filter(function (element) {
+                            return (element !== that._elementResizeInstrument.element);
+                        });
+
                         if (_BaseUtils.validation) {
-                            if (box.childElementCount !== 1) {
+                            if (sizers.length !== 1) {
                                 throw new _ErrorFromName("WinJS.UI.ViewBox.InvalidChildren", strings.invalidViewBoxChildren);
                             }
                         }
                         if (this._sizer) {
                             this._sizer.onresize = null;
                         }
-                        var sizer = box.firstElementChild;
+                        var sizer = sizers[0];
                         this._sizer = sizer;
-                        if (sizer) {
-                            _ElementUtilities._resizeNotifier.subscribe(box, onresizeBox);
-                            box.addEventListener("mselementresize", onresizeBox);
-                            _ElementUtilities._resizeNotifier.subscribe(sizer, onresizeSizer);
-                            sizer.addEventListener("mselementresize", onresizeSizer);
-                        }
+
                         if (box.clientWidth === 0 && box.clientHeight === 0) {
                             var that = this;
                             // Wait for the viewbox to get added to the DOM. It should be added
@@ -52498,6 +52884,24 @@ define('WinJS/Controls/ViewBox',[
                         this._sizer.style[_BaseUtils._browserStyleEquivalents["transform"].scriptName] = "translate(" + (rtl ? "-" : "") + transX + "px," + transY + "px) scale(" + mRatio + ")";
                         this._sizer.style[_BaseUtils._browserStyleEquivalents["transform-origin"].scriptName] = rtl ? "top right" : "top left";
                     }
+
+                    this._layoutCompleteCallback();
+                },
+
+                _handleResize: function () {
+                    if (!this._resizing) {
+                        this._resizing = this._resizing || 0;
+                        this._resizing++;
+                        try {
+                            this._updateLayout();
+                        } finally {
+                            this._resizing--;
+                        }
+                    }
+                },
+
+                _layoutCompleteCallback: function () {
+                    // Overwritten by unit tests.
                 },
 
                 dispose: function () {
@@ -52511,11 +52915,10 @@ define('WinJS/Controls/ViewBox',[
                     }
 
                     if (this.element) {
-                        _ElementUtilities._resizeNotifier.unsubscribe(this.element, onresizeBox);
+                        _ElementUtilities._resizeNotifier.unsubscribe(this.element, this._handleResizeBound);
                     }
-                    if (this._sizer) {
-                        _ElementUtilities._resizeNotifier.unsubscribe(this._sizer, onresizeSizer);
-                    }
+
+                    this._elementResizeInstrument.dispose();
 
                     this._disposed = true;
                     _Dispose.disposeSubTree(this._element);
@@ -52563,6 +52966,54 @@ define('WinJS/Controls/ContentDialog',[
     "use strict";
 
     _Accents.createAccentRule(".win-contentdialog-dialog", [{ name: "outline-color", value: _Accents.ColorTypes.accent }]);
+    
+    //
+    // Implementation Overview
+    //
+    // ContentDialog's responsibilities are divided into the following:
+    //
+    //   Show/hide state management
+    //     This involves firing the beforeshow, aftershow, beforehide, and afterhide events.
+    //     It also involves making sure the control behaves properly when things happen in a
+    //     variety of states such as:
+    //       - show is called while the control is already shown
+    //       - hide is called while the control is in the middle of showing
+    //       - dispose is called within a beforeshow event handler
+    //     The ContentDialog solves these problems by being implemented around a state machine.
+    //     The states are defined in a variable called *States* and the ContentDialog's *_setState*
+    //     method is used to change states. See the comments above the *States* variable for details.
+    //  
+    //   Modal
+    //     The ContentDialog is a modal. It must coordinate with other dismissables (e.g. Flyout,
+    //     AppBar). Specifically, it must coordinate moving focus as well as ensuring that it is
+    //     drawn at the proper z-index relative to the other dismissables. The ContentDialog
+    //     relies on the _LightDismissService for all of this coordination. The only pieces the
+    //     ContentDialog is responsible for are:
+    //       - Describing what happens when a light dismiss is triggered on the ContentDialog.
+    //       - Describing how the ContentDialog should take/restore focus when it becomes the
+    //         topmost dismissable.
+    //     Other functionality that the ContentDialog gets from the _LightDismissService is around
+    //     the eating of keyboard events. While a ContentDialog is shown, keyboard events should
+    //     not escape the ContentDialog. This prevents global hotkeys such as the WinJS BackButton's
+    //     global back hotkey from triggering while a ContentDialog is shown.
+    //
+    //   Positioning and sizing of the dialog
+    //     It was a goal of the ContentDialog's positioning and sizing implementation that the
+    //     dialog's position and size could respond to changes to the dialog's content without
+    //     the app having to be aware of or notify the dialog of the change. For example, suppose
+    //     the dialog is shown and the user expands an accordion control within the dialog. Now
+    //     that the dialog's content has changed size, the dialog should automatically adjust its
+    //     size and position.
+    //     To achieve this goal, the ContentDialog's positioning and sizing implementation is done
+    //     entirely in LESS/CSS rather than in JavaScript. At the time, there was no cross browser
+    //     element resize event so this was the only option. This solution resulted in LESS/CSS
+    //     that is quite tricky. See styles-contentdialog.less for details.
+    //
+    //   Responding to the input pane
+    //     The ContentDialog's general strategy for getting out of the way of the input pane is to
+    //     adhere to its normal positioning and sizing rules but to only use the visible portion
+    //     of the window rather than the entire height of the window.
+    //
 
     _Base.Namespace.define("WinJS.UI", {
         /// <field>
@@ -52585,8 +53036,8 @@ define('WinJS/Controls/ContentDialog',[
         /// <part name="contentdialog-commands" class="win-contentdialog-commands" locid="WinJS.UI.ContentDialog_part:contentdialog-commands">The element which contains the dialog's primary and secondary commands.</part>
         /// <part name="contentdialog-primarycommand" class="win-contentdialog-primarycommand" locid="WinJS.UI.ContentDialog_part:contentdialog-primarycommand">The dialog's primary button.</part>
         /// <part name="contentdialog-secondarycommand" class="win-contentdialog-secondarycommand" locid="WinJS.UI.ContentDialog_part:contentdialog-secondarycommand">The dialog's secondary button.</part>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         ContentDialog: _Base.Namespace._lazy(function () {
             var Strings = {
                 get duplicateConstruction() { return "Invalid argument: Controls may only be instantiated one time for each DOM element"; },
@@ -53661,8 +54112,8 @@ define('WinJS/Controls/SplitView/_SplitView',["require", "exports", '../../Anima
     /// <part name="splitview" class="win-splitview" locid="WinJS.UI.SplitView_part:splitview">The entire SplitView control.</part>
     /// <part name="splitview-pane" class="win-splitview-pane" locid="WinJS.UI.SplitView_part:splitview-pane">The element which hosts the SplitView's pane.</part>
     /// <part name="splitview-content" class="win-splitview-content" locid="WinJS.UI.SplitView_part:splitview-content">The element which hosts the SplitView's content.</part>
-    /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
     var SplitView = (function () {
         function SplitView(element, options) {
             /// <signature helpKeyword="WinJS.UI.SplitView.SplitView">
@@ -54348,8 +54799,8 @@ define('WinJS/Controls/SplitViewPaneToggle/_SplitViewPaneToggle',["require", "ex
     /// <icon src="ui_winjs.ui.splitviewpanetoggle.16x16.png" width="16" height="16" />
     /// <htmlSnippet><![CDATA[<button data-win-control="WinJS.UI.SplitViewPaneToggle"></button>]]></htmlSnippet>
     /// <part name="splitviewpanetoggle" class="win-splitviewpanetoggle" locid="WinJS.UI.SplitViewPaneToggle_part:splitviewpanetoggle">The SplitViewPaneToggle control itself.</part>
-    /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
     var SplitViewPaneToggle = (function () {
         function SplitViewPaneToggle(element, options) {
             /// <signature helpKeyword="WinJS.UI.SplitViewPaneToggle.SplitViewPaneToggle">
@@ -54679,8 +55130,8 @@ define('WinJS/Controls/AppBar/_AppBar',["require", "exports", "../../Core/_Base"
     /// <part name="appbar" class="win-appbar" locid="WinJS.UI.AppBar_part:appbar">The entire AppBar control.</part>
     /// <part name="appbar-overflowbutton" class="win-appbar-overflowbutton" locid="WinJS.UI.AppBar_part:AppBar-overflowbutton">The appbar overflow button.</part>
     /// <part name="appbar-overflowarea" class="win-appbar-overflowarea" locid="WinJS.UI.AppBar_part:AppBar-overflowarea">The container for appbar commands that overflow.</part>
-    /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-    /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+    /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+    /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
     var AppBar = (function () {
         function AppBar(element, options) {
             /// <signature helpKeyword="WinJS.UI.AppBar.AppBar">

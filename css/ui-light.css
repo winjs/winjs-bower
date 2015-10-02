@@ -2051,6 +2051,8 @@ html.win-hoverable .win-itemcontainer.win-selectionstylefilled.win-selected a:ho
 .win-flipview {
   overflow: hidden;
   height: 400px;
+  /* Necessary for detecting element resize */
+  position: relative;
 }
 .win-flipview .win-surface {
   -ms-scroll-chaining: none;
@@ -2626,6 +2628,8 @@ button.win-navigation-backbutton:enabled:hover:active {
 .win-semanticzoom {
   touch-action: pan-x pan-y double-tap-zoom;
   height: 400px;
+  /* Necessary to detect element resize */
+  position: relative;
 }
 .win-semanticzoom .win-listview > .win-viewport * {
   touch-action: auto;
@@ -2710,6 +2714,8 @@ button.win-navigation-backbutton:enabled:hover:active {
   overflow: hidden;
   -ms-scroll-limit-x-max: 0px;
   touch-action: manipulation;
+  /* Necessary for detecting when this element has resized */
+  position: relative;
 }
 .win-pivot .win-pivot-navbutton {
   touch-action: manipulation;
@@ -2928,6 +2934,7 @@ html.win-hoverable .win-pivot .win-pivot-navbutton:hover {
 .win-hub {
   height: 100%;
   width: 100%;
+  /* Necessary for detecting when this element has resized */
   position: relative;
 }
 .win-hub-progress {

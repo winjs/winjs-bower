@@ -12,7 +12,7 @@
             // amd
             define([], factory);
         } else {
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.1.winjs.2015.9.29 base.js,StartTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.4 4.4.0.winjs.2015.10.2 base.js,StartTM');
             if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
                 // CommonJS
                 factory();
@@ -20,7 +20,7 @@
                 // No module system
                 factory(globalObject.WinJS);
             }
-            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.3 4.3.1.winjs.2015.9.29 base.js,StopTM');
+            globalObject.msWriteProfilerMark && msWriteProfilerMark('WinJS.4.4 4.4.0.winjs.2015.10.2 base.js,StopTM');
         }
     }(function (WinJS) {
 
@@ -5198,7 +5198,7 @@ define('WinJS/Core/_BaseUtils',[
         _traceAsyncCallbackStarting: _Trace._traceAsyncCallbackStarting,
         _traceAsyncCallbackCompleted: _Trace._traceAsyncCallbackCompleted,
 
-        _version: "4.3.1"
+        _version: "4.4.0"
     });
 
     _Base.Namespace._moduleDefine(exports, "WinJS", {
@@ -5445,7 +5445,7 @@ define('WinJS/Utilities/_ElementUtilities',[
     }
 
     var _zoomToDuration = 167;
-    
+
     // Firefox's implementation of getComputedStyle returns null when called within
     // an iframe that is display:none. This is a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=548397
     // _getComputedStyle is a helper which is guaranteed to return an object whose keys
@@ -6077,7 +6077,7 @@ define('WinJS/Utilities/_ElementUtilities',[
         focusin: {
             register: registerBubbleListener,
             unregister: removeListenerFromEventMap
-        }
+        },
     };
     if (!_Global.PointerEvent) {
         var pointerEventEntry = {
@@ -6219,7 +6219,7 @@ define('WinJS/Utilities/_ElementUtilities',[
             _resizeEvent: { get: function () { return 'WinJSElementResize'; } }
         }
     );
-
+   
     // - object: The object on which GenericListener will listen for events.
     // - objectName: A string representing the name of *object*. This will be
     //   incorporated into the names of the events and classNames created by
@@ -6598,7 +6598,7 @@ define('WinJS/Utilities/_ElementUtilities',[
         },
 
         _MSPointerEvent: _MSPointerEvent,
-        
+
         _getComputedStyle: _getComputedStyle,
 
         _zoomToDuration: _zoomToDuration,
@@ -7962,12 +7962,12 @@ define('WinJS/Utilities/_ElementUtilities',[
             callback();
             exports._trySetActiveOnAnyElement(focusedElement);
         },
-        
+
         // Tries to give focus to an element (even if its tabIndex is -1) via setActive.
         _trySetActiveOnAnyElement: function Utilities_trySetActiveOnAnyElement(element, scroller) {
             return exports._tryFocusOnAnyElement(element, true, scroller);
         },
-        
+
         // Tries to give focus to an element (even if its tabIndex is -1).
         _tryFocusOnAnyElement: function Utilities_tryFocusOnAnyElement(element, useSetActive, scroller) {
             var previousActiveElement = _Global.document.activeElement;
@@ -7975,22 +7975,22 @@ define('WinJS/Utilities/_ElementUtilities',[
             if (element === previousActiveElement) {
                 return true;
             }
-            
+
             if (useSetActive) {
                 exports._setActive(element, scroller);
             } else {
                 element.focus();
             }
-            
+
             return previousActiveElement !== _Global.document.activeElement;
         },
-        
+
         // Tries to give focus to an element which is a tabstop (i.e. tabIndex >= 0)
         // via setActive.
         _trySetActive: function Utilities_trySetActive(elem, scroller) {
             return this._tryFocus(elem, true, scroller);
         },
-        
+
         // Tries to give focus to an element which is a tabstop (i.e. tabIndex >= 0).
         _tryFocus: function Utilities_tryFocus(elem, useSetActive, scroller) {
             var previousActiveElement = _Global.document.activeElement;
@@ -22826,8 +22826,8 @@ define('WinJS/BindingTemplate',[
         /// <htmlSnippet supportsContent="true"><![CDATA[<div data-win-control="WinJS.Binding.Template"><div>Place content here</div></div>]]></htmlSnippet>
         /// <icon src="base_winjs.ui.template.12x12.png" width="12" height="12" />
         /// <icon src="base_winjs.ui.template.16x16.png" width="16" height="16" />
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         Template: _Base.Namespace._lazy(function () {
             function interpretedRender(template, dataContext, container) {
                 _WriteProfilerMark("WinJS.Binding:templateRender" + template._profilerMarkIdentifier + ",StartTM");
@@ -26775,8 +26775,8 @@ define('WinJS/Controls/HtmlControl',[
         /// <icon src="base_winjs.ui.htmlcontrol.12x12.png" width="12" height="12" />
         /// <icon src="base_winjs.ui.htmlcontrol.16x16.png" width="16" height="16" />
         /// <htmlSnippet><![CDATA[<div data-win-control="WinJS.UI.HtmlControl" data-win-options="{ uri: 'somePage.html' }"></div>]]></htmlSnippet>
-        /// <resource type="javascript" src="//WinJS.4.3/js/WinJS.js" shared="true" />
-        /// <resource type="css" src="//WinJS.4.3/css/ui-dark.css" shared="true" />
+        /// <resource type="javascript" src="//WinJS.4.4/js/WinJS.js" shared="true" />
+        /// <resource type="css" src="//WinJS.4.4/css/ui-dark.css" shared="true" />
         HtmlControl: _Base.Class.define(function HtmlControl_ctor(element, options, complete) {
             /// <signature helpKeyword="WinJS.UI.HtmlControl.HtmlControl">
             /// <summary locid="WinJS.UI.HtmlControl.constructor">
